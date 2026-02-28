@@ -1,0 +1,39 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+      - name: Build
+        run: |
+          xcodebuild -project MacVoiceRecordWidget.xcodeproj \
+            -scheme MacVoiceRecordWidget \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Create artifact
+        run: |
+          cd build/Build/Products/Release
+          zip -r MacVoiceRecordWidget.zip MacVoiceRecordWidget.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacVoiceRecordWidget
+          path: build/Build/Products/Release/MacVoiceRecordWidget.zip
