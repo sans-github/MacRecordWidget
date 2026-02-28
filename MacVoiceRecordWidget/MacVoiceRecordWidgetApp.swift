@@ -9,18 +9,13 @@ struct MacVoiceRecordWidgetApp: App {
             Button {
                 recordingManager.startRecording()
             } label: {
-                HStack {
-                    Image(systemName: "mic.fill")
-                    Text("Start")
-                }
+                Label("Start", systemImage: "mic.fill")
             }
 
             Button {
                 recordingManager.stopRecording()
             } label: {
-                HStack {
-                    Text("⏹️  Stop")
-                }
+                Label("Stop", systemImage: "stop.fill")
             }
 
             Divider()
@@ -30,8 +25,9 @@ struct MacVoiceRecordWidgetApp: App {
             }
             .keyboardShortcut("q")
         } label: {
-            Image(systemName: "mic.fill")
-                .foregroundColor(recordingManager.isRecording ? .green : .primary)
+            Image(systemName: recordingManager.isRecording ? "mic.fill" : "mic")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(recordingManager.isRecording ? .green : .primary)
         }
     }
 }
