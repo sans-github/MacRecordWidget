@@ -6,6 +6,13 @@ struct MacVoiceRecordWidgetApp: App {
 
     var body: some Scene {
         MenuBarExtra {
+            Toggle(isOn: $recordingManager.videoEnabled) {
+                Label("Include Video", systemImage: "camera")
+            }
+            .disabled(recordingManager.isRecording)
+
+            Divider()
+
             Button {
                 recordingManager.startRecording()
             } label: {
@@ -27,7 +34,10 @@ struct MacVoiceRecordWidgetApp: App {
             }
             .keyboardShortcut("q")
         } label: {
-            Image(systemName: recordingManager.isRecording ? "mic.fill" : "mic")
+            let icon = recordingManager.videoEnabled
+                ? (recordingManager.isRecording ? "video.fill" : "video")
+                : (recordingManager.isRecording ? "mic.fill" : "mic")
+            Image(systemName: icon)
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(recordingManager.isRecording ? .green : .primary)
         }
