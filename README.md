@@ -1,17 +1,20 @@
-# MacVoiceRecordWidget
+# MacRecordWidget
 
-A macOS menu bar app for quick voice recording control.
+A macOS menu bar app for quick audio and video recording.
 
 ## Features
 
-- Menu bar mic icon (green when recording)
-- Start/Stop recording via existing macOS Shortcuts
+- Menu bar icon (green when recording, mic or camera depending on mode)
+- Start/Stop audio recording via macOS Shortcuts (Voice Memos)
+- Optional video mode: opens Photo Booth full screen alongside audio
+- Toggle between audio-only and audio+video before each session
 - Auto-generated timestamp for recording names
 
 ## Requirements
 
 - macOS 13.0+
 - Two Shortcuts named "Start" and "Stop" that control Voice Memos recording
+- Photo Booth (built into macOS) for video mode
 
 ## Installation
 
@@ -22,11 +25,12 @@ A macOS menu bar app for quick voice recording control.
 
 ## Usage
 
-Click the mic icon in menu bar:
-- **Start** - begins recording with timestamp name
-- **Stop** - stops current recording
+Click the icon in the menu bar to open the panel:
+- **Include Video** toggle - enable to open Photo Booth on start (off by default)
+- **Start** - begins audio recording; opens Photo Booth full screen if video is on
+- **Stop** - stops audio recording
 
-First run will prompt to allow Shortcuts access.
+First run will prompt to allow Shortcuts access. Enabling video and starting for the first time will prompt for Accessibility permission (needed to full-screen Photo Booth).
 
 ## Building
 
