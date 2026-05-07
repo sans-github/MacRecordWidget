@@ -16,6 +16,7 @@ struct MacRecordWidgetApp: App {
                 HStack(spacing: 8) {
                     Button {
                         recordingManager.startRecording()
+                        NSApp.keyWindow?.close()
                     } label: {
                         Label("Start", systemImage: "mic.fill")
                             .frame(maxWidth: .infinity)
@@ -24,6 +25,7 @@ struct MacRecordWidgetApp: App {
 
                     Button {
                         recordingManager.stopRecording()
+                        NSApp.keyWindow?.close()
                     } label: {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
