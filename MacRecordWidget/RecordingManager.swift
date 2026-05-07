@@ -35,6 +35,11 @@ class RecordingManager: ObservableObject {
         if let url = URL(string: "shortcuts://run-shortcut?name=Stop") {
             NSWorkspace.shared.open(url)
         }
+        if videoEnabled {
+            NSWorkspace.shared.runningApplications
+                .first(where: { $0.bundleIdentifier == "com.apple.PhotoBooth" })?
+                .terminate()
+        }
         isRecording = false
     }
 }
