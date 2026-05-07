@@ -11,12 +11,14 @@ struct MacVoiceRecordWidgetApp: App {
             } label: {
                 Label("Start", systemImage: "mic.fill")
             }
+            .disabled(recordingManager.isRecording)
 
             Button {
                 recordingManager.stopRecording()
             } label: {
                 Label("Stop", systemImage: "stop.fill")
             }
+            .disabled(!recordingManager.isRecording)
 
             Divider()
 
