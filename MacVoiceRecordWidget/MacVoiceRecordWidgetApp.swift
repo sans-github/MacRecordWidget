@@ -30,7 +30,7 @@ struct MacVoiceRecordWidgetApp: App {
                     }
                     .disabled(!recordingManager.isRecording)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
 
                 Divider()
 
