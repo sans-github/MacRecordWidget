@@ -4,9 +4,6 @@
 <dict>
     <key>LSUIElement</key>
     <true/>
-    <key>NSCameraUsageDescription</key>
-    <string>Used to record video when video mode is enabled.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Used to capture audio in video recordings.</string>
+
 </dict>
 </plist>

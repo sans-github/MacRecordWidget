@@ -6,33 +6,41 @@ struct MacVoiceRecordWidgetApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            Toggle(isOn: $recordingManager.videoEnabled) {
-                Label("Include Video", systemImage: "camera")
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Include Video", isOn: $recordingManager.videoEnabled)
+                    .toggleStyle(.switch)
+                    .disabled(recordingManager.isRecording)
+
+                Divider()
+
+                HStack(spacing: 8) {
+                    Button {
+                        recordingManager.startRecording()
+                    } label: {
+                        Label("Start", systemImage: "mic.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(recordingManager.isRecording)
+
+                    Button {
+                        recordingManager.stopRecording()
+                    } label: {
+                        Label("Stop", systemImage: "stop.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(!recordingManager.isRecording)
+                }
+                .buttonStyle(.borderedProminent)
+
+                Divider()
+
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .disabled(recordingManager.isRecording)
-
-            Divider()
-
-            Button {
-                recordingManager.startRecording()
-            } label: {
-                Label("Start", systemImage: "mic.fill")
-            }
-            .disabled(recordingManager.isRecording)
-
-            Button {
-                recordingManager.stopRecording()
-            } label: {
-                Label("Stop", systemImage: "stop.fill")
-            }
-            .disabled(!recordingManager.isRecording)
-
-            Divider()
-
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q")
+            .padding(12)
+            .frame(width: 220)
         } label: {
             let icon = recordingManager.videoEnabled
                 ? (recordingManager.isRecording ? "video.fill" : "video")
@@ -41,5 +49,6 @@ struct MacVoiceRecordWidgetApp: App {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(recordingManager.isRecording ? .green : .primary)
         }
+        .menuBarExtraStyle(.window)
     }
 }
