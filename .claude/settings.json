@@ -1,13 +1,15 @@
 {
   "permissions": {
     "allow": [
+      "Bash(CLAUDE.md:*)",
       "Bash(git:*)",
-      "Bash(gh run list:*)",
       "Bash(gh run download:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
       "Bash(unzip:*)",
       "Bash(open MacVoiceRecordWidget/MacVoiceRecordWidget.app)",
       "Bash(open MacVoiceRecordWidget.app)",
-      "Bash(gh run watch:*)"
+      "Bash(README.md:*)"
     ]
   }
 }
