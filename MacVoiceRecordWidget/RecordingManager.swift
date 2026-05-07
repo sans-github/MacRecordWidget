@@ -18,6 +18,14 @@ class RecordingManager: ObservableObject {
 
         if videoEnabled {
             NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let task = Process()
+                task.launchPath = "/usr/bin/osascript"
+                task.arguments = ["-e",
+                    "tell application \"System Events\" to tell process \"Photo Booth\" to set value of attribute \"AXFullScreen\" of window 1 to true"
+                ]
+                try? task.run()
+            }
         }
 
         isRecording = true
