@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A1000030238F1E8900000001"
-               BuildableName = "MacVoiceRecordWidget.app"
-               BlueprintName = "MacVoiceRecordWidget"
-               ReferencedContainer = "container:MacVoiceRecordWidget.xcodeproj">
+               BuildableName = "MacRecordWidget.app"
+               BlueprintName = "MacRecordWidget"
+               ReferencedContainer = "container:MacRecordWidget.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -37,9 +37,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A1000030238F1E8900000001"
-            BuildableName = "MacVoiceRecordWidget.app"
-            BlueprintName = "MacVoiceRecordWidget"
-            ReferencedContainer = "container:MacVoiceRecordWidget.xcodeproj">
+            BuildableName = "MacRecordWidget.app"
+            BlueprintName = "MacRecordWidget"
+            ReferencedContainer = "container:MacRecordWidget.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>

@@ -18,7 +18,7 @@ A macOS menu bar app for quick audio and video recording.
 
 ## Installation
 
-1. Download `MacVoiceRecordWidget.zip` from [GitHub Actions](../../actions) into a `tmp/` folder
+1. Download `MacRecordWidget.zip` from [GitHub Actions](../../actions) into a `tmp/` folder
 2. Unzip and move `.app` to Applications
 3. Remove the `tmp/` folder
 4. Right-click > Open to bypass Gatekeeper on first launch

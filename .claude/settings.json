@@ -9,6 +9,7 @@
       "Bash(unzip:*)",
       "Bash(open MacVoiceRecordWidget/MacVoiceRecordWidget.app)",
       "Bash(open MacVoiceRecordWidget.app)",
+      "Bash(open /Applications/MacVoiceRecordWidget.app)",
       "Bash(README.md:*)"
     ]
   }

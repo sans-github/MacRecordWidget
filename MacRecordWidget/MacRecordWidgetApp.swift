@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MacVoiceRecordWidgetApp: App {
+struct MacRecordWidgetApp: App {
     @StateObject private var recordingManager = RecordingManager()
 
     var body: some Scene {
