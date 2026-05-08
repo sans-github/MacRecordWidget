@@ -7,13 +7,26 @@ struct MacRecordWidgetApp: App {
     var body: some Scene {
         MenuBarExtra {
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Include Video", isOn: $recordingManager.videoEnabled)
-                    .toggleStyle(.switch)
-                    .disabled(recordingManager.isRecording)
+                HStack {
+                    Toggle("Include Video", isOn: $recordingManager.videoEnabled)
+                        .toggleStyle(.switch)
+                        .disabled(recordingManager.isRecording)
+                    Spacer()
+                    Button {
+                        if recordingManager.isRecording {
+                            recordingManager.stopRecording()
+                        }
+                        NSApplication.shared.terminate(nil)
+                    } label: {
+                        Image(systemName: "power")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 Divider()
 
-                HStack(spacing: 8) {
+                VStack(spacing: 6) {
                     Button {
                         recordingManager.startRecording()
                         NSApp.keyWindow?.close()
@@ -33,16 +46,9 @@ struct MacRecordWidgetApp: App {
                     .disabled(!recordingManager.isRecording)
                 }
                 .buttonStyle(.bordered)
-
-                Divider()
-
-                Button("Quit") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .frame(maxWidth: .infinity)
             }
             .padding(12)
-            .frame(width: 220)
+            .frame(width: 180)
         } label: {
             let icon = recordingManager.videoEnabled
                 ? (recordingManager.isRecording ? "video.fill" : "video")
