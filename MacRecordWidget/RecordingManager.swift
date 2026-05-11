@@ -11,9 +11,16 @@ class RecordingManager: ObservableObject {
             .replacingOccurrences(of: ":", with: "-")
         let name = "Recording-\(timestamp)"
 
-        if let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "shortcuts://run-shortcut?name=Start&input=text&text=\(encoded)") {
-            NSWorkspace.shared.open(url)
+        let voiceMemos = NSWorkspace.shared.runningApplications
+            .first(where: { $0.bundleIdentifier == "com.apple.VoiceMemos" })
+        let delay: Double = voiceMemos != nil ? 0.8 : 0.0
+        voiceMemos?.terminate()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            if let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+               let url = URL(string: "shortcuts://run-shortcut?name=Start&input=text&text=\(encoded)") {
+                NSWorkspace.shared.open(url)
+            }
         }
 
         if videoEnabled {
