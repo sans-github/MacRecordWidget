@@ -29,7 +29,9 @@ struct MacRecordWidgetApp: App {
                 VStack(spacing: 6) {
                     Button {
                         recordingManager.startRecording()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { NSApp.keyWindow?.orderOut(nil) }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NSStatusBar.system.statusItems.first?.button?.performClick(nil)
+                        }
                     } label: {
                         Label("Start", systemImage: "mic.fill")
                             .frame(maxWidth: .infinity)
@@ -38,7 +40,9 @@ struct MacRecordWidgetApp: App {
 
                     Button {
                         recordingManager.stopRecording()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { NSApp.keyWindow?.orderOut(nil) }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NSStatusBar.system.statusItems.first?.button?.performClick(nil)
+                        }
                     } label: {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
