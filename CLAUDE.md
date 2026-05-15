@@ -18,4 +18,4 @@ Requires two user-created Shortcuts named exactly "Start" and "Stop". Video mode
 ## Gotchas
 
 - Voice Memos must be quit before firing the Start shortcut or macOS raises `VMAudioServiceErrorDomain` error 5. The quit + wait happens on a background thread so the UI doesn't block.
-- Do not call `popover.close()` manually after Start/Stop -- it breaks the popover double-click to reopen while recording.
+- Do not call `popover.close()` manually after Start/Stop -- it breaks the popover double-click to reopen while recording. Instead, use `NSApp.deactivate()` with a short async delay to dismiss the popover naturally.

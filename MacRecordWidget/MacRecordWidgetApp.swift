@@ -29,6 +29,7 @@ struct MacRecordWidgetApp: App {
                 VStack(spacing: 6) {
                     Button {
                         recordingManager.startRecording()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { NSApp.deactivate() }
                     } label: {
                         Label("Start", systemImage: "mic.fill")
                             .frame(maxWidth: .infinity)
@@ -37,6 +38,7 @@ struct MacRecordWidgetApp: App {
 
                     Button {
                         recordingManager.stopRecording()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { NSApp.deactivate() }
                     } label: {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
