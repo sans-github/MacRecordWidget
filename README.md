@@ -12,7 +12,7 @@ A macOS menu bar app for quick audio and video recording.
 
 ## Requirements
 
-- macOS 13.0+
+- macOS 14.0+
 - Two Shortcuts named "Start" and "Stop" that control Voice Memos recording
 - Photo Booth (built into macOS) for video mode
 
@@ -27,10 +27,10 @@ A macOS menu bar app for quick audio and video recording.
 
 Click the icon in the menu bar to open the panel:
 - **Include Video** toggle - enable to open Photo Booth on start (off by default)
-- **Start** - begins audio recording; opens Photo Booth full screen if video is on
+- **Start** - begins audio recording; opens Photo Booth (not full screen) if video is on
 - **Stop** - stops audio recording
 
-First run will prompt to allow Shortcuts access. Enabling video and starting for the first time will prompt for Accessibility permission (needed to full-screen Photo Booth).
+First run will prompt to allow Shortcuts access. No Accessibility permission is required.
 
 ## Building
 

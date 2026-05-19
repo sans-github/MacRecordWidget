@@ -79,23 +79,23 @@
   - [x] **5.1 QA:** produce manual smoke test plan → [Test Plan](../generated-docs/qa/test-plan.md) -- done when: file exists covering all smoke scenarios; scope: manual only, no XCUITest automation
   - [x] **5.2 💾 EM:** review and approve test plan -- done when: Status: Approved — EM set in file; every AC maps to at least one scenario
 
-- [ ] **Test Execution**
-  - [ ] **5.3 QA:** execute manual smoke tests -- done when: all scenarios pass; results appended to test-plan.md
-  - [ ] **5.4 💾 EM:** review and approve test results -- done when: all scenarios pass; no open blockers
+- [x] **Test Execution**
+  - [x] **5.3 QA:** execute manual smoke tests -- SKIPPED: human elected to skip formal smoke test execution and proceed directly to completion
+  - [x] **5.4 💾 EM:** review and approve test results -- SKIPPED: human elected to skip formal smoke test execution and proceed directly to completion
 
 ---
 
 ### Stage 6: Master Baseline Update
 
-- [ ] **PM:** merge this feature's PRD into `projects/master/product-specs/prd.md` -- done when: master PRD reflects this feature
-- [ ] **macOS DESIGNER:** merge this feature's mocks into `projects/master/mocks/` -- done when: master mocks reflect updated UI
-- [ ] 👤💾 **HUMAN:** confirm master is current
+- [x] **PM:** merge this feature's PRD into `projects/master/product-specs/prd.md` -- done when: master PRD reflects this feature → [projects/master/product-specs/prd.md](../../../projects/master/product-specs/prd.md)
+- [x] **macOS DESIGNER:** merge this feature's mocks into `projects/master/mocks/` -- done when: master mocks reflect updated UI → [projects/master/mocks/](../../../projects/master/mocks/)
+- [x] 👤💾 **HUMAN:** confirm master is current -- SKIPPED: human elected to move past this gate
 
 ---
 
 ### Stage 7: README and CLAUDE.md
 
-- [ ] **EM:** update `README.md` and `CLAUDE.md` to reflect production-polish changes -- done when: both files updated at repo root
+- [x] **EM:** update `README.md` and `CLAUDE.md` to reflect production-polish changes -- done when: both files updated at repo root → [README.md](../../../README.md), [CLAUDE.md](../../../CLAUDE.md)
 - [ ] 👤💾 **HUMAN:** review and approve README and CLAUDE.md
 
 ---

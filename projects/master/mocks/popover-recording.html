@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget — Popover: Recording in Progress</title>
+<style>
+:root {
+  --bg-window:          #ECECEC;
+  --bg-popover:         #F2F2F2;
+  --label-primary:      rgba(0,0,0,0.85);
+  --label-secondary:    rgba(0,0,0,0.50);
+  --separator:          rgba(0,0,0,0.12);
+  --accent:             #007AFF;
+  --accent-label:       #FFFFFF;
+  --destructive:        rgba(255,59,48,0.90);
+  --btn-surface:        rgba(0,0,0,0.06);
+  --btn-border:         rgba(0,0,0,0.14);
+  --toggle-track-off:   rgba(0,0,0,0.16);
+  --toggle-track-on:    #34C759;
+  --toggle-thumb:       #FFFFFF;
+  --icon-green:         #34C759;
+  --shadow:             rgba(0,0,0,0.18);
+  --recording-badge-bg: rgba(52,199,89,0.14);
+  --recording-badge-fg: #1A7A30;
+}
+
+#dm-toggle { display: none; }
+#dm-toggle:checked ~ * {
+  --bg-window: #1E1E1E;
+  --bg-popover: #2C2C2E;
+  --label-primary: rgba(255,255,255,0.85);
+  --label-secondary: rgba(255,255,255,0.55);
+  --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF;
+  --btn-surface: rgba(255,255,255,0.10);
+  --btn-border: rgba(255,255,255,0.16);
+  --toggle-track-off: rgba(255,255,255,0.20);
+  --shadow: rgba(0,0,0,0.50);
+  --recording-badge-bg: rgba(52,199,89,0.20);
+  --recording-badge-fg: #30D158;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  background: var(--bg-window);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 24px 40px;
+  transition: background 0.2s;
+}
+
+.dm-label {
+  align-self: flex-end;
+  margin-bottom: 16px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.state-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Menu bar strip showing green icon */
+.menubar-strip {
+  width: 220px;
+  background: linear-gradient(to bottom, #D0D0D0, #C8C8C8);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  gap: 6px;
+}
+#dm-toggle:checked ~ * .menubar-strip {
+  background: linear-gradient(to bottom, #3A3A3A, #323232);
+}
+.menubar-icon-green {
+  font-size: 13px;
+  color: var(--icon-green);
+  line-height: 1;
+}
+.menubar-label { font-size: 10px; color: var(--label-secondary); }
+
+.popover {
+  width: 220px;
+  background: var(--bg-popover);
+  border-radius: 0 0 8px 8px;
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.20),
+    0 4px 20px var(--shadow),
+    0 1px 4px rgba(0,0,0,0.10);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Recording status badge */
+.recording-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--recording-badge-bg);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--recording-badge-fg);
+}
+.recording-dot {
+  width: 7px; height: 7px;
+  background: var(--icon-green);
+  border-radius: 50%;
+  flex-shrink: 0;
+  /* pulse animation */
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recording-dot { animation: none; }
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle-label {
+  font-size: 13px;
+  color: var(--label-secondary); /* disabled appearance */
+}
+.toggle-switch {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+  opacity: 0.40; /* disabled */
+}
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--toggle-track-off);
+  border-radius: 10px;
+}
+.toggle-thumb-el {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.30);
+}
+
+.btn-quit {
+  width: 22px; height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--label-secondary);
+  font-size: 11px;
+  padding: 0;
+}
+.btn-quit::before { content: "⏻"; font-size: 12px; }
+
+.divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 0 -12px 8px -12px;
+}
+
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  border: 0.5px solid transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.btn-start {
+  background: var(--btn-surface);
+  color: var(--label-secondary);
+  border-color: rgba(0,0,0,0.10);
+  opacity: 0.40;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Stop — destructive, prominent, enabled */
+.btn-stop {
+  background: var(--destructive);
+  color: #FFFFFF;
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(255,59,48,0.30);
+}
+.btn-stop:hover { filter: brightness(1.08); }
+.btn-stop:active { filter: brightness(0.88); }
+
+.icon-mic::before    { content: "🎙"; font-size: 12px; }
+.icon-stop::before   { content: "⏹"; font-size: 11px; }
+
+.annotations {
+  margin-top: 24px;
+  width: 220px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  line-height: 1.6;
+}
+.annotations h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-primary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ann-row { display: flex; gap: 6px; margin-bottom: 2px; }
+.ann-key { color: var(--destructive); font-weight: 600; min-width: 16px; }
+</style>
+</head>
+<body>
+
+<input type="checkbox" id="dm-toggle">
+<label for="dm-toggle" class="dm-label">Dark mode</label>
+
+<div class="state-label">State: Recording in Progress — Audio Mode</div>
+
+<div class="menubar-strip">
+  <span class="menubar-icon-green">🎙</span>
+  <span class="menubar-label">mic.fill — green (recording active)</span>
+</div>
+
+<div class="popover">
+
+  <!-- Recording badge -->
+  <div class="recording-badge">
+    <div class="recording-dot"></div>
+    Recording
+  </div>
+
+  <!-- Header: toggle (disabled) + quit -->
+  <div class="header-row">
+    <div class="toggle-row">
+      <div class="toggle-switch">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb-el"></div>
+      </div>
+      <span class="toggle-label">Include Video</span>
+    </div>
+    <button class="btn-quit" title="Quit" aria-label="Quit MacRecordWidget"></button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="btn-stack">
+    <button class="btn btn-start disabled" aria-disabled="true" aria-label="Start recording (unavailable while recording)">
+      <span class="icon-mic"></span>
+      Start
+    </button>
+    <button class="btn btn-stop" aria-label="Stop recording">
+      <span class="icon-stop"></span>
+      Stop
+    </button>
+  </div>
+
+</div>
+
+<div class="annotations">
+  <h3>Component spec — recording state</h3>
+  <div class="ann-row"><span class="ann-key">A</span><span>Recording badge: custom <code>HStack</code> with animated <code>Circle</code> fill (<code>Color.green</code>) + <code>Text("Recording")</code>. Respects Reduce Motion — animation stops when preference is on. Background: <code>Color.green.opacity(0.12)</code>, corner radius 6pt.</span></div>
+  <div class="ann-row"><span class="ann-key">B</span><span>Toggle: <code>.disabled(true)</code> while <code>isRecording</code>. Visually: <code>opacity(0.40)</code>. SwiftUI handles this automatically via <code>.disabled()</code>.</span></div>
+  <div class="ann-row"><span class="ann-key">C</span><span>Start: <code>.disabled(true)</code>. Uses <code>.buttonStyle(.bordered)</code> in disabled state — accent fill does not apply when disabled.</span></div>
+  <div class="ann-row"><span class="ann-key">D</span><span>Stop: <code>.buttonStyle(.borderedProminent)</code> + <code>.tint(.red)</code>. Enabled. This is the primary action in this state — it is visually dominant.</span></div>
+  <div class="ann-row"><span class="ann-key">E</span><span>Menu bar icon: <code>mic.fill</code> with <code>.foregroundStyle(.green)</code>. Switches to this state when <code>isRecording == true</code>.</span></div>
+  <div class="ann-row"><span class="ann-key">F</span><span>AC-UI-1 satisfied: Stop button uses system destructive tint (<code>.tint(.red)</code>), not hardcoded hex. Correct in all accent color themes and both appearances.</span></div>
+</div>
+
+</body>
+</html>
