@@ -57,7 +57,7 @@ final class RecordingManager {
         isRecording = true
 
         if videoEnabled {
-            try await launchPhotoBooth()
+            await launchPhotoBooth()
         }
     }
 
@@ -84,10 +84,10 @@ final class RecordingManager {
         }
     }
 
-    private func launchPhotoBooth() async throws {
+    private func launchPhotoBooth() async {
         NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
         // Wait for Photo Booth to finish launching before sending AX event
-        try await Task.sleep(for: .seconds(2.0))
+        try? await Task.sleep(for: .seconds(2.0))
 
         let task = Process()
         task.launchPath = "/usr/bin/osascript"
@@ -95,22 +95,9 @@ final class RecordingManager {
             "tell application \"System Events\" to tell process \"Photo Booth\" " +
             "to set value of attribute \"AXFullScreen\" of window 1 to true"
         ]
-        let stderrPipe = Pipe()
-        task.standardError = stderrPipe
-        try task.run()
+        // Full-screen is best-effort. If it fails (permission not granted, window not ready,
+        // etc.) Photo Booth still opens -- it just won't be full-screen. Not fatal.
+        try? task.run()
         task.waitUntilExit()
-
-        if task.terminationStatus != 0 {
-            // Only surface an error if Accessibility was actually denied. Other failures
-            // (e.g. Photo Booth window not yet ready) are timing issues and not user-actionable.
-            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderrText = String(data: stderrData, encoding: .utf8) ?? ""
-            if stderrText.localizedCaseInsensitiveContains("not allowed assistive") ||
-               stderrText.localizedCaseInsensitiveContains("accessibility") {
-                isRecording = false
-                throw RecordingError.accessibilityDenied
-            }
-            // Non-Accessibility failure: Photo Booth opened but full-screen failed. Not fatal.
-        }
     }
 }
