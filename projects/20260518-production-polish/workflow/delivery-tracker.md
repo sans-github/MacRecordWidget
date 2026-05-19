@@ -53,9 +53,9 @@
 - [-] **Frontend Development** -- SKIPPED (no web frontend)
 - [-] **Infrastructure** -- SKIPPED (deployment target: local)
 
-- [ ] **Swift Detailed Design**
-  - [ ] **4.1 SWIFT ENGINEER:** produce Swift Detailed Design → [Swift Detailed Design](../generated-docs/architecture/swift-detailed-design.md) -- done when: file exists with all required sections
-  - [ ] **4.2 💾 EM:** review and approve Swift Detailed Design -- done when: Status: Approved — EM set in file; all ACs addressed
+- [x] **Swift Detailed Design**
+  - [x] **4.1 SWIFT ENGINEER:** produce Swift Detailed Design → [Swift Detailed Design](../generated-docs/architecture/swift-detailed-design.md) -- done when: file exists with all required sections
+  - [x] **4.2 💾 EM:** review and approve Swift Detailed Design -- done when: Status: Approved — EM set in file; all ACs addressed
 
 - [ ] **Component Spec**
   - [ ] **4.3 macOS DESIGNER:** finalise component spec → [Component Spec](../generated-docs/design/component-spec.md) -- done when: spec maps every UI element to SwiftUI control, semantic color, and spacing value

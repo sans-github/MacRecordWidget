@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>swift-detailed-design</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {  background-color: #f8f8f8; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ef2929; } /* Alert */
+    code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #204a87; } /* Attribute */
+    code span.bn { color: #0000cf; } /* BaseN */
+    code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4e9a06; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code span.dt { color: #204a87; } /* DataType */
+    code span.dv { color: #0000cf; } /* DecVal */
+    code span.er { color: #a40000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #0000cf; } /* Float */
+    code span.fu { color: #204a87; font-weight: bold; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code span.ot { color: #8f5902; } /* Other */
+    code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code span.sc { color: #ce5c00; font-weight: bold; } /* SpecialChar */
+    code span.ss { color: #4e9a06; } /* SpecialString */
+    code span.st { color: #4e9a06; } /* String */
+    code span.va { color: #000000; } /* Variable */
+    code span.vs { color: #4e9a06; } /* VerbatimString */
+    code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">swift-detailed-design</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#swift-detailed-design-production-polish"
+id="toc-swift-detailed-design-production-polish"><span
+class="toc-section-number">1</span> Swift Detailed Design: Production
+Polish</a>
+<ul>
+<li><a href="#view-overview" id="toc-view-overview"><span
+class="toc-section-number">1.1</span> View Overview</a></li>
+<li><a href="#1-view-tree-breakdown"
+id="toc-1-view-tree-breakdown"><span
+class="toc-section-number">1.2</span> 1. View Tree Breakdown</a></li>
+<li><a href="#2-recordingmanager-refactor-plan"
+id="toc-2-recordingmanager-refactor-plan"><span
+class="toc-section-number">1.3</span> 2. RecordingManager Refactor
+Plan</a></li>
+<li><a href="#3-popover-dismissal" id="toc-3-popover-dismissal"><span
+class="toc-section-number">1.4</span> 3. Popover Dismissal</a></li>
+<li><a href="#4-error-surface" id="toc-4-error-surface"><span
+class="toc-section-number">1.5</span> 4. Error Surface</a></li>
+<li><a href="#5-deployment-target" id="toc-5-deployment-target"><span
+class="toc-section-number">1.6</span> 5. Deployment Target</a></li>
+<li><a href="#6-ac-coverage-table" id="toc-6-ac-coverage-table"><span
+class="toc-section-number">1.7</span> 6. AC Coverage Table</a></li>
+</ul></li>
+</ul>
+</nav>
+<p>Status: Approved — EM Approved: 2026-05-18</p>
+<h1 data-number="1" id="swift-detailed-design-production-polish"><span
+class="header-section-number">1</span> Swift Detailed Design: Production
+Polish</h1>
+<h2 data-number="1.1" id="view-overview"><span
+class="header-section-number">1.1</span> View Overview</h2>
+<p><code>MacRecordWidgetApp.swift</code> hosts the entire view tree
+inside a single <code>MenuBarExtra</code> scene. The changes are
+confined to that file and to <code>RecordingManager.swift</code>. No new
+views or files are introduced.</p>
+<pre><code>MacRecordWidgetApp (@main, App)
+└── MenuBarExtra(.window)
+    ├── label: Image(systemName: icon)          ← icon logic unchanged (AC-UI-5)
+    └── content: VStack(alignment: .leading)
+        ├── HStack
+        │   ├── Toggle(&quot;Include Video&quot;, ...)     ← label uses .font(.body) (AC-UI-4)
+        │   └── Button(power icon)               ← plain style, unchanged
+        ├── Divider
+        └── VStack(spacing: 8)
+            ├── Button(&quot;Start&quot;)                  ← .tint(.accentColor), min 44pt (AC-UI-2, AC-UI-3)
+            └── Button(&quot;Stop&quot;)                   ← .controlSize(.large), .tint(.red) role-equivalent (AC-UI-1, AC-UI-3)</code></pre>
+<hr />
+<h2 data-number="1.2" id="1-view-tree-breakdown"><span
+class="header-section-number">1.2</span> 1. View Tree Breakdown</h2>
+<h3 data-number="1.2.1" id="11-stop-button"><span
+class="header-section-number">1.2.1</span> 1.1 Stop button</h3>
+<p><strong>Current:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Button <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">panel</span> <span class="op">=</span> NSApp<span class="op">.</span>keyWindow</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    recordingManager<span class="op">.</span>stopRecording<span class="op">()</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    DispatchQueue<span class="op">.</span>main<span class="op">.</span>asyncAfter<span class="op">(</span>deadline<span class="op">:</span> <span class="op">.</span>now<span class="op">()</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">{</span> panel<span class="op">?.</span>orderOut<span class="op">(</span><span class="kw">nil</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> label<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    Label<span class="op">(</span><span class="st">&quot;Stop&quot;</span><span class="op">,</span> systemImage<span class="op">:</span> <span class="st">&quot;stop.fill&quot;</span><span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>frame<span class="op">(</span>maxWidth<span class="op">:</span> <span class="op">.</span>infinity<span class="op">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(!</span>recordingManager<span class="op">.</span>isRecording<span class="op">)</span></span></code></pre></div>
+<p><strong>Proposed:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Button <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    Task <span class="op">{</span> <span class="cf">await</span> stopAndDismiss<span class="op">()</span> <span class="op">}</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> label<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    Label<span class="op">(</span><span class="st">&quot;Stop&quot;</span><span class="op">,</span> systemImage<span class="op">:</span> <span class="st">&quot;stop.fill&quot;</span><span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>frame<span class="op">(</span>maxWidth<span class="op">:</span> <span class="op">.</span>infinity<span class="op">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>buttonStyle<span class="op">(.</span>bordered<span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>tint<span class="op">(.</span>red<span class="op">)</span>                          <span class="co">// semantic destructive tint; adapts to light/dark</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(!</span>recordingManager<span class="op">.</span>isRecording <span class="op">||</span> recordingManager<span class="op">.</span>isInFlight<span class="op">)</span></span></code></pre></div>
+<p>The <code>tint(.red)</code> modifier on a <code>.bordered</code>
+button uses the system <code>.red</code> color role, which adapts
+correctly to light mode, dark mode, and all accent color settings. There
+is no SwiftUI <code>ButtonRole.destructive</code> on macOS for
+<code>.bordered</code> style buttons -- <code>.tint(.red)</code> is the
+correct HIG-compliant approach.</p>
+<p><strong>Satisfies:</strong> AC-UI-1</p>
+<h3 data-number="1.2.2" id="12-start-button"><span
+class="header-section-number">1.2.2</span> 1.2 Start button</h3>
+<p><strong>Current:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Button <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">panel</span> <span class="op">=</span> NSApp<span class="op">.</span>keyWindow</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    recordingManager<span class="op">.</span>startRecording<span class="op">()</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    DispatchQueue<span class="op">.</span>main<span class="op">.</span>asyncAfter<span class="op">(</span>deadline<span class="op">:</span> <span class="op">.</span>now<span class="op">()</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">{</span> panel<span class="op">?.</span>orderOut<span class="op">(</span><span class="kw">nil</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> label<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    Label<span class="op">(</span><span class="st">&quot;Start&quot;</span><span class="op">,</span> systemImage<span class="op">:</span> <span class="st">&quot;mic.fill&quot;</span><span class="op">)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>frame<span class="op">(</span>maxWidth<span class="op">:</span> <span class="op">.</span>infinity<span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(</span>recordingManager<span class="op">.</span>isRecording<span class="op">)</span></span></code></pre></div>
+<p><strong>Proposed:</strong></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Button <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    Task <span class="op">{</span> <span class="cf">await</span> startAndDismiss<span class="op">()</span> <span class="op">}</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> label<span class="op">:</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    Label<span class="op">(</span><span class="st">&quot;Start&quot;</span><span class="op">,</span> systemImage<span class="op">:</span> <span class="st">&quot;mic.fill&quot;</span><span class="op">)</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>frame<span class="op">(</span>maxWidth<span class="op">:</span> <span class="op">.</span>infinity<span class="op">)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>buttonStyle<span class="op">(.</span>bordered<span class="op">)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>tint<span class="op">(.</span>accentColor<span class="op">)</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(</span>recordingManager<span class="op">.</span>isRecording <span class="op">||</span> recordingManager<span class="op">.</span>isInFlight<span class="op">)</span></span></code></pre></div>
+<p><strong>Satisfies:</strong> AC-UI-2, AC-SW-6</p>
+<h3 data-number="1.2.3" id="13-control-sizing"><span
+class="header-section-number">1.2.3</span> 1.3 Control sizing</h3>
+<p><strong>Current:</strong> <code>.frame(width: 180)</code> on the
+outer VStack; no explicit minimum height on buttons.</p>
+<p><strong>Proposed:</strong> Buttons remain <code>.bordered</code>
+style which renders at the standard macOS control height (approximately
+22pt intrinsic). The <code>.frame(maxWidth: .infinity)</code> ensures
+the full 180pt width is tappable. This meets the HIG click-target
+guidance for menu-bar popovers (menu-bar popovers are pointer-driven,
+not touch -- the 44pt iOS touch target does not apply; macOS HIG
+requires controls be at least the default control size, which
+<code>.bordered</code> satisfies).</p>
+<p><strong>Satisfies:</strong> AC-UI-3</p>
+<h3 data-number="1.2.4" id="14-typography"><span
+class="header-section-number">1.2.4</span> 1.4 Typography</h3>
+<p><strong>Current:</strong> No explicit font modifiers are set on
+labels in the current code. The default SwiftUI font in a
+<code>MenuBarExtra</code> panel inherits <code>.body</code> (13pt
+Regular on macOS), which is correct. No changes required -- no hardcoded
+<code>.system(size: N)</code> exists in the current source.</p>
+<p>If the Video toggle label ever gains a subtitle or secondary text, it
+must use <code>.font(.caption)</code>.</p>
+<p><strong>Satisfies:</strong> AC-UI-4 (confirmed no hardcoded sizes; no
+change needed)</p>
+<h3 data-number="1.2.5" id="15-menu-bar-icon"><span
+class="header-section-number">1.2.5</span> 1.5 Menu bar icon</h3>
+<p><strong>Current (unchanged):</strong></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="va">icon</span> <span class="op">=</span> recordingManager<span class="op">.</span>videoEnabled</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> <span class="op">(</span>recordingManager<span class="op">.</span>isRecording <span class="op">?</span> <span class="st">&quot;video.fill&quot;</span> <span class="op">:</span> <span class="st">&quot;video&quot;</span><span class="op">)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="op">(</span>recordingManager<span class="op">.</span>isRecording <span class="op">?</span> <span class="st">&quot;mic.fill&quot;</span> <span class="op">:</span> <span class="st">&quot;mic&quot;</span><span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>Image<span class="op">(</span>systemName<span class="op">:</span> icon<span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>symbolRenderingMode<span class="op">(.</span>hierarchical<span class="op">)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>foregroundStyle<span class="op">(</span>recordingManager<span class="op">.</span>isRecording <span class="op">?</span> <span class="op">.</span>green <span class="op">:</span> <span class="op">.</span>primary<span class="op">)</span></span></code></pre></div>
+<p>No change. The logic correctly implements all four states.</p>
+<p><strong>Satisfies:</strong> AC-UI-5</p>
+<h3 data-number="1.2.6" id="16-popover-spacing-and-padding"><span
+class="header-section-number">1.2.6</span> 1.6 Popover spacing and
+padding</h3>
+<p><strong>Current:</strong>
+<code>VStack(alignment: .leading, spacing: 8)</code>,
+<code>.padding(12)</code>, inner <code>VStack(spacing: 6)</code>.</p>
+<p><strong>Proposed:</strong> Adjust to match HIG popover insets.
+Standard macOS popover content inset is 16pt on all sides; minimum
+inter-control spacing is 8pt.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>VStack<span class="op">(</span>alignment<span class="op">:</span> <span class="op">.</span>leading<span class="op">,</span> spacing<span class="op">:</span> <span class="dv">8</span><span class="op">)</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>padding<span class="op">(</span><span class="dv">16</span><span class="op">)</span>                           <span class="co">// was 12</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>frame<span class="op">(</span>width<span class="op">:</span> <span class="dv">200</span><span class="op">)</span>                     <span class="co">// was 180; wider avoids label truncation</span></span></code></pre></div>
+<p>Inner button stack spacing stays at 8pt (raised from 6 to match
+standard row spacing).</p>
+<p><strong>Satisfies:</strong> AC-UI-6</p>
+<h3 data-number="1.2.7"
+id="17-call-site-state-and-dismiss-helpers"><span
+class="header-section-number">1.2.7</span> 1.7 Call-site: @State and
+dismiss helpers</h3>
+<p>The <code>@StateObject</code> instantiation is replaced with
+<code>@State</code>:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@main</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MacRecordWidgetApp<span class="op">:</span> <span class="dt">App</span> <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@State</span> <span class="kw">private</span> <span class="kw">var</span> <span class="va">recordingManager</span> <span class="op">=</span> RecordingManager<span class="op">()</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> <span class="va">body</span><span class="op">:</span> some Scene <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Dismissal helpers -- see Section 3 for rationale</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MainActor</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="kw">func</span> <span class="fu">startAndDismiss</span><span class="op">()</span> <span class="fu">async</span> <span class="op">{</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> <span class="va">panel</span> <span class="op">=</span> NSApp<span class="op">.</span>keyWindow</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">do</span> <span class="op">{</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">try</span> <span class="cf">await</span> recordingManager<span class="op">.</span>startRecording<span class="op">()</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">catch</span> <span class="op">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>            presentAlert<span class="op">(</span><span class="cf">for</span><span class="op">:</span> error<span class="op">)</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// See CLAUDE.md &quot;Gotchas&quot;: orderOut is used instead of popover.close()</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// because close() breaks double-click-to-reopen while recording.</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">// The 100ms delay gives the button animation time to complete before</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="co">// the window is removed from the screen.</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        DispatchQueue<span class="op">.</span>main<span class="op">.</span>asyncAfter<span class="op">(</span>deadline<span class="op">:</span> <span class="op">.</span>now<span class="op">()</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">{</span> panel<span class="op">?.</span>orderOut<span class="op">(</span><span class="kw">nil</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MainActor</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="kw">func</span> <span class="fu">stopAndDismiss</span><span class="op">()</span> <span class="fu">async</span> <span class="op">{</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> <span class="va">panel</span> <span class="op">=</span> NSApp<span class="op">.</span>keyWindow</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">do</span> <span class="op">{</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">try</span> <span class="cf">await</span> recordingManager<span class="op">.</span>stopRecording<span class="op">()</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">catch</span> <span class="op">{</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>            presentAlert<span class="op">(</span><span class="cf">for</span><span class="op">:</span> error<span class="op">)</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>        DispatchQueue<span class="op">.</span>main<span class="op">.</span>asyncAfter<span class="op">(</span>deadline<span class="op">:</span> <span class="op">.</span>now<span class="op">()</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">{</span> panel<span class="op">?.</span>orderOut<span class="op">(</span><span class="kw">nil</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Satisfies:</strong> AC-SW-1, AC-SW-3, AC-SW-8</p>
+<hr />
+<h2 data-number="1.3" id="2-recordingmanager-refactor-plan"><span
+class="header-section-number">1.3</span> 2. RecordingManager Refactor
+Plan</h2>
+<h3 data-number="1.3.1" id="21-observable-migration"><span
+class="header-section-number">1.3.1</span> 2.1 @Observable
+migration</h3>
+<p><strong>Current:</strong></p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> RecordingManager<span class="op">:</span> <span class="dt">ObservableObject</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Published</span> <span class="kw">var</span> <span class="va">isRecording</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Published</span> <span class="kw">var</span> <span class="va">videoEnabled</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Proposed:</strong></p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Observable</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">final</span> <span class="kw">class</span> RecordingManager <span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> <span class="va">isRecording</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> <span class="va">videoEnabled</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> <span class="va">isInFlight</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Remove <code>import SwiftUI</code> from
+<code>RecordingManager.swift</code> (it is only needed for
+<code>@Published</code>; <code>@Observable</code> lives in
+<code>Observation</code>, which is re-exported by <code>SwiftUI</code>
+but is also available via <code>import Observation</code>). Keep
+<code>import Foundation</code>.</p>
+<p>No changes to observation semantics from the SwiftUI side --
+<code>@Observable</code> properties are tracked automatically when
+accessed inside a <code>body</code> computation.</p>
+<p><strong>Satisfies:</strong> AC-SW-1</p>
+<h3 data-number="1.3.2" id="22-async-throws-signatures"><span
+class="header-section-number">1.3.2</span> 2.2 Async throws
+signatures</h3>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="fu">startRecording</span><span class="op">()</span> <span class="fu">async</span> <span class="kw">throws</span> <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> <span class="op">!</span>isInFlight <span class="cf">else</span> <span class="op">{</span> <span class="kw">return</span> <span class="op">}</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    isInFlight <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">defer</span> <span class="op">{</span> isInFlight <span class="op">=</span> <span class="kw">false</span> <span class="op">}</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Quit Voice Memos if running (see CLAUDE.md gotcha)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">voiceMemos</span> <span class="op">=</span> NSWorkspace<span class="op">.</span>shared<span class="op">.</span>runningApplications</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>first<span class="op">(</span><span class="kw">where</span><span class="op">:</span> <span class="op">{</span> $<span class="fl">0.</span>bundleIdentifier <span class="op">==</span> <span class="st">&quot;com.apple.VoiceMemos&quot;</span> <span class="op">})</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    voiceMemos<span class="op">?.</span>terminate<span class="op">()</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> voiceMemos <span class="op">!=</span> <span class="kw">nil</span> <span class="op">{</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span> <span class="cf">await</span> Task<span class="op">.</span>sleep<span class="op">(</span><span class="cf">for</span><span class="op">:</span> <span class="op">.</span>seconds<span class="op">(</span><span class="fl">1.5</span><span class="op">))</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">timestamp</span> <span class="op">=</span> DateFormatter<span class="op">.</span>localizedString<span class="op">(</span>from<span class="op">:</span> Date<span class="op">(),</span> dateStyle<span class="op">:</span> <span class="op">.</span>short<span class="op">,</span> timeStyle<span class="op">:</span> <span class="op">.</span>medium<span class="op">)</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>replacingOccurrences<span class="op">(</span>of<span class="op">:</span> <span class="st">&quot;/&quot;</span><span class="op">,</span> with<span class="op">:</span> <span class="st">&quot;-&quot;</span><span class="op">)</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>replacingOccurrences<span class="op">(</span>of<span class="op">:</span> <span class="st">&quot;:&quot;</span><span class="op">,</span> with<span class="op">:</span> <span class="st">&quot;-&quot;</span><span class="op">)</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">name</span> <span class="op">=</span> <span class="st">&quot;Recording-</span><span class="er">\(</span><span class="st">timestamp)&quot;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> <span class="kw">let</span> <span class="va">encoded</span> <span class="op">=</span> name<span class="op">.</span>addingPercentEncoding<span class="op">(</span>withAllowedCharacters<span class="op">:</span> <span class="op">.</span>urlQueryAllowed<span class="op">),</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>          <span class="kw">let</span> <span class="va">url</span> <span class="op">=</span> URL<span class="op">(</span>string<span class="op">:</span> <span class="st">&quot;shortcuts://run-shortcut?name=Start&amp;input=text&amp;text=</span><span class="er">\(</span><span class="st">encoded)&quot;</span><span class="op">)</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">throw</span> RecordingError<span class="op">.</span>shortcutLaunchFailed<span class="op">(</span>reason<span class="op">:</span> <span class="st">&quot;Could not construct shortcut URL&quot;</span><span class="op">)</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">opened</span> <span class="op">=</span> NSWorkspace<span class="op">.</span>shared<span class="op">.</span>open<span class="op">(</span>url<span class="op">)</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> opened <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        <span class="kw">throw</span> RecordingError<span class="op">.</span>shortcutLaunchFailed<span class="op">(</span>reason<span class="op">:</span> <span class="st">&quot;NSWorkspace.open returned false&quot;</span><span class="op">)</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">// State is set only after the URL opens successfully (AC-SW-7)</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    isRecording <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> videoEnabled <span class="op">{</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span> <span class="cf">await</span> launchPhotoBooth<span class="op">()</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="fu">stopRecording</span><span class="op">()</span> <span class="fu">async</span> <span class="kw">throws</span> <span class="op">{</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> <span class="op">!</span>isInFlight <span class="cf">else</span> <span class="op">{</span> <span class="kw">return</span> <span class="op">}</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    isInFlight <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">defer</span> <span class="op">{</span> isInFlight <span class="op">=</span> <span class="kw">false</span> <span class="op">}</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> <span class="kw">let</span> <span class="va">url</span> <span class="op">=</span> URL<span class="op">(</span>string<span class="op">:</span> <span class="st">&quot;shortcuts://run-shortcut?name=Stop&quot;</span><span class="op">)</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>        <span class="kw">throw</span> RecordingError<span class="op">.</span>shortcutLaunchFailed<span class="op">(</span>reason<span class="op">:</span> <span class="st">&quot;Could not construct Stop shortcut URL&quot;</span><span class="op">)</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">opened</span> <span class="op">=</span> NSWorkspace<span class="op">.</span>shared<span class="op">.</span>open<span class="op">(</span>url<span class="op">)</span></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">guard</span> opened <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>        <span class="kw">throw</span> RecordingError<span class="op">.</span>shortcutLaunchFailed<span class="op">(</span>reason<span class="op">:</span> <span class="st">&quot;NSWorkspace.open returned false for Stop&quot;</span><span class="op">)</span></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>    isRecording <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> videoEnabled <span class="op">{</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>        NSWorkspace<span class="op">.</span>shared<span class="op">.</span>runningApplications</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>first<span class="op">(</span><span class="kw">where</span><span class="op">:</span> <span class="op">{</span> $<span class="fl">0.</span>bundleIdentifier <span class="op">==</span> <span class="st">&quot;com.apple.PhotoBooth&quot;</span> <span class="op">})?</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>terminate<span class="op">()</span></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Satisfies:</strong> AC-SW-3, AC-SW-6, AC-SW-7</p>
+<h3 data-number="1.3.3" id="23-recordingerror-enum"><span
+class="header-section-number">1.3.3</span> 2.3 RecordingError enum</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> RecordingError<span class="op">:</span> <span class="dt">Error</span><span class="op">,</span> <span class="dt">LocalizedError</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> shortcutLaunchFailed<span class="op">(</span>reason<span class="op">:</span> String<span class="op">)</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> accessibilityDenied</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> <span class="va">errorDescription</span><span class="op">:</span> String<span class="op">?</span> <span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">switch</span> <span class="kw">self</span> <span class="op">{</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> <span class="op">.</span>shortcutLaunchFailed<span class="op">(</span><span class="kw">let</span> <span class="va">reason</span><span class="op">):</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">return</span> <span class="st">&quot;Could not launch the recording shortcut. </span><span class="er">\(</span><span class="st">reason)&quot;</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> <span class="op">.</span>accessibilityDenied<span class="op">:</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">return</span> <span class="st">&quot;Accessibility permission was denied.&quot;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Cases:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>When thrown</th>
+<th>Associated value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shortcutLaunchFailed(reason:)</code></td>
+<td><code>NSWorkspace.shared.open(url)</code> returns
+<code>false</code>, or URL construction fails</td>
+<td>Human-readable reason string for logging</td>
+</tr>
+<tr>
+<td><code>accessibilityDenied</code></td>
+<td><code>osascript</code> process exits with a non-zero code indicating
+AX permission denied</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Satisfies:</strong> AC-SW-4, AC-SW-5</p>
+<h3 data-number="1.3.4" id="24-isinflight-guard"><span
+class="header-section-number">1.3.4</span> 2.4 isInFlight guard</h3>
+<p><code>isInFlight: Bool</code> is a stored property on
+<code>RecordingManager</code> (tracked by <code>@Observable</code>). It
+is set to <code>true</code> at the very start of
+<code>startRecording()</code> and <code>stopRecording()</code>, and
+reset to <code>false</code> via <code>defer</code> on any exit path
+(success, throw, or early return).</p>
+<p>The guard pattern:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">guard</span> <span class="op">!</span>isInFlight <span class="cf">else</span> <span class="op">{</span> <span class="kw">return</span> <span class="op">}</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>isInFlight <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">defer</span> <span class="op">{</span> isInFlight <span class="op">=</span> <span class="kw">false</span> <span class="op">}</span></span></code></pre></div>
+<p>Both the Start and Stop buttons bind <code>.disabled</code> to
+<code>isInFlight</code>:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(</span>recordingManager<span class="op">.</span>isRecording <span class="op">||</span> recordingManager<span class="op">.</span>isInFlight<span class="op">)</span>   <span class="co">// Start</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>disabled<span class="op">(!</span>recordingManager<span class="op">.</span>isRecording <span class="op">||</span> recordingManager<span class="op">.</span>isInFlight<span class="op">)</span>  <span class="co">// Stop</span></span></code></pre></div>
+<p>Because <code>isInFlight</code> is <code>@Observable</code>, SwiftUI
+re-renders the button disabled state as soon as the property changes on
+the main actor. The guard inside the function provides a second layer of
+protection in case a tap arrives before the UI disables.</p>
+<p><strong>Satisfies:</strong> AC-SW-6</p>
+<h3 data-number="1.3.5"
+id="25-isrecording-set-only-after-successful-open"><span
+class="header-section-number">1.3.5</span> 2.5 isRecording set only
+after successful open</h3>
+<p><code>NSWorkspace.shared.open(url)</code> is synchronous and returns
+<code>Bool</code>. If it returns <code>false</code>, the function throws
+<code>RecordingError.shortcutLaunchFailed</code> before reaching
+<code>isRecording = true</code>. This guarantees state is never set
+optimistically.</p>
+<p>On the stop path: <code>isRecording = false</code> is placed after
+the <code>guard opened</code> check for symmetry, so a failed Stop URL
+also leaves state unchanged.</p>
+<p><strong>Satisfies:</strong> AC-SW-7</p>
+<h3 data-number="1.3.6" id="26-photo-booth--osascript-path"><span
+class="header-section-number">1.3.6</span> 2.6 Photo Booth / osascript
+path</h3>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="kw">func</span> <span class="fu">launchPhotoBooth</span><span class="op">()</span> <span class="fu">async</span> <span class="kw">throws</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    NSWorkspace<span class="op">.</span>shared<span class="op">.</span>open<span class="op">(</span>URL<span class="op">(</span>fileURLWithPath<span class="op">:</span> <span class="st">&quot;/System/Applications/Photo Booth.app&quot;</span><span class="op">))</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Wait for Photo Booth to finish launching before sending AX event</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> <span class="cf">await</span> Task<span class="op">.</span>sleep<span class="op">(</span><span class="cf">for</span><span class="op">:</span> <span class="op">.</span>seconds<span class="op">(</span><span class="fl">2.0</span><span class="op">))</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">task</span> <span class="op">=</span> Process<span class="op">()</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    task<span class="op">.</span>launchPath <span class="op">=</span> <span class="st">&quot;/usr/bin/osascript&quot;</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    task<span class="op">.</span>arguments <span class="op">=</span> <span class="op">[</span><span class="st">&quot;-e&quot;</span><span class="op">,</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;tell application </span><span class="sc">\&quot;</span><span class="st">System Events</span><span class="sc">\&quot;</span><span class="st"> to tell process </span><span class="sc">\&quot;</span><span class="st">Photo Booth</span><span class="sc">\&quot;</span><span class="st"> &quot;</span> <span class="op">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;to set value of attribute </span><span class="sc">\&quot;</span><span class="st">AXFullScreen</span><span class="sc">\&quot;</span><span class="st"> of window 1 to true&quot;</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">]</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> task<span class="op">.</span>run<span class="op">()</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    task<span class="op">.</span>waitUntilExit<span class="op">()</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> task<span class="op">.</span>terminationStatus <span class="op">!=</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// A non-zero exit from osascript sending an AX event reliably indicates</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// that Accessibility permission was denied. Surface this to the caller.</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        isRecording <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">throw</span> RecordingError<span class="op">.</span>accessibilityDenied</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Note: <code>Process.run()</code> can throw if the executable is not
+found; that is re-thrown as a system error and caught by the generic
+<code>catch</code> in the call-site helpers, which will present an
+<code>NSAlert</code> with the localized description.</p>
+<p><strong>Satisfies:</strong> AC-SW-5</p>
+<hr />
+<h2 data-number="1.4" id="3-popover-dismissal"><span
+class="header-section-number">1.4</span> 3. Popover Dismissal</h2>
+<p>The <code>orderOut</code> approach documented in
+<code>CLAUDE.md</code> is retained without change. The only addition is
+an explicit inline comment at both call sites.</p>
+<p><strong>Rationale (preserved from CLAUDE.md):</strong> Calling
+<code>popover.close()</code> directly while a recording is in progress
+breaks the double-click-to-reopen behavior: the popover enters an
+inconsistent internal state and will not reopen until the app is
+relaunched. Using <code>NSApp.keyWindow?.orderOut(nil)</code> with a
+100ms delay dismisses the panel through the window layer rather than the
+popover API, which sidesteps the bug. The 100ms delay gives the button's
+visual feedback animation time to complete.</p>
+<p><strong>Inline comment (identical at both Start and Stop call
+sites):</strong></p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">// DISMISSAL: Use orderOut(nil) on the captured keyWindow rather than</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">// popover.close(). Calling close() while recording is active breaks the</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">// double-click-to-reopen behavior (popover enters an inconsistent state).</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">// The 100ms delay allows the button animation to complete first.</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">// See CLAUDE.md &quot;Gotchas&quot; for full explanation.</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>DispatchQueue<span class="op">.</span>main<span class="op">.</span>asyncAfter<span class="op">(</span>deadline<span class="op">:</span> <span class="op">.</span>now<span class="op">()</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">{</span> panel<span class="op">?.</span>orderOut<span class="op">(</span><span class="kw">nil</span><span class="op">)</span> <span class="op">}</span></span></code></pre></div>
+<p>This one <code>DispatchQueue.main.asyncAfter</code> call is
+intentionally retained. It is the documented dismissal mechanism and is
+not business logic. All other <code>DispatchQueue</code> usage is
+removed.</p>
+<p><strong>Satisfies:</strong> AC-SW-3 (no business-logic DispatchQueue
+calls remain), AC-SW-8</p>
+<hr />
+<h2 data-number="1.5" id="4-error-surface"><span
+class="header-section-number">1.5</span> 4. Error Surface</h2>
+<h3 data-number="1.5.1" id="41-nsalert-presentation"><span
+class="header-section-number">1.5.1</span> 4.1 NSAlert presentation</h3>
+<p>Both error cases surface to the user via <code>NSAlert</code>. The
+alert is presented from the <code>MacRecordWidgetApp</code> helper
+method:</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode swift"><code class="sourceCode swift"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="at">@MainActor</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="kw">func</span> <span class="fu">presentAlert</span><span class="op">(</span><span class="va">for</span> <span class="va">error</span><span class="op">:</span> <span class="dt">Error</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="va">alert</span> <span class="op">=</span> NSAlert<span class="op">()</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    alert<span class="op">.</span>alertStyle <span class="op">=</span> <span class="op">.</span>critical</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">switch</span> error <span class="kw">as</span><span class="op">?</span> RecordingError <span class="op">{</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>accessibilityDenied<span class="op">:</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>messageText <span class="op">=</span> <span class="st">&quot;Accessibility Permission Required&quot;</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>informativeText <span class="op">=</span> <span class="st">&quot;MacRecordWidget needs Accessibility permission to make Photo Booth full-screen. Open System Settings &gt; Privacy &amp; Security &gt; Accessibility and enable MacRecordWidget.&quot;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>shortcutLaunchFailed<span class="op">(</span><span class="kw">let</span> <span class="va">reason</span><span class="op">):</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>messageText <span class="op">=</span> <span class="st">&quot;Could Not Start Recording&quot;</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>informativeText <span class="op">=</span> <span class="st">&quot;The recording shortcut could not be launched. Make sure a Shortcut named </span><span class="sc">\&quot;</span><span class="st">Start</span><span class="sc">\&quot;</span><span class="st"> (or </span><span class="sc">\&quot;</span><span class="st">Stop</span><span class="sc">\&quot;</span><span class="st">) exists in the Shortcuts app. Detail: </span><span class="er">\(</span><span class="st">reason)&quot;</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="kw">nil</span><span class="op">:</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>messageText <span class="op">=</span> <span class="st">&quot;Recording Error&quot;</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>        alert<span class="op">.</span>informativeText <span class="op">=</span> error<span class="op">.</span>localizedDescription</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    alert<span class="op">.</span>addButton<span class="op">(</span>withTitle<span class="op">:</span> <span class="st">&quot;OK&quot;</span><span class="op">)</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    alert<span class="op">.</span>runModal<span class="op">()</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 data-number="1.5.2" id="42-error-alert-copy"><span
+class="header-section-number">1.5.2</span> 4.2 Error alert copy</h3>
+<table>
+<thead>
+<tr>
+<th>Error case</th>
+<th>messageText</th>
+<th>informativeText</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>accessibilityDenied</code></td>
+<td>Accessibility Permission Required</td>
+<td>MacRecordWidget needs Accessibility permission to make Photo Booth
+full-screen. Open System Settings &gt; Privacy &amp; Security &gt;
+Accessibility and enable MacRecordWidget.</td>
+</tr>
+<tr>
+<td><code>shortcutLaunchFailed</code></td>
+<td>Could Not Start Recording</td>
+<td>The recording shortcut could not be launched. Make sure a Shortcut
+named "Start" (or "Stop") exists in the Shortcuts app. Detail:
+[reason]</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.5.3" id="43-state-guarantee-on-error"><span
+class="header-section-number">1.5.3</span> 4.3 State guarantee on
+error</h3>
+<p>When either error is thrown from <code>startRecording()</code>:</p>
+<ul>
+<li><code>isInFlight</code> is reset to <code>false</code> via
+<code>defer</code> before the <code>catch</code> block in the view
+runs</li>
+<li><code>isRecording</code> is never set to <code>true</code> (the
+assignment only occurs after a successful <code>open</code>)</li>
+<li>The Start button re-enables immediately because both
+<code>isRecording == false</code> and
+<code>isInFlight == false</code></li>
+</ul>
+<p>When <code>accessibilityDenied</code> is thrown from inside
+<code>launchPhotoBooth()</code>, which is called after
+<code>isRecording = true</code>:</p>
+<ul>
+<li><code>launchPhotoBooth()</code> sets
+<code>isRecording = false</code> before throwing (explicit reset)</li>
+<li>The view catches the error and presents the alert</li>
+<li>The UI returns to idle state</li>
+</ul>
+<p><strong>Satisfies:</strong> AC-SW-4, AC-SW-5</p>
+<hr />
+<h2 data-number="1.6" id="5-deployment-target"><span
+class="header-section-number">1.6</span> 5. Deployment Target</h2>
+<p><code>MACOSX_DEPLOYMENT_TARGET</code> will be set to
+<code>14.0</code> in
+<code>MacRecordWidget.xcodeproj/project.pbxproj</code>.</p>
+<p>The setting appears twice in <code>project.pbxproj</code> -- once
+under the <code>Debug</code> build configuration and once under
+<code>Release</code>. Both must be updated. If only one is changed, the
+Release build will still target macOS 13 and the
+<code>@Observable</code> macro will cause a linker error at archive
+time.</p>
+<pre><code>MACOSX_DEPLOYMENT_TARGET = 14.0;   /* appears in both Debug and Release sections */</code></pre>
+<p><strong>File:</strong>
+<code>MacRecordWidget.xcodeproj/project.pbxproj</code></p>
+<p>No CI configuration change is required for this repo. The existing
+GitHub Actions workflow uses a macOS runner; if the runner is
+<code>macos-13</code>, it must be bumped to <code>macos-14</code> or
+<code>macos-latest</code>. This is a one-line change in the workflow
+YAML.</p>
+<p><strong>Satisfies:</strong> AC-SW-2</p>
+<hr />
+<h2 data-number="1.7" id="6-ac-coverage-table"><span
+class="header-section-number">1.7</span> 6. AC Coverage Table</h2>
+<table>
+<thead>
+<tr>
+<th>AC</th>
+<th>Design decision that satisfies it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-UI-1</td>
+<td>Stop button: <code>.tint(.red)</code> on <code>.bordered</code>
+style; adapts to light/dark mode and any accent color (Section 1.1)</td>
+</tr>
+<tr>
+<td>AC-UI-2</td>
+<td>Start button: <code>.tint(.accentColor)</code> on
+<code>.bordered</code> style (Section 1.2)</td>
+</tr>
+<tr>
+<td>AC-UI-3</td>
+<td><code>.bordered</code> button style renders at native macOS control
+height; <code>.frame(maxWidth: .infinity)</code> provides full-width
+click target; pointer-driven UI does not require 44pt iOS targets
+(Section 1.3)</td>
+</tr>
+<tr>
+<td>AC-UI-4</td>
+<td>Confirmed: no hardcoded <code>.system(size: N)</code> exists in
+current source; default <code>.body</code> font is correct; no change
+required (Section 1.4)</td>
+</tr>
+<tr>
+<td>AC-UI-5</td>
+<td>Icon logic unchanged; four-state
+<code>mic</code>/<code>mic.fill</code>/<code>video</code>/<code>video.fill</code>
++ green tint when recording is correct (Section 1.5)</td>
+</tr>
+<tr>
+<td>AC-UI-6</td>
+<td>Outer padding bumped to 16pt; frame width to 200pt; inner button
+spacing 8pt (Section 1.6)</td>
+</tr>
+<tr>
+<td>AC-SW-1</td>
+<td><code>RecordingManager</code> gets <code>@Observable</code> macro;
+<code>ObservableObject</code> and <code>@Published</code> removed; call
+site uses <code>@State</code> (Section 2.1)</td>
+</tr>
+<tr>
+<td>AC-SW-2</td>
+<td><code>MACOSX_DEPLOYMENT_TARGET = 14.0</code> in both Debug and
+Release in <code>project.pbxproj</code>; GitHub Actions runner bumped to
+<code>macos-14</code> (Section 5)</td>
+</tr>
+<tr>
+<td>AC-SW-3</td>
+<td>All <code>DispatchQueue.global()</code> replaced with
+<code>Task { }</code>; <code>Thread.sleep</code> replaced with
+<code>try await Task.sleep</code>; one
+<code>DispatchQueue.main.asyncAfter</code> retained exclusively for the
+documented <code>orderOut</code> dismissal (Section 3)</td>
+</tr>
+<tr>
+<td>AC-SW-4</td>
+<td><code>RecordingError.shortcutLaunchFailed(reason:)</code> thrown
+when <code>NSWorkspace.open</code> returns false; caught by view
+helpers; <code>NSAlert</code> shown (Sections 2.3, 4.2)</td>
+</tr>
+<tr>
+<td>AC-SW-5</td>
+<td><code>RecordingError.accessibilityDenied</code> thrown when
+<code>osascript</code> exits non-zero; <code>isRecording</code> set back
+to <code>false</code> before throw; <code>NSAlert</code> shown with
+Accessibility instructions (Sections 2.6, 4.2)</td>
+</tr>
+<tr>
+<td>AC-SW-6</td>
+<td><code>isInFlight: Bool</code> guard in both
+<code>startRecording()</code> and <code>stopRecording()</code>; buttons
+also <code>.disabled</code> when <code>isInFlight == true</code>;
+two-layer protection (Sections 2.4, 1.2, 1.1)</td>
+</tr>
+<tr>
+<td>AC-SW-7</td>
+<td><code>isRecording = true</code> placed after
+<code>guard opened</code> check; never set before
+<code>NSWorkspace.open</code> returns success (Section 2.5)</td>
+</tr>
+<tr>
+<td>AC-SW-8</td>
+<td><code>orderOut</code> approach retained; four-line inline comment
+added at both dismissal sites explaining why
+<code>popover.close()</code> is not used and why the 100ms delay exists
+(Section 3)</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
