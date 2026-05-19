@@ -95,14 +95,22 @@ final class RecordingManager {
             "tell application \"System Events\" to tell process \"Photo Booth\" " +
             "to set value of attribute \"AXFullScreen\" of window 1 to true"
         ]
+        let stderrPipe = Pipe()
+        task.standardError = stderrPipe
         try task.run()
         task.waitUntilExit()
 
         if task.terminationStatus != 0 {
-            // A non-zero exit from osascript sending an AX event reliably indicates
-            // that Accessibility permission was denied. Surface this to the caller.
-            isRecording = false
-            throw RecordingError.accessibilityDenied
+            // Only surface an error if Accessibility was actually denied. Other failures
+            // (e.g. Photo Booth window not yet ready) are timing issues and not user-actionable.
+            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            let stderrText = String(data: stderrData, encoding: .utf8) ?? ""
+            if stderrText.localizedCaseInsensitiveContains("not allowed assistive") ||
+               stderrText.localizedCaseInsensitiveContains("accessibility") {
+                isRecording = false
+                throw RecordingError.accessibilityDenied
+            }
+            // Non-Accessibility failure: Photo Booth opened but full-screen failed. Not fatal.
         }
     }
 }
