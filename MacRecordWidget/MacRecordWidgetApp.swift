@@ -26,6 +26,7 @@ struct MacRecordWidgetApp: App {
                         Image(systemName: "power")
                     }
                     .buttonStyle(.plain)
+                    .help("Quit MacRecordWidget")
                     .accessibilityLabel("Quit MacRecordWidget")
                     .accessibilityIdentifier("quitButton")
                 }
@@ -36,6 +37,7 @@ struct MacRecordWidgetApp: App {
                 // Hidden from VoiceOver because the disabled button state already communicates
                 // the in-flight condition.
                 PulsingDot(isInFlight: recordingManager.isInFlight, isStarting: !recordingManager.isRecording)
+                    .frame(height: recordingManager.isInFlight ? 8 : 0)
 
                 VStack(spacing: 8) {
                     Button {
@@ -44,7 +46,7 @@ struct MacRecordWidgetApp: App {
                         Label("Start", systemImage: "mic.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(recordingManager.isRecording ? .bordered : .borderedProminent)
                     .tint(.accentColor)
                     .disabled(recordingManager.isRecording || recordingManager.isInFlight)
                     .accessibilityLabel("Start recording")
@@ -56,7 +58,7 @@ struct MacRecordWidgetApp: App {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(recordingManager.isRecording ? .borderedProminent : .bordered)
                     .tint(Color(NSColor.systemRed))
                     .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
                     .accessibilityLabel("Stop recording")
