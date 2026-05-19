@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crestline — Warm Precision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"] {
+    --primary: #C97D2E; --primary-hover: #A86322; --primary-subtle: #FBF0E0;
+    --secondary: #7A6650; --bg: #FAF8F4; --surface: #FFFFFF;
+    --text: #1C1710; --text-sec: #6B5E4E; --border: #E2D9CC;
+    --success: #3A6E4A; --error: #8C3030; --warning: #7A6020;
+    --shadow-sm: 0 1px 4px rgba(28,23,16,0.06);
+    --shadow-md: 0 4px 16px rgba(28,23,16,0.08);
+  }
+  :root[data-theme="dark"] {
+    --primary: #D9973E; --primary-hover: #C07D28; --primary-subtle: #2A1E0A;
+    --secondary: #9A8A70; --bg: #18140E; --surface: #221C14;
+    --text: #F0E8DC; --text-sec: #9A8878; --border: #3A3028;
+    --success: #5A9E6A; --error: #C05050; --warning: #C0A040;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.30);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.40);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.65; transition: background 0.25s, color 0.25s; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 56px; flex-wrap: wrap; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 36px; height: 36px; border-radius: 4px; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 18px; }
+  .brand-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+  .brand-tagline { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge-flavor { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary); border-radius: 3px; padding: 3px 10px; }
+  .toggle-btn { font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
+  .toggle-btn:hover { background: var(--primary-subtle); border-color: var(--primary); }
+  .section { margin-bottom: 56px; }
+  .section-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-sec); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .palette { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch-group { display: flex; flex-direction: column; gap: 4px; }
+  .swatch-group-label { font-size: 11px; color: var(--text-sec); font-weight: 500; margin-bottom: 4px; }
+  .swatch { width: 72px; height: 48px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--shadow-sm); }
+  .swatch-hex { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-sec); }
+  .type-scale { display: flex; flex-direction: column; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .type-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-sec); width: 90px; flex-shrink: 0; }
+  .t-display { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 600; line-height: 1.05; }
+  .t-h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; line-height: 1.15; }
+  .t-h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; line-height: 1.25; }
+  .t-h3 { font-size: 18px; font-weight: 600; line-height: 1.35; }
+  .t-body { font-size: 16px; font-weight: 400; line-height: 1.65; }
+  .t-caption { font-size: 13px; font-weight: 400; color: var(--text-sec); }
+  .t-label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .t-code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; background: var(--primary-subtle); padding: 2px 7px; border-radius: 3px; }
+  .component-grid { display: flex; flex-direction: column; gap: 32px; }
+  .component-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .component-section-title { font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.8px; width: 100%; margin-bottom: 4px; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 9px 22px; border-radius: 6px; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary { background: var(--surface); color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-secondary:hover { background: var(--primary-subtle); }
+  .btn-ghost { background: transparent; color: var(--primary); }
+  .btn-ghost:hover { background: var(--primary-subtle); }
+  .btn-destructive { background: var(--error); color: white; }
+  .btn-destructive:hover { opacity: 0.88; }
+  .btn:disabled { background: var(--border) !important; color: var(--text-sec) !important; border-color: transparent !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; opacity: 0.6; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 12px; font-weight: 600; color: var(--text-sec); }
+  .input { font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--surface); color: var(--text); border: 1.5px solid var(--border); border-radius: 6px; padding: 9px 14px; width: 240px; transition: all 0.15s; outline: none; }
+  .input:hover { border-color: var(--secondary); }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-subtle); }
+  .input.error { border-color: var(--error); }
+  .input-error-msg { font-size: 12px; color: var(--error); }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 3px; display: inline-flex; align-items: center; }
+  .badge-default { background: var(--border); color: var(--text-sec); }
+  .badge-primary { background: var(--primary-subtle); color: var(--primary); }
+  .badge-success { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+  .badge-error { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-top: 1px solid var(--primary); border-radius: 10px; padding: 24px; box-shadow: var(--shadow-md); max-width: 320px; }
+  .card-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--primary); margin-bottom: 8px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .card-body { font-size: 14px; color: var(--text-sec); line-height: 1.6; margin-bottom: 20px; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-sec); }
+  .voice-grid { display: flex; flex-direction: column; gap: 16px; }
+  .voice-row { display: flex; gap: 16px; align-items: flex-start; }
+  .voice-type { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-sec); width: 80px; flex-shrink: 0; padding-top: 3px; }
+  .voice-sample { font-size: 14px; color: var(--text); background: color-mix(in srgb, var(--primary) 7%, transparent); border-radius: 6px; padding: 10px 14px; flex: 1; border-left: 3px solid var(--primary); line-height: 1.55; }
+  .voice-sample.error-sample { border-left-color: var(--error); background: color-mix(in srgb, var(--error) 7%, transparent); }
+  .voice-sample.success-sample { border-left-color: var(--success); background: color-mix(in srgb, var(--success) 7%, transparent); }
+  .voice-sample.warn-sample { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 7%, transparent); }
+  .sig-note { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-sec); background: var(--primary-subtle); border-radius: 6px; padding: 10px 14px; border-left: 3px solid var(--primary); margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">Crestline</div>
+        <div class="brand-tagline">Warm precision — B2B SaaS, consulting, financial services</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-flavor">Amber + Cormorant Garamond</span>
+      <button class="toggle-btn" onclick="toggleTheme()">Toggle dark mode</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Color palette</div>
+    <div class="palette">
+      <div class="swatch-group"><div class="swatch-group-label">Primary</div><div class="swatch" style="background:#C97D2E"></div><div class="swatch-hex">#C97D2E</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary hover</div><div class="swatch" style="background:#A86322"></div><div class="swatch-hex">#A86322</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary subtle</div><div class="swatch" style="background:#FBF0E0;border:1px solid #E2D9CC"></div><div class="swatch-hex">#FBF0E0</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Secondary</div><div class="swatch" style="background:#7A6650"></div><div class="swatch-hex">#7A6650</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Background</div><div class="swatch" style="background:#FAF8F4;border:1px solid #E2D9CC"></div><div class="swatch-hex">#FAF8F4</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Surface</div><div class="swatch" style="background:#FFFFFF;border:1px solid #E2D9CC"></div><div class="swatch-hex">#FFFFFF</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Text</div><div class="swatch" style="background:#1C1710"></div><div class="swatch-hex">#1C1710</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Text secondary</div><div class="swatch" style="background:#6B5E4E"></div><div class="swatch-hex">#6B5E4E</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Success</div><div class="swatch" style="background:#3A6E4A"></div><div class="swatch-hex">#3A6E4A</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Error</div><div class="swatch" style="background:#8C3030"></div><div class="swatch-hex">#8C3030</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Warning</div><div class="swatch" style="background:#7A6020"></div><div class="swatch-hex">#7A6020</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Typography scale — Cormorant Garamond (display) + DM Sans (body) + IBM Plex Mono (code)</div>
+    <div class="type-scale">
+      <div class="type-row"><span class="type-meta">display / 600</span><span class="t-display">Crestline</span></div>
+      <div class="type-row"><span class="type-meta">h1 / 600</span><span class="t-h1">We have done the thinking</span></div>
+      <div class="type-row"><span class="type-meta">h2 / 600</span><span class="t-h2">Assured, grounded, unhurried</span></div>
+      <div class="type-row"><span class="type-meta">h3 / 600</span><span class="t-h3">Financial services platform</span></div>
+      <div class="type-row"><span class="type-meta">body / 400</span><span class="t-body">Swiss grid discipline softened by amber warmth. For products that mean business but don't feel cold.</span></div>
+      <div class="type-row"><span class="type-meta">caption / 400</span><span class="t-caption">Last reviewed by compliance — no issues found</span></div>
+      <div class="type-row"><span class="type-meta">label / 600</span><span class="t-label">Active engagement</span></div>
+      <div class="type-row"><span class="type-meta">code / mono</span><span class="t-code">GET /api/v2/accounts</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Components</div>
+    <div class="component-grid">
+      <div class="component-row">
+        <span class="component-section-title">Buttons</span>
+        <button class="btn btn-primary">Submit proposal</button>
+        <button class="btn btn-secondary">View report</button>
+        <button class="btn btn-ghost">Learn more</button>
+        <button class="btn btn-destructive">Close account</button>
+        <button class="btn btn-primary" disabled>Processing...</button>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Text input</span>
+        <div class="input-group">
+          <label class="input-label">Company name</label>
+          <input class="input" type="text" placeholder="Crestline Partners LLC" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Tax ID</label>
+          <input class="input error" type="text" value="12-34567 89" />
+          <span class="input-error-msg">Tax ID format is invalid.</span>
+        </div>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Badges</span>
+        <span class="badge badge-primary">Active</span>
+        <span class="badge badge-success">Approved</span>
+        <span class="badge badge-error">Rejected</span>
+        <span class="badge badge-default">Pending</span>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Card — amber top-border signature</span>
+        <div class="card">
+          <div class="card-eyebrow">Q3 Portfolio Review</div>
+          <div class="card-title">Performance report ready</div>
+          <div class="card-body">Quarterly analysis complete. Returns exceeded benchmark by 2.3 points. Full breakdown available for stakeholder distribution.</div>
+          <div class="card-footer">
+            <span class="card-meta">Oct 15, 2026</span>
+            <button class="btn btn-primary" style="font-size:13px;padding:7px 16px;">Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Voice and tone — "We have done the thinking so you don't have to."</div>
+    <div class="voice-grid">
+      <div class="voice-row"><span class="voice-type">empty state</span><div class="voice-sample">No engagements on record. <a href="#" style="color:var(--primary);text-decoration:none;font-weight:600;">Create your first engagement</a> to begin.</div></div>
+      <div class="voice-row"><span class="voice-type">error</span><div class="voice-sample error-sample">The submission could not be processed. Review the highlighted fields and resubmit.</div></div>
+      <div class="voice-row"><span class="voice-type">success</span><div class="voice-sample success-sample">Report submitted. Your advisor will review it within one business day.</div></div>
+      <div class="voice-row"><span class="voice-type">destructive</span><div class="voice-sample warn-sample">Close this account? All associated records will be archived. Reversible within 30 days.</div></div>
+    </div>
+    <div class="sig-note">Signature: 1px top border in #C97D2E on primary cards and hero sections only — like a ruled line beneath a heading, not a full frame.</div>
+  </div>
+</div>
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  }
+</script>
+</body>
+</html>

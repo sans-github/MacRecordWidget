@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{FEATURE_NAME}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary:         #2A6872;
+  --primary-hover:   #1A4E58;
+  --primary-subtle:  #E4EFF0;
+  --secondary:       #4A7880;
+  --n900:            #161E20;
+  --n600:            #526870;
+  --n300:            #B8CACF;
+  --n100:            #EAF0F2;
+  --n0:              #FFFFFF;
+  --surface:         #F5F8F9;
+  --success:         #2A6A52;
+  --radius-sm:       4px;
+  --radius-md:       7px;
+  --radius-lg:       12px;
+  --shadow-sm:       0 1px 3px rgba(22,30,32,.07);
+  --shadow-md:       0 4px 12px rgba(22,30,32,.09);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--surface);
+  color: var(--n900);
+  min-height: 100vh;
+  padding: 32px 16px 64px;
+}
+
+/* ── Header ── */
+.header {
+  max-width: 760px;
+  margin: 0 auto 20px;
+  padding: 0 4px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--n900);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.header p {
+  font-size: 14px;
+  color: var(--n600);
+  margin-top: 5px;
+  line-height: 1.6;
+}
+
+/* ── Card ── */
+.card {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--n0);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--n300);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* ── Phases header row ── */
+.list-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--n100);
+  background: var(--surface);
+}
+.list-header-cell {
+  padding: 9px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--n600);
+}
+.list-header-cell:first-child {
+  border-right: 1px solid var(--n100);
+}
+
+/* ── Stage row ── */
+.stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--n100);
+}
+.stage:last-child { border-bottom: none; }
+
+/* Left: phase control */
+.stage-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-right: 1px solid var(--n100);
+  cursor: pointer;
+  user-select: none;
+  transition: background .1s;
+}
+.stage-left:hover { background: var(--surface); }
+.stage.locked .stage-left { cursor: default; }
+.stage.locked .stage-left:hover { background: transparent; }
+
+.stage-body { flex: 1; min-width: 0; }
+.stage-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--n900);
+  transition: color .15s;
+}
+.stage-desc {
+  font-size: 12px;
+  color: var(--n600);
+  margin-top: 2px;
+  line-height: 1.4;
+  transition: color .15s;
+}
+.stage.inactive .stage-name { color: var(--n300); }
+.stage.inactive .stage-desc { color: var(--n300); }
+
+.always-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--primary);
+  background: var(--primary-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Toggle switch */
+.toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: var(--primary);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background .15s;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: right .15s, left .15s;
+  box-shadow: var(--shadow-sm);
+}
+.toggle.off { background: var(--n300); }
+.toggle.off::after { right: auto; left: 3px; }
+
+/* Right: gate checkboxes */
+.stage-right {
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  transition: opacity .15s;
+}
+.stage.inactive .stage-right { opacity: .3; pointer-events: none; }
+
+.gate-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.stage.locked .gate-item { cursor: default; }
+
+.gate-cb {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--n300);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .12s, border-color .12s;
+  background: var(--n0);
+}
+.gate-cb.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.gate-cb.checked::after {
+  content: '';
+  display: block;
+  width: 4px; height: 7px;
+  border: 1.5px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+.stage.locked .gate-cb { opacity: .5; }
+
+.gate-label-text {
+  font-size: 12px;
+  color: var(--n600);
+  line-height: 1.35;
+}
+.no-gates {
+  font-size: 12px;
+  color: var(--n300);
+  font-style: italic;
+}
+
+/* ── Config sections ── */
+.config-section {
+  padding: 16px 20px;
+  border-top: 1px solid var(--n100);
+}
+.config-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--n600);
+  margin-bottom: 10px;
+}
+
+/* Deploy options */
+.deploy-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.deploy-opt {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 13px;
+  border: 1.5px solid var(--n300);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--n600);
+  background: var(--n0);
+  transition: border-color .1s, background .1s, color .1s;
+  user-select: none;
+}
+.deploy-opt:hover { border-color: var(--primary); color: var(--primary); }
+.deploy-opt.selected {
+  border-color: var(--primary);
+  background: var(--primary-subtle);
+  color: var(--primary);
+  font-weight: 600;
+}
+.deploy-opt input { display: none; }
+
+/* Context textarea */
+textarea.context-input {
+  width: 100%;
+  border: 1.5px solid var(--n300);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--n900);
+  resize: vertical;
+  min-height: 64px;
+  outline: none;
+  transition: border-color .12s;
+  background: var(--surface);
+}
+textarea.context-input:focus { border-color: var(--primary); background: var(--n0); }
+textarea.context-input::placeholder { color: var(--n300); }
+
+/* ── Footer ── */
+.footer { padding: 16px 20px 20px; border-top: 1px solid var(--n100); }
+.confirm-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: background .15s, box-shadow .15s;
+  box-shadow: 0 4px 12px rgba(42,104,114,.28);
+}
+.confirm-btn:hover { background: var(--primary-hover); box-shadow: 0 6px 18px rgba(42,104,114,.34); }
+.confirm-btn:active { background: var(--primary-hover); box-shadow: none; }
+.confirm-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.confirm-btn.done { background: var(--success); box-shadow: 0 4px 12px rgba(42,106,82,.22); cursor: default; }
+
+.success-hint {
+  display: none;
+  text-align: center;
+  margin-top: 11px;
+  font-size: 12px;
+  color: var(--n600);
+  line-height: 1.5;
+}
+.success-hint strong { color: var(--n900); }
+.success-hint.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>{{FEATURE_NAME}}</h1>
+  <p>{{PROJECT_SUMMARY}}</p>
+</div>
+
+<div class="card">
+
+  <div class="list-header">
+    <div class="list-header-cell">Phase</div>
+    <div class="list-header-cell">Review gates</div>
+  </div>
+
+  <div id="stages-list"></div>
+
+  <div class="config-section">
+    <span class="config-label">Where does this ship?</span>
+    <div class="deploy-grid" id="deploy-grid">
+      <label class="deploy-opt selected"><input type="radio" name="deploy" value="local" checked>Local only</label>
+      <label class="deploy-opt"><input type="radio" name="deploy" value="existing AWS infra">Existing AWS</label>
+      <label class="deploy-opt"><input type="radio" name="deploy" value="new AWS infra">New AWS infra</label>
+      <label class="deploy-opt"><input type="radio" name="deploy" value="TBD">TBD</label>
+    </div>
+  </div>
+
+  <div class="config-section" style="padding-top:0">
+    <span class="config-label">Anything Claude should know upfront?</span>
+    <textarea class="context-input" id="extra-context" placeholder="Constraints, tech decisions, team preferences -- or leave blank."></textarea>
+  </div>
+
+  <div class="footer">
+    <button class="confirm-btn" id="confirm-btn" onclick="confirmConfig()">Lock in workflow</button>
+    <p class="success-hint" id="success-hint">
+      Copied to clipboard. Switch back to Claude and type <strong>done</strong> to continue.
+    </p>
+  </div>
+
+</div>
+
+<script>
+const STAGES = {{STAGES_JSON}};
+
+function buildStages() {
+  const list = document.getElementById('stages-list');
+  STAGES.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'stage' + (s.locked ? ' locked' : '') + (!s.active ? ' inactive' : '');
+    el.dataset.idx = i;
+
+    const displayName = s.name.replace(/^Stage \d+:\s*/, '');
+    const leftHtml = `
+      <div class="stage-body">
+        <div class="stage-name">${displayName}</div>
+        <div class="stage-desc">${s.desc}</div>
+      </div>
+      ${s.locked
+        ? '<span class="always-badge">Always on</span>'
+        : `<button class="toggle${s.active ? '' : ' off'}" onclick="event.stopPropagation();toggleStage(${i})" title="${s.active ? 'Skip this stage' : 'Enable this stage'}"></button>`}`;
+
+    const gates = s.gates || [];
+    let rightHtml = '';
+    if (gates.length) {
+      rightHtml = gates.map((g, gi) => `
+        <div class="gate-item" id="gate-${i}-${gi}" onclick="toggleGate(event,${i},${gi})">
+          <span class="gate-cb${g.active ? ' checked' : ''}"></span>
+          <span class="gate-label-text">${g.label}</span>
+        </div>`).join('');
+    } else {
+      rightHtml = '<span class="no-gates">No review gates</span>';
+    }
+
+    el.innerHTML = `
+      <div class="stage-left" onclick="${s.locked ? '' : 'toggleStage(' + i + ')'}">${leftHtml}</div>
+      <div class="stage-right">${rightHtml}</div>`;
+    list.appendChild(el);
+  });
+}
+
+function toggleStage(i) {
+  const s = STAGES[i];
+  s.active = !s.active;
+  const el = document.querySelector('.stage[data-idx="' + i + '"]');
+  el.classList.toggle('inactive', !s.active);
+  const toggle = el.querySelector('.toggle');
+  if (toggle) toggle.classList.toggle('off', !s.active);
+}
+
+function toggleGate(e, si, gi) {
+  e.stopPropagation();
+  if (STAGES[si].locked) return;
+  const g = STAGES[si].gates[gi];
+  g.active = !g.active;
+  document.getElementById('gate-' + si + '-' + gi).querySelector('.gate-cb').classList.toggle('checked', g.active);
+}
+
+function confirmConfig() {
+  const phases = {}, checkpoints = {};
+  STAGES.forEach(s => {
+    phases[s.id] = s.active;
+    if (s.active && s.gates && s.gates.length) {
+      const cp = {};
+      s.gates.forEach(g => { cp[g.id] = g.active; });
+      checkpoints[s.id] = cp;
+    }
+  });
+  const deploy = document.querySelector('input[name="deploy"]:checked').value;
+  const ctx = document.getElementById('extra-context').value.trim();
+  const payload = JSON.stringify({ phases, checkpoints, deployment_target: deploy, additional_context: ctx }, null, 2);
+
+  const ta = document.createElement('textarea');
+  ta.value = payload;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+
+  const btn = document.getElementById('confirm-btn');
+  btn.textContent = 'Workflow locked';
+  btn.classList.add('done');
+  btn.disabled = true;
+  document.getElementById('success-hint').classList.add('visible');
+}
+
+document.getElementById('deploy-grid').addEventListener('change', e => {
+  document.querySelectorAll('.deploy-opt').forEach(o => {
+    o.classList.toggle('selected', o.querySelector('input') === e.target);
+  });
+});
+
+buildStages();
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Stack — Brand 5: Off-White + Deep Teal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"] {
+    --color-primary: #2A6872;
+    --color-primary-hover: #1A4E58;
+    --color-primary-subtle: #E4EFF0;
+    --color-secondary: #4A7880;
+    --color-neutral-900: #161E20;
+    --color-neutral-600: #526870;
+    --color-neutral-300: #B8CACF;
+    --color-neutral-100: #EAF0F2;
+    --color-neutral-0: #FFFFFF;
+    --color-success: #2A6A52;
+    --color-warning: #806030;
+    --color-error: #783040;
+    --color-info: #2A4A78;
+    --color-surface: #F5F8F9;
+    --shadow-sm: 0 1px 3px rgba(22,30,32,0.07);
+    --shadow-md: 0 4px 12px rgba(22,30,32,0.09);
+    --shadow-lg: 0 12px 32px rgba(22,30,32,0.13);
+  }
+  :root[data-theme="dark"] {
+    --color-primary: #4AA8B8;
+    --color-primary-hover: #60C0D0;
+    --color-primary-subtle: #182830;
+    --color-secondary: #70A8B4;
+    --color-neutral-900: #E8F0F2;
+    --color-neutral-600: #7898A0;
+    --color-neutral-300: #2E4850;
+    --color-neutral-100: #1C3038;
+    --color-neutral-0: #162028;
+    --color-success: #50A880;
+    --color-warning: #C8A050;
+    --color-error: #C06070;
+    --color-info: #50A0C8;
+    --color-surface: #111820;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.36);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.46);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--color-surface); color: var(--color-neutral-900); font-size: 15px; line-height: 1.6; transition: background 0.25s, color 0.25s; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 36px; height: 36px; border-radius: 8px; background: var(--color-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; letter-spacing: -0.5px; }
+  .brand-name { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .brand-tagline { font-size: 12px; color: var(--color-neutral-600); margin-top: 1px; }
+  .badge-flavor { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; background: var(--color-primary-subtle); color: var(--color-primary); border: 1px solid var(--color-primary); border-radius: 4px; padding: 3px 10px; opacity: 0.85; }
+  .toggle-btn { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; background: var(--color-neutral-100); color: var(--color-neutral-900); border: 1px solid var(--color-neutral-300); border-radius: 6px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; margin-left: 12px; }
+  .toggle-btn:hover { background: var(--color-neutral-300); }
+  .section { margin-bottom: 56px; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: var(--color-neutral-600); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--color-neutral-100); }
+  .palette { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch-group { display: flex; flex-direction: column; gap: 4px; }
+  .swatch-group-label { font-size: 11px; color: var(--color-neutral-600); font-weight: 500; margin-bottom: 4px; }
+  .swatch { width: 72px; height: 48px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--shadow-sm); }
+  .swatch-hex { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--color-neutral-600); }
+  .type-scale { display: flex; flex-direction: column; gap: 16px; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 12px 0; border-bottom: 1px solid var(--color-neutral-100); }
+  .type-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--color-neutral-600); width: 90px; flex-shrink: 0; }
+  .t-display { font-size: 44px; font-weight: 700; letter-spacing: -1.5px; line-height: 1.1; }
+  .t-h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.8px; }
+  .t-h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+  .t-h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+  .t-body-lg { font-size: 17px; font-weight: 400; }
+  .t-body { font-size: 15px; font-weight: 400; }
+  .t-body-sm { font-size: 13px; font-weight: 400; color: var(--color-neutral-600); }
+  .t-label { font-size: 12px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; }
+  .t-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--color-neutral-100); padding: 2px 6px; border-radius: 4px; }
+  .component-grid { display: flex; flex-direction: column; gap: 32px; }
+  .component-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .component-section-title { font-size: 12px; font-weight: 600; color: var(--color-neutral-600); text-transform: uppercase; letter-spacing: 0.8px; width: 100%; margin-bottom: 4px; }
+  .btn { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 9px 20px; border-radius: 7px; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--color-primary); color: white; }
+  .btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary { background: var(--color-neutral-0); color: var(--color-primary); border: 1.5px solid var(--color-primary); }
+  .btn-secondary:hover { background: var(--color-primary-subtle); }
+  .btn-ghost { background: transparent; color: var(--color-primary); }
+  .btn-ghost:hover { background: var(--color-primary-subtle); }
+  .btn-destructive { background: var(--color-error); color: white; }
+  .btn-destructive:hover { opacity: 0.88; }
+  .btn:disabled { background: var(--color-neutral-100) !important; color: var(--color-neutral-300) !important; border-color: transparent !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 12px; font-weight: 600; color: var(--color-neutral-600); }
+  .input { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; background: var(--color-neutral-0); color: var(--color-neutral-900); border: 1.5px solid var(--color-neutral-300); border-radius: 7px; padding: 9px 14px; width: 240px; transition: all 0.15s; outline: none; }
+  .input:hover { border-color: var(--color-neutral-600); }
+  .input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-subtle); }
+  .input.error { border-color: var(--color-error); }
+  .input-error-msg { font-size: 12px; color: var(--color-error); margin-top: 2px; }
+  .badge { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; }
+  .badge-default { background: var(--color-neutral-100); color: var(--color-neutral-600); }
+  .badge-primary { background: var(--color-primary-subtle); color: var(--color-primary); }
+  .badge-success { background: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); }
+  .badge-error { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); }
+  .card { background: var(--color-neutral-0); border: 1px solid var(--color-neutral-100); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-sm); max-width: 320px; }
+  .card-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--color-primary); margin-bottom: 8px; }
+  .card-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 8px; }
+  .card-body { font-size: 14px; color: var(--color-neutral-600); line-height: 1.6; margin-bottom: 20px; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--color-neutral-600); }
+  .voice-grid { display: flex; flex-direction: column; gap: 16px; }
+  .voice-row { display: flex; gap: 16px; align-items: flex-start; }
+  .voice-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--color-neutral-600); width: 80px; flex-shrink: 0; padding-top: 2px; }
+  .voice-sample { font-size: 14px; color: var(--color-neutral-900); background: var(--color-neutral-100); border-radius: 8px; padding: 10px 14px; flex: 1; border-left: 3px solid var(--color-primary); }
+  .voice-sample.error-sample { border-left-color: var(--color-error); }
+  .voice-sample.success-sample { border-left-color: var(--color-success); }
+  .voice-sample.warn-sample { border-left-color: var(--color-warning); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark">AS</div>
+      <div>
+        <div class="brand-name">Agent Stack</div>
+        <div class="brand-tagline">Multi-agent toolkit for engineering teams</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="badge-flavor">Brand 5 — Off-White + Deep Teal</span>
+      <button class="toggle-btn" onclick="toggleTheme()">Toggle dark mode</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Color palette</div>
+    <div class="palette">
+      <div class="swatch-group"><div class="swatch-group-label">Primary</div><div class="swatch" style="background:var(--color-primary)"></div><div class="swatch-hex">--color-primary</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary hover</div><div class="swatch" style="background:var(--color-primary-hover)"></div><div class="swatch-hex">--color-primary-hover</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary subtle</div><div class="swatch" style="background:var(--color-primary-subtle)"></div><div class="swatch-hex">--color-primary-subtle</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Neutral 900</div><div class="swatch" style="background:var(--color-neutral-900)"></div><div class="swatch-hex">--neutral-900</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Neutral 600</div><div class="swatch" style="background:var(--color-neutral-600)"></div><div class="swatch-hex">--neutral-600</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Neutral 300</div><div class="swatch" style="background:var(--color-neutral-300)"></div><div class="swatch-hex">--neutral-300</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Neutral 100</div><div class="swatch" style="background:var(--color-neutral-100)"></div><div class="swatch-hex">--neutral-100</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Surface</div><div class="swatch" style="background:var(--color-surface);border:1px solid var(--color-neutral-300)"></div><div class="swatch-hex">--color-surface</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Success</div><div class="swatch" style="background:var(--color-success)"></div><div class="swatch-hex">--color-success</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Warning</div><div class="swatch" style="background:var(--color-warning)"></div><div class="swatch-hex">--color-warning</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Error</div><div class="swatch" style="background:var(--color-error)"></div><div class="swatch-hex">--color-error</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Info</div><div class="swatch" style="background:var(--color-info)"></div><div class="swatch-hex">--color-info</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Typography scale — Plus Jakarta Sans + JetBrains Mono</div>
+    <div class="type-scale">
+      <div class="type-row"><span class="type-meta">display / 700</span><span class="t-display">Agent Stack</span></div>
+      <div class="type-row"><span class="type-meta">h1 / 700</span><span class="t-h1">Build smarter pipelines</span></div>
+      <div class="type-row"><span class="type-meta">h2 / 600</span><span class="t-h2">Orchestrate with confidence</span></div>
+      <div class="type-row"><span class="type-meta">h3 / 600</span><span class="t-h3">Agent configuration</span></div>
+      <div class="type-row"><span class="type-meta">body-lg / 400</span><span class="t-body-lg">A collection of reusable Claude Code agent definitions for engineering teams.</span></div>
+      <div class="type-row"><span class="type-meta">body / 400</span><span class="t-body">Each agent follows a strict contract-first workflow. No downstream work begins until the upstream artifact is approved.</span></div>
+      <div class="type-row"><span class="type-meta">body-sm / 400</span><span class="t-body-sm">Last updated 2 hours ago — 3 agents active</span></div>
+      <div class="type-row"><span class="type-meta">label / 600</span><span class="t-label">Active pipeline</span></div>
+      <div class="type-row"><span class="type-meta">code / mono</span><span class="t-code">bash scripts/sync.sh v1.2.0</span></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Components</div>
+    <div class="component-grid">
+      <div class="component-row">
+        <span class="component-section-title">Buttons</span>
+        <button class="btn btn-primary">Deploy agents</button>
+        <button class="btn btn-secondary">View config</button>
+        <button class="btn btn-ghost">Learn more</button>
+        <button class="btn btn-destructive">Remove</button>
+        <button class="btn btn-primary" disabled>Processing...</button>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Text input</span>
+        <div class="input-group">
+          <label class="input-label">Agent name</label>
+          <input class="input" type="text" placeholder="senior-backend-engineer" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Feature branch</label>
+          <input class="input error" type="text" value="feature/my branch" />
+          <span class="input-error-msg">Branch names cannot contain spaces.</span>
+        </div>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Badges</span>
+        <span class="badge badge-primary">Active</span>
+        <span class="badge badge-success">Approved</span>
+        <span class="badge badge-error">Blocked</span>
+        <span class="badge badge-default">Draft</span>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Card</span>
+        <div class="card">
+          <div class="card-eyebrow">Phase 2 — Design</div>
+          <div class="card-title">Mocks ready for review</div>
+          <div class="card-body">Designer has completed all screens including edge cases, error states, and empty states. PM sign-off required before engineering begins.</div>
+          <div class="card-footer">
+            <span class="card-meta">Updated 12 min ago</span>
+            <button class="btn btn-primary" style="font-size:13px;padding:7px 16px;">Approve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Voice and tone</div>
+    <div class="voice-grid">
+      <div class="voice-row"><span class="voice-type">empty state</span><div class="voice-sample">No agents configured yet. <a href="#" style="color:var(--color-primary);text-decoration:none;font-weight:600;">Add your first agent</a> to get started.</div></div>
+      <div class="voice-row"><span class="voice-type">error</span><div class="voice-sample error-sample">Sync failed. Check your network connection and try again. If the problem continues, <a href="#" style="color:var(--color-error);font-weight:600;">contact support</a>.</div></div>
+      <div class="voice-row"><span class="voice-type">success</span><div class="voice-sample success-sample">Changes saved. The updated config will take effect on the next run.</div></div>
+      <div class="voice-row"><span class="voice-type">destructive</span><div class="voice-sample warn-sample">Remove this agent? All associated plans and contracts will be permanently deleted. This cannot be undone.</div></div>
+    </div>
+  </div>
+</div>
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  }
+</script>
+</body>
+</html>

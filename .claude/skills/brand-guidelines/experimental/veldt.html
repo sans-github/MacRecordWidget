@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veldt — Cool Restraint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"] {
+    --primary: #0057FF; --primary-hover: #0041CC; --primary-subtle: #E5EEFF;
+    --secondary: #3A4B5C; --bg: #F2F3F5; --surface: #FFFFFF;
+    --text: #0D1117; --text-sec: #5A6472; --border: #D4D8DE;
+    --success: #006644; --error: #CC1616; --warning: #886600;
+    --shadow-sm: 0 1px 3px rgba(13,17,23,0.08);
+    --shadow-md: 0 3px 10px rgba(13,17,23,0.10);
+  }
+  :root[data-theme="dark"] {
+    --primary: #4D8AFF; --primary-hover: #6699FF; --primary-subtle: #0A1A3A;
+    --secondary: #6A8FAA; --bg: #0D1117; --surface: #161B22;
+    --text: #E6EDF3; --text-sec: #7D8590; --border: #30363D;
+    --success: #3FB950; --error: #F85149; --warning: #D29922;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+    --shadow-md: 0 3px 10px rgba(0,0,0,0.40);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Serif 4', serif; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.7; transition: background 0.25s, color 0.25s; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 56px; flex-wrap: wrap; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 36px; height: 36px; border-radius: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .brand-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .brand-tagline { font-family: 'Source Serif 4', serif; font-size: 13px; color: var(--text-sec); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge-flavor { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary); border-radius: 2px; padding: 3px 10px; }
+  .toggle-btn { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
+  .toggle-btn:hover { background: var(--primary-subtle); border-color: var(--primary); color: var(--primary); }
+  .section { margin-bottom: 56px; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-sec); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .palette { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch-group { display: flex; flex-direction: column; gap: 4px; }
+  .swatch-group-label { font-family: 'Syne', sans-serif; font-size: 11px; color: var(--text-sec); font-weight: 600; margin-bottom: 4px; }
+  .swatch { width: 72px; height: 48px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--shadow-sm); }
+  .swatch-hex { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sec); }
+  .type-scale { display: flex; flex-direction: column; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .type-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sec); width: 90px; flex-shrink: 0; }
+  .t-display { font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 700; line-height: 1.0; letter-spacing: -1px; }
+  .t-h1 { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 700; line-height: 1.1; }
+  .t-h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 600; line-height: 1.2; }
+  .t-h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 600; line-height: 1.3; }
+  .t-body { font-family: 'Source Serif 4', serif; font-size: 16px; font-weight: 400; line-height: 1.7; }
+  .t-caption { font-family: 'Source Serif 4', serif; font-size: 13px; font-weight: 400; color: var(--text-sec); }
+  .t-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+  .t-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--primary-subtle); color: var(--primary); padding: 2px 7px; border-radius: 2px; }
+  .component-grid { display: flex; flex-direction: column; gap: 32px; }
+  .component-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .component-section-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.8px; width: 100%; margin-bottom: 4px; }
+  .btn { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; padding: 9px 20px; border-radius: 4px; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary { background: var(--surface); color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-secondary:hover { background: var(--primary-subtle); }
+  .btn-ghost { background: transparent; color: var(--primary); }
+  .btn-ghost:hover { background: var(--primary-subtle); }
+  .btn-destructive { background: var(--error); color: white; }
+  .btn-destructive:hover { opacity: 0.88; }
+  .btn:disabled { background: var(--border) !important; color: var(--text-sec) !important; border-color: transparent !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; opacity: 0.6; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-sec); letter-spacing: 0.3px; }
+  .input { font-family: 'Source Serif 4', serif; font-size: 15px; background: var(--surface); color: var(--text); border: 1.5px solid var(--border); border-radius: 4px; padding: 9px 14px; width: 240px; transition: all 0.15s; outline: none; }
+  .input:hover { border-color: var(--secondary); }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-subtle); }
+  .input.error { border-color: var(--error); }
+  .input-error-msg { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--error); }
+  .badge { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2px; padding: 3px 10px; border-radius: 2px; display: inline-flex; align-items: center; }
+  .badge-default { background: var(--border); color: var(--text-sec); }
+  .badge-primary { background: var(--primary-subtle); color: var(--primary); }
+  .badge-success { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+  .badge-error { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); }
+  .info-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 20px 20px 24px; box-shadow: var(--shadow-sm); max-width: 380px; position: relative; overflow: hidden; }
+  .info-panel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-radius: 0; }
+  .info-panel-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary); margin-bottom: 8px; }
+  .info-panel-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .info-panel-body { font-family: 'Source Serif 4', serif; font-size: 14px; color: var(--text-sec); line-height: 1.65; margin-bottom: 16px; }
+  .info-panel-footer { display: flex; align-items: center; justify-content: space-between; }
+  .info-panel-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sec); }
+  .voice-grid { display: flex; flex-direction: column; gap: 16px; }
+  .voice-row { display: flex; gap: 16px; align-items: flex-start; }
+  .voice-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sec); width: 80px; flex-shrink: 0; padding-top: 3px; }
+  .voice-sample { font-family: 'Source Serif 4', serif; font-size: 14px; color: var(--text); background: var(--primary-subtle); border-radius: 4px; padding: 10px 14px; flex: 1; border-left: 3px solid var(--primary); line-height: 1.6; }
+  .voice-sample.error-sample { border-left-color: var(--error); background: color-mix(in srgb, var(--error) 7%, transparent); }
+  .voice-sample.success-sample { border-left-color: var(--success); background: color-mix(in srgb, var(--success) 7%, transparent); }
+  .voice-sample.warn-sample { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 7%, transparent); }
+  .sig-note { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sec); background: var(--primary-subtle); border-radius: 4px; padding: 10px 14px; border-left: 3px solid var(--primary); margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark">VT</div>
+      <div>
+        <div class="brand-name">Veldt</div>
+        <div class="brand-tagline">Cool restraint — developer tools, infrastructure, data platforms</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-flavor">Electric blue + Syne</span>
+      <button class="toggle-btn" onclick="toggleTheme()">Toggle dark mode</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Color palette</div>
+    <div class="palette">
+      <div class="swatch-group"><div class="swatch-group-label">Primary</div><div class="swatch" style="background:#0057FF"></div><div class="swatch-hex">#0057FF</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary hover</div><div class="swatch" style="background:#0041CC"></div><div class="swatch-hex">#0041CC</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Primary subtle</div><div class="swatch" style="background:#E5EEFF;border:1px solid #D4D8DE"></div><div class="swatch-hex">#E5EEFF</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Secondary</div><div class="swatch" style="background:#3A4B5C"></div><div class="swatch-hex">#3A4B5C</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Background</div><div class="swatch" style="background:#F2F3F5;border:1px solid #D4D8DE"></div><div class="swatch-hex">#F2F3F5</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Surface</div><div class="swatch" style="background:#FFFFFF;border:1px solid #D4D8DE"></div><div class="swatch-hex">#FFFFFF</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Text</div><div class="swatch" style="background:#0D1117"></div><div class="swatch-hex">#0D1117</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Text secondary</div><div class="swatch" style="background:#5A6472"></div><div class="swatch-hex">#5A6472</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Success</div><div class="swatch" style="background:#006644"></div><div class="swatch-hex">#006644</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Error</div><div class="swatch" style="background:#CC1616"></div><div class="swatch-hex">#CC1616</div></div>
+      <div class="swatch-group"><div class="swatch-group-label">Warning</div><div class="swatch" style="background:#886600"></div><div class="swatch-hex">#886600</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Typography scale — Syne (headings + labels) + Source Serif 4 (body) + JetBrains Mono (code)</div>
+    <div class="type-scale">
+      <div class="type-row"><span class="type-meta">display / 700</span><span class="t-display">Veldt</span></div>
+      <div class="type-row"><span class="type-meta">h1 / 700</span><span class="t-h1">Complexity handled here</span></div>
+      <div class="type-row"><span class="type-meta">h2 / 600</span><span class="t-h2">Infrastructure observability</span></div>
+      <div class="type-row"><span class="type-meta">h3 / 600</span><span class="t-h3">Deployment pipeline</span></div>
+      <div class="type-row"><span class="type-meta">body / 400</span><span class="t-body">Near-monochrome with a single electric blue accent. Source Serif 4 in body copy is unexpected for a dev-tool brand and creates distinction.</span></div>
+      <div class="type-row"><span class="type-meta">caption / 400</span><span class="t-caption">Build completed in 4m 32s — 0 errors, 2 warnings</span></div>
+      <div class="type-row"><span class="type-meta">label / 700</span><span class="t-label">Pipeline status</span></div>
+      <div class="type-row"><span class="type-meta">code / mono</span><span class="t-code">kubectl apply -f deployment.yaml</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Components</div>
+    <div class="component-grid">
+      <div class="component-row">
+        <span class="component-section-title">Buttons</span>
+        <button class="btn btn-primary">Deploy</button>
+        <button class="btn btn-secondary">View logs</button>
+        <button class="btn btn-ghost">Docs</button>
+        <button class="btn btn-destructive">Terminate</button>
+        <button class="btn btn-primary" disabled>Running...</button>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Text input</span>
+        <div class="input-group">
+          <label class="input-label">Service name</label>
+          <input class="input" type="text" placeholder="api-gateway-prod" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Port</label>
+          <input class="input error" type="text" value="99999" />
+          <span class="input-error-msg">port must be 1-65535</span>
+        </div>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Badges</span>
+        <span class="badge badge-primary">Running</span>
+        <span class="badge badge-success">Healthy</span>
+        <span class="badge badge-error">Failed</span>
+        <span class="badge badge-default">Idle</span>
+      </div>
+      <div class="component-row">
+        <span class="component-section-title">Info panel — vertical left-edge signature</span>
+        <div class="info-panel">
+          <div class="info-panel-label">Deployment notice</div>
+          <div class="info-panel-title">Rollout in progress</div>
+          <div class="info-panel-body">3 of 6 pods updated. Traffic is being shifted gradually. No downtime expected. Monitor the rollout status in real time.</div>
+          <div class="info-panel-footer">
+            <span class="info-panel-meta">Started 2m ago</span>
+            <button class="btn btn-secondary" style="font-size:13px;padding:7px 16px;">Watch</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Voice and tone — "Complexity is handled here."</div>
+    <div class="voice-grid">
+      <div class="voice-row"><span class="voice-type">empty state</span><div class="voice-sample">No services configured. <a href="#" style="color:var(--primary);text-decoration:none;font-weight:600;">Add a service</a> to start monitoring.</div></div>
+      <div class="voice-row"><span class="voice-type">error</span><div class="voice-sample error-sample">Connection refused on port 5432. Check that the database is running and the firewall allows inbound traffic on that port.</div></div>
+      <div class="voice-row"><span class="voice-type">success</span><div class="voice-sample success-sample">Deployment complete. All 6 pods are healthy. Rollback window closes in 10 minutes.</div></div>
+      <div class="voice-row"><span class="voice-type">destructive</span><div class="voice-sample warn-sample">Terminate this cluster? All running workloads will stop immediately. This cannot be undone.</div></div>
+    </div>
+    <div class="sig-note">Signature: 3px vertical line in #0057FF flush to the left edge of informational panels, no border-radius on that edge. Reads like margin annotations in technical documentation.</div>
+  </div>
+</div>
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  }
+</script>
+</body>
+</html>
