@@ -1,6 +1,6 @@
 # Kickoff Prompt
 
-**Feature folder:** `projects/[YYYYMMDD-feature-name]`
+**Feature folder:** `projects/20260518-production-polish`
 
 ---
 
