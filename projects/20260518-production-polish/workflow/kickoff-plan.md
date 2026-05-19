@@ -30,11 +30,11 @@ MacRecordWidget is a two-file macOS menu bar app (`MacRecordWidget/MacRecordWidg
 
 ## Open Questions
 
-1. ❓ Should the System Architecture step in Stage 3 be skipped? The feature-setup.md marks it active, but this is a two-file refactor with no new infrastructure and no unfamiliar technology -- the skip condition in `feature-setup.md` ("skip if no new infrastructure or unfamiliar technology") appears to apply. EM will make the final call during Stage 3.
+1. ❓✅ Should the System Architecture step in Stage 3 be skipped? -- Yes, skip it. No new infrastructure or unfamiliar technology introduced.
 
-2. ❓ What is the minimum macOS deployment target for the refactored app? `@Observable` and the Observation framework require macOS 14. If the current target is 13 or lower, the Swift Engineer cannot migrate from `ObservableObject` without bumping the target.
+2. ❓✅ What is the minimum macOS deployment target for the refactored app? -- Current target is 13.0. Bump to 14.0 as part of this refactor, enabling `@Observable` and the Observation framework.
 
-3. ❓ Should Stage 5 (QA) be scoped to manual smoke testing rather than full automation? XCUITest has very limited access to `MenuBarExtra` popovers. An automated suite may be impractical for this app's surface area.
+3. ❓✅ Should Stage 5 (QA) be scoped to manual smoke testing rather than full automation? -- Yes, manual smoke testing only. No XCUITest automation suite.
 
 ---
 
