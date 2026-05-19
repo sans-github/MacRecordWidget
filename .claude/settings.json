@@ -5,7 +5,7 @@
       "Bash(git:*)",
       "Bash(gh run download:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run watch:*)",
+      "Bash(gh run watch.*)",
       "Bash(unzip:*)",
       "Bash(open MacVoiceRecordWidget/MacVoiceRecordWidget.app)",
       "Bash(open MacVoiceRecordWidget.app)",
@@ -14,7 +14,9 @@
       "Bash(open *)",
       "Bash(pdfinfo *)",
       "Bash(command -v *)",
-      "Bash(pbpaste)"
+      "Bash(pbpaste)",
+      "Bash(gh run watch.*)",
+      "Bash(gh run view.*)"
     ]
   }
 }

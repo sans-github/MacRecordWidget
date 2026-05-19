@@ -46,7 +46,7 @@ struct MacRecordWidgetApp: App {
                         Label("Start", systemImage: "mic.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(recordingManager.isRecording ? .bordered : .borderedProminent)
+                    .buttonStyle(.bordered)
                     .tint(.accentColor)
                     .disabled(recordingManager.isRecording || recordingManager.isInFlight)
                     .accessibilityLabel("Start recording")
@@ -58,7 +58,7 @@ struct MacRecordWidgetApp: App {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(recordingManager.isRecording ? .borderedProminent : .bordered)
+                    .buttonStyle(.bordered)
                     .tint(Color(NSColor.systemRed))
                     .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
                     .accessibilityLabel("Stop recording")
