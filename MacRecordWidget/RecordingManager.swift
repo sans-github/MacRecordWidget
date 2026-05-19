@@ -1,54 +1,107 @@
 import Foundation
-import SwiftUI
+import Observation
 
-class RecordingManager: ObservableObject {
-    @Published var isRecording = false
-    @Published var videoEnabled = false
+enum RecordingError: Error, LocalizedError {
+    case shortcutLaunchFailed(reason: String)
+    case accessibilityDenied
 
-    func startRecording() {
+    var errorDescription: String? {
+        switch self {
+        case .shortcutLaunchFailed(let reason):
+            return "Could not launch the recording shortcut. \(reason)"
+        case .accessibilityDenied:
+            return "Accessibility permission was denied."
+        }
+    }
+}
+
+@Observable
+final class RecordingManager {
+    var isRecording = false
+    var videoEnabled = false
+    var isInFlight = false
+
+    func startRecording() async throws {
+        guard !isInFlight else { return }
+        isInFlight = true
+        defer { isInFlight = false }
+
+        // Quit Voice Memos before firing the Start shortcut. If Voice Memos is
+        // open, macOS raises VMAudioServiceErrorDomain error 5. The 1.5s wait
+        // gives it time to fully exit. See CLAUDE.md "Gotchas".
+        let voiceMemos = NSWorkspace.shared.runningApplications
+            .first(where: { $0.bundleIdentifier == "com.apple.VoiceMemos" })
+        voiceMemos?.terminate()
+        if voiceMemos != nil {
+            try await Task.sleep(for: .seconds(1.5))
+        }
+
         let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "-")
         let name = "Recording-\(timestamp)"
 
-        let voiceMemos = NSWorkspace.shared.runningApplications
-            .first(where: { $0.bundleIdentifier == "com.apple.VoiceMemos" })
-
-        DispatchQueue.global().async {
-            voiceMemos?.terminate()
-            if voiceMemos != nil { Thread.sleep(forTimeInterval: 1.5) }
-            DispatchQueue.main.async {
-                if let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-                   let url = URL(string: "shortcuts://run-shortcut?name=Start&input=text&text=\(encoded)") {
-                    NSWorkspace.shared.open(url)
-                }
-            }
+        guard let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "shortcuts://run-shortcut?name=Start&input=text&text=\(encoded)")
+        else {
+            throw RecordingError.shortcutLaunchFailed(reason: "Could not construct shortcut URL")
         }
+
+        let opened = NSWorkspace.shared.open(url)
+        guard opened else {
+            throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false")
+        }
+
+        // State is set only after the URL opens successfully (AC-SW-7)
+        isRecording = true
 
         if videoEnabled {
-            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                let task = Process()
-                task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["-e",
-                    "tell application \"System Events\" to tell process \"Photo Booth\" to set value of attribute \"AXFullScreen\" of window 1 to true"
-                ]
-                try? task.run()
-            }
+            try await launchPhotoBooth()
         }
-
-        isRecording = true
     }
 
-    func stopRecording() {
-        if let url = URL(string: "shortcuts://run-shortcut?name=Stop") {
-            NSWorkspace.shared.open(url)
+    func stopRecording() async throws {
+        guard !isInFlight else { return }
+        isInFlight = true
+        defer { isInFlight = false }
+
+        guard let url = URL(string: "shortcuts://run-shortcut?name=Stop") else {
+            throw RecordingError.shortcutLaunchFailed(reason: "Could not construct Stop shortcut URL")
         }
+
+        let opened = NSWorkspace.shared.open(url)
+        guard opened else {
+            throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false for Stop")
+        }
+
+        isRecording = false
+
         if videoEnabled {
             NSWorkspace.shared.runningApplications
                 .first(where: { $0.bundleIdentifier == "com.apple.PhotoBooth" })?
                 .terminate()
         }
-        isRecording = false
+    }
+
+    private func launchPhotoBooth() async throws {
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
+        // Wait for Photo Booth to finish launching before sending AX event
+        try await Task.sleep(for: .seconds(2.0))
+
+        let task = Process()
+        task.launchPath = "/usr/bin/osascript"
+        task.arguments = ["-e",
+            "tell application \"System Events\" to tell process \"Photo Booth\" " +
+            "to set value of attribute \"AXFullScreen\" of window 1 to true"
+        ]
+        try task.run()
+        task.waitUntilExit()
+
+        if task.terminationStatus != 0 {
+            // A non-zero exit from osascript sending an AX event reliably indicates
+            // that Accessibility permission was denied. Surface this to the caller.
+            isRecording = false
+            throw RecordingError.accessibilityDenied
+        }
     }
 }
