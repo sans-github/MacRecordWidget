@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget — Popover: Idle (Audio Mode)</title>
+<style>
+/* ── Color tokens (light mode defaults) ── */
+:root {
+  --bg-window:          #ECECEC;
+  --bg-control:         #FFFFFF;
+  --bg-popover:         #F2F2F2;
+  --label-primary:      rgba(0,0,0,0.85);
+  --label-secondary:    rgba(0,0,0,0.50);
+  --label-tertiary:     rgba(0,0,0,0.26);
+  --separator:          rgba(0,0,0,0.12);
+  --accent:             #007AFF;        /* blue — matches default macOS accent */
+  --accent-label:       #FFFFFF;
+  --destructive:        rgba(255,59,48,0.90);
+  --destructive-label:  #FFFFFF;
+  --btn-surface:        rgba(0,0,0,0.06);
+  --btn-border:         rgba(0,0,0,0.14);
+  --btn-disabled-label: rgba(0,0,0,0.26);
+  --toggle-track-off:   rgba(0,0,0,0.16);
+  --toggle-track-on:    #34C759;
+  --toggle-thumb:       #FFFFFF;
+  --icon-green:         #34C759;
+  --shadow:             rgba(0,0,0,0.18);
+}
+
+/* ── Dark mode via checkbox ── */
+#dm-toggle { display: none; }
+#dm-toggle:checked ~ * { --bg-window: #1E1E1E; --bg-control: #3A3A3C; --bg-popover: #2C2C2E; --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55); --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12); --accent: #0A84FF; --btn-surface: rgba(255,255,255,0.10); --btn-border: rgba(255,255,255,0.16); --btn-disabled-label: rgba(255,255,255,0.26); --toggle-track-off: rgba(255,255,255,0.20); --shadow: rgba(0,0,0,0.50); }
+
+/* ── Page scaffold ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  background: var(--bg-window);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 24px 40px;
+  transition: background 0.2s;
+}
+
+/* ── Dark mode toggle label ── */
+.dm-label {
+  align-self: flex-end;
+  margin-bottom: 16px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dm-label::before {
+  content: '';
+  display: inline-block;
+  width: 28px; height: 16px;
+  background: var(--toggle-track-off);
+  border-radius: 8px;
+  position: relative;
+  transition: background 0.15s;
+}
+#dm-toggle:checked ~ body .dm-label::before,
+#dm-toggle:checked + * .dm-label::before { background: var(--toggle-track-on); }
+
+/* ── State label ── */
+.state-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ── Menu bar strip ── */
+.menubar-strip {
+  width: 220px;
+  background: linear-gradient(to bottom, #D0D0D0, #C8C8C8);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--label-secondary);
+}
+#dm-toggle:checked ~ * .menubar-strip {
+  background: linear-gradient(to bottom, #3A3A3A, #323232);
+}
+.menubar-icon {
+  font-size: 13px;
+  color: var(--label-primary);
+  line-height: 1;
+}
+.menubar-label { font-size: 10px; color: var(--label-secondary); }
+
+/* ── Popover frame ── */
+.popover {
+  width: 220px;
+  background: var(--bg-popover);
+  border-radius: 0 0 8px 8px;
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.20),
+    0 4px 20px var(--shadow),
+    0 1px 4px rgba(0,0,0,0.10);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Header row: toggle + quit ── */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* ── Toggle (macOS-style switch) ── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle-label {
+  font-size: 13px;
+  color: var(--label-primary);
+  line-height: 1.2;
+}
+.toggle-switch {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--toggle-track-off);
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+.toggle-track.on { background: var(--toggle-track-on); }
+.toggle-thumb-el {
+  position: absolute;
+  top: 2px;
+  width: 16px; height: 16px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.30);
+  transition: left 0.15s;
+  left: 2px;
+}
+.toggle-track.on ~ .toggle-thumb-el,
+.toggle-switch.on .toggle-thumb-el { left: 18px; }
+
+/* ── Quit button ── */
+.btn-quit {
+  width: 22px; height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--label-secondary);
+  font-size: 11px;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.btn-quit:hover { background: var(--btn-surface); color: var(--label-primary); }
+/* power symbol via unicode */
+.btn-quit::before { content: "⏻"; font-size: 12px; }
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 0 -12px 8px -12px;
+}
+
+/* ── Action buttons ── */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  border: 0.5px solid var(--btn-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  transition: opacity 0.12s, filter 0.12s;
+  position: relative;
+}
+
+/* Start — accent (controlAccentColor) */
+.btn-start {
+  background: var(--accent);
+  color: var(--accent-label);
+  border-color: transparent;
+}
+.btn-start:hover { filter: brightness(1.08); }
+.btn-start:active { filter: brightness(0.92); }
+
+/* Stop — destructive tint */
+.btn-stop {
+  background: var(--btn-surface);
+  color: var(--destructive);
+  border-color: var(--btn-border);
+}
+.btn-stop:hover { background: rgba(255,59,48,0.08); }
+.btn-stop:active { background: rgba(255,59,48,0.16); }
+
+/* Disabled state */
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.36;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* SF Symbols approximations via Unicode */
+.icon-mic::before    { content: "🎙"; font-size: 12px; }
+.icon-stop::before   { content: "⏹"; font-size: 11px; }
+
+/* ── Annotation layer (designer notes) ── */
+.annotations {
+  margin-top: 24px;
+  width: 220px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  line-height: 1.6;
+}
+.annotations h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-primary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ann-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.ann-key { color: var(--accent); font-weight: 600; min-width: 16px; }
+</style>
+</head>
+<body>
+
+<input type="checkbox" id="dm-toggle">
+
+<label for="dm-toggle" class="dm-label">Dark mode</label>
+
+<div class="state-label">State: Idle — Audio Mode</div>
+
+<!-- Menu bar strip (context indicator) -->
+<div class="menubar-strip">
+  <span class="menubar-icon">🎙</span>
+  <span class="menubar-label">mic (idle, not recording)</span>
+</div>
+
+<!-- Popover -->
+<div class="popover">
+
+  <!-- Header: toggle + quit -->
+  <div class="header-row">
+    <div class="toggle-row">
+      <!-- Toggle OFF -->
+      <div class="toggle-switch">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb-el"></div>
+      </div>
+      <span class="toggle-label">Include Video</span>
+    </div>
+    <button class="btn-quit" title="Quit" aria-label="Quit MacRecordWidget"></button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Actions -->
+  <div class="btn-stack">
+    <button class="btn btn-start" aria-label="Start recording">
+      <span class="icon-mic"></span>
+      Start
+    </button>
+    <button class="btn btn-stop disabled" aria-label="Stop recording" aria-disabled="true">
+      <span class="icon-stop"></span>
+      Stop
+    </button>
+  </div>
+
+</div>
+
+<!-- Designer annotations -->
+<div class="annotations">
+  <h3>Component spec</h3>
+  <div class="ann-row"><span class="ann-key">A</span><span>Toggle — SwiftUI <code>Toggle</code> with <code>.toggleStyle(.switch)</code>. Enabled.</span></div>
+  <div class="ann-row"><span class="ann-key">B</span><span>Quit — SwiftUI <code>Button</code> with <code>.buttonStyle(.plain)</code>. SF Symbol: <code>power</code> at 11pt.</span></div>
+  <div class="ann-row"><span class="ann-key">C</span><span>Start — SwiftUI <code>Button</code> with <code>.buttonStyle(.borderedProminent)</code>. Uses <code>.accentColor</code> / <code>controlAccentColor</code>. SF Symbol: <code>mic.fill</code>. Enabled.</span></div>
+  <div class="ann-row"><span class="ann-key">D</span><span>Stop — SwiftUI <code>Button</code> with <code>.buttonStyle(.bordered)</code> + <code>.tint(.red)</code> (semantic destructive). Disabled (<code>.disabled(true)</code>).</span></div>
+  <div class="ann-row"><span class="ann-key">E</span><span>Divider — SwiftUI <code>Divider()</code>. Full bleed with -12pt horizontal inset.</span></div>
+  <div class="ann-row"><span class="ann-key">F</span><span>Menu bar icon: <code>mic</code> symbol, <code>.primary</code> foreground (not green — not recording).</span></div>
+  <div class="ann-row"><span class="ann-key">G</span><span>Popover width: 220pt. Padding: 12pt all sides. Button height: 28pt (meets 22pt minimum). Gap between buttons: 6pt.</span></div>
+  <div class="ann-row"><span class="ann-key">H</span><span>All text: <code>.font(.body)</code> (13pt SF Pro). Quit icon: <code>.font(.system(size: 11))</code>.</span></div>
+</div>
+
+</body>
+</html>

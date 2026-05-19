@@ -18,9 +18,9 @@
 
 ### Stage 2: Design
 
-- [ ] **UI / UX Design**
-  - [ ] **macOS DESIGNER:** produce HIG-compliant mocks → [Mocks](../generated-docs/design/) -- done when: mocks present in generated-docs/design/ and human approves
-  - [ ] 👤💾 **HUMAN:** review and approve mocks
+- [x] **UI / UX Design**
+  - [x] **macOS DESIGNER:** produce HIG-compliant mocks → [Mocks](../generated-docs/design/) -- done when: mocks present in generated-docs/design/ and human approves
+  - [x] 👤💾 **HUMAN:** review and approve mocks
 
 ---
 

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget — Popover: Video Mode (Idle)</title>
+<style>
+:root {
+  --bg-window:          #ECECEC;
+  --bg-popover:         #F2F2F2;
+  --label-primary:      rgba(0,0,0,0.85);
+  --label-secondary:    rgba(0,0,0,0.50);
+  --label-tertiary:     rgba(0,0,0,0.26);
+  --separator:          rgba(0,0,0,0.12);
+  --accent:             #007AFF;
+  --accent-label:       #FFFFFF;
+  --destructive:        rgba(255,59,48,0.90);
+  --btn-surface:        rgba(0,0,0,0.06);
+  --btn-border:         rgba(0,0,0,0.14);
+  --toggle-track-off:   rgba(0,0,0,0.16);
+  --toggle-track-on:    #34C759;
+  --toggle-thumb:       #FFFFFF;
+  --icon-green:         #34C759;
+  --shadow:             rgba(0,0,0,0.18);
+  --info-bg:            rgba(0,122,255,0.08);
+  --info-fg:            #005BB5;
+}
+
+#dm-toggle { display: none; }
+#dm-toggle:checked ~ * {
+  --bg-window: #1E1E1E;
+  --bg-popover: #2C2C2E;
+  --label-primary: rgba(255,255,255,0.85);
+  --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26);
+  --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF;
+  --btn-surface: rgba(255,255,255,0.10);
+  --btn-border: rgba(255,255,255,0.16);
+  --toggle-track-off: rgba(255,255,255,0.20);
+  --shadow: rgba(0,0,0,0.50);
+  --info-bg: rgba(10,132,255,0.14);
+  --info-fg: #64AFFF;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  background: var(--bg-window);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 40px;
+  transition: background 0.2s;
+}
+
+.dm-label {
+  align-self: flex-end;
+  margin-bottom: 16px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.state-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.menubar-strip {
+  width: 220px;
+  background: linear-gradient(to bottom, #D0D0D0, #C8C8C8);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  gap: 6px;
+}
+#dm-toggle:checked ~ * .menubar-strip {
+  background: linear-gradient(to bottom, #3A3A3A, #323232);
+}
+.menubar-icon { font-size: 13px; color: var(--label-primary); line-height: 1; }
+.menubar-label { font-size: 10px; color: var(--label-secondary); }
+
+.popover {
+  width: 220px;
+  background: var(--bg-popover);
+  border-radius: 0 0 8px 8px;
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.20),
+    0 4px 20px var(--shadow),
+    0 1px 4px rgba(0,0,0,0.10);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toggle-row { display: flex; align-items: center; gap: 8px; }
+.toggle-label { font-size: 13px; color: var(--label-primary); }
+
+/* Toggle ON */
+.toggle-switch {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--toggle-track-on); /* ON */
+  border-radius: 10px;
+}
+.toggle-thumb-el {
+  position: absolute;
+  top: 2px; left: 18px; /* ON position */
+  width: 16px; height: 16px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.30);
+}
+
+.btn-quit {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  border-radius: 4px; color: var(--label-secondary); font-size: 11px; padding: 0;
+}
+.btn-quit::before { content: "⏻"; font-size: 12px; }
+
+.divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 0 -12px 8px -12px;
+}
+
+/* Accessibility hint */
+.hint-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: var(--info-bg);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--info-fg);
+  line-height: 1.4;
+}
+.hint-icon { font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+
+.btn-stack { display: flex; flex-direction: column; gap: 6px; }
+
+.btn {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  border: 0.5px solid transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.btn-start {
+  background: var(--accent);
+  color: var(--accent-label);
+  border-color: transparent;
+}
+.btn-start:hover { filter: brightness(1.08); }
+
+.btn-stop {
+  background: var(--btn-surface);
+  color: var(--destructive);
+  border-color: var(--btn-border);
+  opacity: 0.40;
+  cursor: default;
+  pointer-events: none;
+}
+
+.icon-video::before  { content: "📹"; font-size: 12px; }
+.icon-stop::before   { content: "⏹"; font-size: 11px; }
+
+.annotations {
+  margin-top: 24px;
+  width: 220px;
+  font-size: 11px;
+  color: var(--label-secondary);
+  line-height: 1.6;
+}
+.annotations h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-primary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ann-row { display: flex; gap: 6px; margin-bottom: 2px; }
+.ann-key { color: var(--accent); font-weight: 600; min-width: 16px; }
+</style>
+</head>
+<body>
+
+<input type="checkbox" id="dm-toggle">
+<label for="dm-toggle" class="dm-label">Dark mode</label>
+
+<div class="state-label">State: Video Mode — Idle (not recording)</div>
+
+<div class="menubar-strip">
+  <span class="menubar-icon">📹</span>
+  <span class="menubar-label">video (idle, video mode on)</span>
+</div>
+
+<div class="popover">
+
+  <div class="header-row">
+    <div class="toggle-row">
+      <!-- Toggle ON -->
+      <div class="toggle-switch">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb-el"></div>
+      </div>
+      <span class="toggle-label">Include Video</span>
+    </div>
+    <button class="btn-quit" title="Quit" aria-label="Quit MacRecordWidget"></button>
+  </div>
+
+  <!-- Accessibility hint — shown when video mode is on and permission not yet granted -->
+  <div class="hint-row" role="note" aria-label="Accessibility permission required for full-screen video">
+    <span class="hint-icon">ⓘ</span>
+    <span>Requires Accessibility permission to full-screen Photo Booth.</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="btn-stack">
+    <button class="btn btn-start" aria-label="Start recording with video">
+      <span class="icon-video"></span>
+      Start
+    </button>
+    <button class="btn btn-stop disabled" aria-disabled="true" aria-label="Stop recording (unavailable)">
+      <span class="icon-stop"></span>
+      Stop
+    </button>
+  </div>
+
+</div>
+
+<div class="annotations">
+  <h3>Component spec — video mode idle</h3>
+  <div class="ann-row"><span class="ann-key">A</span><span>Toggle: <code>.toggleStyle(.switch)</code>, <code>isOn: $recordingManager.videoEnabled</code>. ON state. Green track = <code>toggleStyle</code> default when on. Enabled (not recording).</span></div>
+  <div class="ann-row"><span class="ann-key">B</span><span>Accessibility hint: inline <code>HStack</code> with SF Symbol <code>info.circle</code> (11pt) + <code>Text</code> at 11pt / <code>.font(.caption)</code>. Background: <code>Color.accentColor.opacity(0.08)</code>. Shown whenever video mode is enabled and Accessibility permission status is unknown or not granted. Hidden once permission is confirmed.</span></div>
+  <div class="ann-row"><span class="ann-key">C</span><span>Start: <code>.buttonStyle(.borderedProminent)</code>. SF Symbol changes to <code>video.fill</code> when <code>videoEnabled == true</code> (matches menu bar icon logic).</span></div>
+  <div class="ann-row"><span class="ann-key">D</span><span>Menu bar icon: <code>video</code> (not filled, not green — idle).</span></div>
+  <div class="ann-row"><span class="ann-key">E</span><span>AC-UI-5 coverage: icon is <code>video</code> (not <code>mic</code>) because <code>videoEnabled == true</code>. Idle so not green, not filled.</span></div>
+  <div class="ann-row"><span class="ann-key">F</span><span>The hint row is a non-intrusive contextual note. It does not block action. If the user denies Accessibility, the error state mock shows the full error treatment.</span></div>
+</div>
+
+</body>
+</html>

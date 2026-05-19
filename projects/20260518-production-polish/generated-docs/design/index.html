@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget — Design Mocks Index</title>
+<style>
+:root {
+  --bg: #F5F5F7;
+  --card-bg: #FFFFFF;
+  --label: rgba(0,0,0,0.85);
+  --secondary: rgba(0,0,0,0.50);
+  --accent: #007AFF;
+  --border: rgba(0,0,0,0.10);
+  --shadow: rgba(0,0,0,0.10);
+  --badge-idle-bg: rgba(0,0,0,0.06); --badge-idle-fg: rgba(0,0,0,0.50);
+  --badge-rec-bg: rgba(52,199,89,0.12); --badge-rec-fg: #1A7A30;
+  --badge-video-bg: rgba(0,122,255,0.10); --badge-video-fg: #005BB5;
+  --badge-error-bg: rgba(255,59,48,0.10); --badge-error-fg: #C0392B;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1C1C1E;
+    --card-bg: #2C2C2E;
+    --label: rgba(255,255,255,0.85);
+    --secondary: rgba(255,255,255,0.55);
+    --border: rgba(255,255,255,0.12);
+    --shadow: rgba(0,0,0,0.40);
+    --accent: #0A84FF;
+    --badge-idle-bg: rgba(255,255,255,0.10); --badge-idle-fg: rgba(255,255,255,0.55);
+    --badge-rec-bg: rgba(52,199,89,0.18); --badge-rec-fg: #30D158;
+    --badge-video-bg: rgba(10,132,255,0.16); --badge-video-fg: #64AFFF;
+    --badge-error-bg: rgba(255,69,58,0.16); --badge-error-fg: #FF6B6B;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 40px 24px;
+  color: var(--label);
+}
+.page-header {
+  max-width: 680px;
+  margin: 0 auto 32px;
+}
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--label);
+  margin-bottom: 4px;
+}
+.page-header p {
+  font-size: 13px;
+  color: var(--secondary);
+}
+.grid {
+  max-width: 680px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 520px) {
+  .grid { grid-template-columns: 1fr; }
+}
+.card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+  padding: 16px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+.card:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+  transform: translateY(-1px);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label);
+}
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.03em;
+}
+.badge-idle  { background: var(--badge-idle-bg);  color: var(--badge-idle-fg); }
+.badge-rec   { background: var(--badge-rec-bg);   color: var(--badge-rec-fg); }
+.badge-video { background: var(--badge-video-bg); color: var(--badge-video-fg); }
+.badge-error { background: var(--badge-error-bg); color: var(--badge-error-fg); }
+.card-desc {
+  font-size: 12px;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+.card-ac {
+  font-size: 10px;
+  color: var(--secondary);
+  font-variant-numeric: tabular-nums;
+}
+.card-link {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  margin-top: auto;
+}
+.card-link::after { content: " →"; }
+.feature-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(0,122,255,0.08);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>MacRecordWidget — Popover Mocks</h1>
+  <p>Feature: 20260518-production-polish &nbsp;·&nbsp; 4 states &nbsp;·&nbsp; Light + dark mode &nbsp;·&nbsp; Ready for PM review</p>
+</div>
+
+<div class="grid">
+
+  <a class="card" href="popover-idle.html">
+    <div class="card-header">
+      <span class="card-title">Idle — Audio Mode</span>
+      <span class="badge badge-idle">Idle</span>
+    </div>
+    <p class="card-desc">Default state on launch. Video toggle is off. Start uses accent color (<code>controlAccentColor</code>). Stop is disabled.</p>
+    <p class="card-ac">Covers: AC-UI-1, AC-UI-2, AC-UI-3, AC-UI-4, AC-UI-5, AC-UI-6</p>
+    <span class="card-link">Open mock</span>
+  </a>
+
+  <a class="card" href="popover-recording.html">
+    <div class="card-header">
+      <span class="card-title">Recording in Progress</span>
+      <span class="badge badge-rec">Recording</span>
+    </div>
+    <p class="card-desc">Active recording. Green badge with pulsing dot (Reduce Motion aware). Stop is the primary action — full destructive fill. Start and toggle disabled.</p>
+    <p class="card-ac">Covers: AC-UI-1, AC-UI-5, AC-SW-6; menu bar icon green mic.fill</p>
+    <span class="card-link">Open mock</span>
+  </a>
+
+  <a class="card" href="popover-video-mode.html">
+    <div class="card-header">
+      <span class="card-title">Video Mode — Idle</span>
+      <span class="badge badge-video">Video</span>
+    </div>
+    <p class="card-desc">Toggle is on. Contextual hint about Accessibility permission shown inline. Start icon changes to video. Menu bar icon switches to <code>video</code> symbol.</p>
+    <p class="card-ac">Covers: AC-UI-5; sets up error state flow</p>
+    <span class="card-link">Open mock</span>
+  </a>
+
+  <a class="card" href="popover-error.html">
+    <div class="card-header">
+      <span class="card-title">Error — Permission Denied</span>
+      <span class="badge badge-error">Error</span>
+    </div>
+    <p class="card-desc">Accessibility permission denied. Error banner with direct link to Privacy &amp; Security. Both action buttons disabled. <code>isRecording</code> stays false — no partial state.</p>
+    <p class="card-ac">Covers: AC-SW-5; VoiceOver announcement spec included</p>
+    <span class="card-link">Open mock</span>
+  </a>
+
+</div>
+
+</body>
+</html>
