@@ -62,12 +62,12 @@
 
 - [x] **Swift Engineer Issues List**
   - [x] **4.4 EM:** produce and approve Swift Engineer Issues List -- done when: Status: Approved — EM set in list; one issue per logical unit
-  - [ ] **4.5 SWIFT ENGINEER:** create GitHub Issues from approved list -- done when: all issues exist in GitHub with correct labels
+  - [x] **4.5 SWIFT ENGINEER:** create GitHub Issues from approved list -- done when: all issues exist in GitHub with correct labels
 
-- [ ] **macOS Development**
-  - [ ] **4.6 SWIFT ENGINEER:** implement Track 1 UI changes → `MacRecordWidget/MacRecordWidgetApp.swift` -- done when: AC-UI-1 through AC-UI-6 satisfied; builds clean; verified against mocks
-  - [ ] **4.7 SWIFT ENGINEER:** implement Track 2 Swift modernization → `MacRecordWidget/` -- done when: AC-SW-1 through AC-SW-8 satisfied; builds clean on macOS 14 SDK; CI passes
-  - [ ] **4.8 💾 EM:** review and approve Swift Engineer implementation -- done when: all ACs verified; no open blockers
+- [x] **macOS Development**
+  - [x] **4.6 SWIFT ENGINEER:** implement Track 1 UI changes → `MacRecordWidget/MacRecordWidgetApp.swift` -- done when: AC-UI-1 through AC-UI-6 satisfied; builds clean; verified against mocks
+  - [x] **4.7 SWIFT ENGINEER:** implement Track 2 Swift modernization → `MacRecordWidget/` -- done when: AC-SW-1 through AC-SW-8 satisfied; builds clean on macOS 14 SDK; CI passes
+  - [x] **4.8 💾 EM:** review and approve Swift Engineer implementation -- done when: all ACs verified; no open blockers
 
 ---
 
