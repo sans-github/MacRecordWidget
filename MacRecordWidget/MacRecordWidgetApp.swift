@@ -68,12 +68,7 @@ struct MacRecordWidgetApp: App {
             .padding(16)
             .frame(width: 200)
         } label: {
-            let icon = recordingManager.videoEnabled
-                ? (recordingManager.isRecording ? "video.fill" : "video")
-                : (recordingManager.isRecording ? "mic.fill" : "mic")
-            Image(systemName: icon)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(recordingManager.isRecording ? .green : .primary)
+            MenuBarIcon(isRecording: recordingManager.isRecording)
         }
         .menuBarExtraStyle(.window)
     }
@@ -155,5 +150,42 @@ private struct PulsingDot: View {
                     pulsing = false
                 }
             }
+    }
+}
+
+// MARK: - MenuBarIcon
+
+private struct MenuBarIcon: View {
+    let isRecording: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var blinkOpacity: Double = 1.0
+
+    private let dotColor = Color(red: 1.0, green: 0.620, blue: 0.200)
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Image(systemName: "record.circle")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(isRecording ? .green : .primary)
+
+            if isRecording {
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: 5, height: 5)
+                    .opacity(reduceMotion ? 1.0 : blinkOpacity)
+                    .offset(x: 2, y: 2)
+                    .accessibilityHidden(true)
+            }
+        }
+        .onChange(of: isRecording) { _, recording in
+            if recording && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    blinkOpacity = 0.15
+                }
+            } else {
+                blinkOpacity = 1.0
+            }
+        }
     }
 }
