@@ -10,7 +10,9 @@
       "Bash(pkill.*)",
       "Bash(pdfinfo.*)",
       "Bash(command -v.*)",
-      "Bash(pbpaste)"
+      "Bash(pbpaste)",
+      "Bash(pandoc.*)",
+      "Bash(mkdir.*)"
     ]
   }
 }
