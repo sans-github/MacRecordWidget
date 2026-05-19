@@ -10,9 +10,9 @@
 
 ### Stage 1: Discovery
 
-- [ ] **Requirements Finalization**
-  - [ ] **PM:** review PRD with human, surface open questions, confirm scope → [PRD](../product-specs/prd.md) -- done when: PRD body written and human approves
-  - [ ] 👤💾 **HUMAN:** review and approve PRD
+- [x] **Requirements Finalization**
+  - [x] **PM:** review PRD with human, surface open questions, confirm scope → [PRD](../product-specs/prd.md) -- done when: PRD body written and human approves
+  - [x] 👤💾 **HUMAN:** review and approve PRD
 
 ---
 
