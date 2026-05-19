@@ -57,7 +57,7 @@ final class RecordingManager {
         isRecording = true
 
         if videoEnabled {
-            await launchPhotoBooth()
+            launchPhotoBooth()
         }
     }
 
@@ -84,20 +84,7 @@ final class RecordingManager {
         }
     }
 
-    private func launchPhotoBooth() async {
+    private func launchPhotoBooth() {
         NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
-        // Wait for Photo Booth to finish launching before sending AX event
-        try? await Task.sleep(for: .seconds(2.0))
-
-        let task = Process()
-        task.launchPath = "/usr/bin/osascript"
-        task.arguments = ["-e",
-            "tell application \"System Events\" to tell process \"Photo Booth\" " +
-            "to set value of attribute \"AXFullScreen\" of window 1 to true"
-        ]
-        // Full-screen is best-effort. If it fails (permission not granted, window not ready,
-        // etc.) Photo Booth still opens -- it just won't be full-screen. Not fatal.
-        try? task.run()
-        task.waitUntilExit()
     }
 }
