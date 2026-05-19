@@ -10,7 +10,11 @@
       "Bash(open MacVoiceRecordWidget/MacVoiceRecordWidget.app)",
       "Bash(open MacVoiceRecordWidget.app)",
       "Bash(open /Applications/MacVoiceRecordWidget.app)",
-      "Bash(README.md:*)"
+      "Bash(README.md:*)",
+      "Bash(open *)",
+      "Bash(pdfinfo *)",
+      "Bash(command -v *)",
+      "Bash(pbpaste)"
     ]
   }
 }
