@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Test Plan: Production Polish</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Test Plan: Production Polish</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#test-plan-production-polish-manual-smoke"
+id="toc-test-plan-production-polish-manual-smoke"><span
+class="toc-section-number">1</span> Test Plan: Production Polish (Manual
+Smoke)</a>
+<ul>
+<li><a href="#scope" id="toc-scope"><span
+class="toc-section-number">1.1</span> Scope</a></li>
+<li><a href="#test-cases" id="toc-test-cases"><span
+class="toc-section-number">1.2</span> Test Cases</a></li>
+<li><a href="#ac-coverage-map" id="toc-ac-coverage-map"><span
+class="toc-section-number">1.3</span> AC Coverage Map</a></li>
+<li><a href="#test-results" id="toc-test-results"><span
+class="toc-section-number">1.4</span> Test Results</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 data-number="1" id="test-plan-production-polish-manual-smoke"><span
+class="header-section-number">1</span> Test Plan: Production Polish
+(Manual Smoke)</h1>
+<h2 data-number="1.1" id="scope"><span
+class="header-section-number">1.1</span> Scope</h2>
+<p><strong>In scope:</strong> Manual smoke verification of all AC-UI-1
+through AC-UI-6 and AC-SW-1 through AC-SW-8 for the production polish
+pass. Ten scenarios covering icon state, recording lifecycle, error
+handling, double-tap guard, popover behavior, quit safety, and color
+theming.</p>
+<p><strong>Out of scope:</strong> XCUITest automation (explicitly
+deferred in PRD), App Store submission checks, network/backend testing
+(no backend exists), and any feature not listed in the PRD.</p>
+<p><strong>Risk summary:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Covered by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Icon state inconsistency across video/audio modes</td>
+<td>TC-01, TC-02, TC-03, TC-04</td>
+</tr>
+<tr>
+<td>Duplicate shortcut invocations on rapid tap</td>
+<td>TC-06</td>
+</tr>
+<tr>
+<td>Accessibility denial leaving partial state</td>
+<td>TC-05</td>
+</tr>
+<tr>
+<td>Popover not reopenable while recording</td>
+<td>TC-07</td>
+</tr>
+<tr>
+<td>Quit before Stop fires shortcut silently</td>
+<td>TC-08</td>
+</tr>
+<tr>
+<td>Color regressions in non-default themes</td>
+<td>TC-09, TC-10</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.2" id="test-cases"><span
+class="header-section-number">1.2</span> Test Cases</h2>
+<h3 data-number="1.2.1"
+id="tc-01-idle-state-icon-audio-and-video-modes"><span
+class="header-section-number">1.2.1</span> TC-01: Idle state icon (audio
+and video modes)</h3>
+<p><strong>AC covered:</strong> AC-UI-5</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>macOS menubar is visible</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Observe the menu bar icon with video mode toggle OFF (default).</li>
+<li>Note the icon symbol displayed.</li>
+<li>Click the menu bar icon to open the popover.</li>
+<li>Toggle video mode ON.</li>
+<li>Close the popover (click away or press Escape).</li>
+<li>Observe the menu bar icon again.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 2: icon shows <code>mic</code> (outline, non-filled,
+non-green).</li>
+<li>Step 6: icon shows <code>video</code> (outline, non-filled,
+non-green).</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.2"
+id="tc-02-start-recording----icon-and-popover"><span
+class="header-section-number">1.2.2</span> TC-02: Start recording --
+icon and popover</h3>
+<p><strong>AC covered:</strong> AC-UI-5, AC-SW-6, AC-SW-7, AC-SW-8</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>A Shortcut named "Start" exists and is functional</li>
+<li>Video mode is OFF</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Tap the Start button.</li>
+<li>Observe the popover immediately after tapping.</li>
+<li>Observe the menu bar icon after the popover dismisses.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 3: popover dismisses (not left open).</li>
+<li>Step 4: icon shows <code>mic.fill</code> in green, indicating
+recording is active.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.3"
+id="tc-03-stop-recording----icon-and-popover"><span
+class="header-section-number">1.2.3</span> TC-03: Stop recording -- icon
+and popover</h3>
+<p><strong>AC covered:</strong> AC-UI-5, AC-SW-7, AC-SW-8</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and actively recording (icon shows
+<code>mic.fill</code> green)</li>
+<li>A Shortcut named "Stop" exists and is functional</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Confirm the Start button is not the primary action; Stop button is
+present.</li>
+<li>Tap the Stop button.</li>
+<li>Observe the popover immediately after tapping.</li>
+<li>Observe the menu bar icon after the popover dismisses.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 4: popover dismisses.</li>
+<li>Step 5: icon returns to <code>mic</code> (outline, non-green),
+indicating idle state.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.4"
+id="tc-04-video-mode-toggle----disabled-while-recording-icon-reflects-state"><span
+class="header-section-number">1.2.4</span> TC-04: Video mode toggle --
+disabled while recording, icon reflects state</h3>
+<p><strong>AC covered:</strong> AC-UI-5, AC-SW-6</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>Video mode is OFF</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Toggle video mode ON. Close the popover.</li>
+<li>Observe the menu bar icon (should show <code>video</code>).</li>
+<li>Click the menu bar icon. Tap Start. Confirm recording begins (icon
+shows <code>video.fill</code> green).</li>
+<li>Click the menu bar icon to reopen the popover while recording.</li>
+<li>Attempt to interact with the video mode toggle.</li>
+<li>Observe whether the toggle is interactive.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 3: icon shows <code>video</code> (outline, non-green).</li>
+<li>Step 4: icon shows <code>video.fill</code> in green after recording
+starts.</li>
+<li>Step 7: video mode toggle is disabled (not interactive) while
+recording is in progress.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.5"
+id="tc-05-accessibility-denied----alert-shown-isrecording-stays-false"><span
+class="header-section-number">1.2.5</span> TC-05: Accessibility denied
+-- alert shown, isRecording stays false</h3>
+<p><strong>AC covered:</strong> AC-SW-5</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>Video mode is ON</li>
+<li>Accessibility permission for the app is NOT granted (revoke in
+System Settings &gt; Privacy &amp; Security &gt; Accessibility if
+previously granted)</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Confirm video mode is ON.</li>
+<li>Tap Start.</li>
+<li>When macOS prompts for Accessibility permission, deny it (click
+"Don't Allow" or equivalent).</li>
+<li>Observe any alert or error indicator shown by the app.</li>
+<li>Observe the menu bar icon.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 5: app displays an NSAlert or visible error indicator
+explaining that Accessibility permission was denied.</li>
+<li>Step 6: icon remains <code>video</code> (non-green);
+<code>isRecording</code> is false; no recording is in progress.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.6"
+id="tc-06-double-tap-guard----rapid-start-taps-produce-one-invocation"><span
+class="header-section-number">1.2.6</span> TC-06: Double-tap guard --
+rapid Start taps produce one invocation</h3>
+<p><strong>AC covered:</strong> AC-SW-6</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>A Shortcut named "Start" exists and is functional</li>
+<li>Video mode is OFF</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Tap the Start button two or more times as quickly as possible (rapid
+consecutive taps).</li>
+<li>Observe the Shortcuts app (or the shortcut's effect) to count how
+many times the "Start" shortcut was triggered.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>The "Start" shortcut fires exactly once regardless of how many rapid
+taps were made. After the first tap, the Start button is visually
+disabled or does not respond to further taps until the invocation
+completes.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.7" id="tc-07-popover-reopen-while-recording"><span
+class="header-section-number">1.2.7</span> TC-07: Popover reopen while
+recording</h3>
+<p><strong>AC covered:</strong> AC-SW-8</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and actively recording (icon shows
+<code>mic.fill</code> green)</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Double-click the menu bar status item (or single-click, depending on
+macOS behavior for MenuBarExtra).</li>
+<li>Observe whether the popover opens.</li>
+<li>If it opens, verify the Stop button is present and the app UI is
+functional.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Popover opens successfully while recording is active.</li>
+<li>Stop button is visible and the UI is not stuck or broken.</li>
+<li>This verifies that the dismissal approach (orderOut) does not
+prevent reopening.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.8"
+id="tc-08-quit-while-recording----stop-fires-before-termination"><span
+class="header-section-number">1.2.8</span> TC-08: Quit while recording
+-- Stop fires before termination</h3>
+<p><strong>AC covered:</strong> AC-SW-7 (state integrity on quit
+path)</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and actively recording (icon shows
+<code>mic.fill</code> green)</li>
+<li>A Shortcut named "Stop" exists and is functional</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Click the menu bar icon to open the popover.</li>
+<li>Tap the Quit button (power icon).</li>
+<li>Observe whether a Stop shortcut fires before the app exits (e.g. via
+Shortcuts notification or recording stopping in Voice Memos).</li>
+<li>Verify the app terminates.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>The Stop shortcut fires (or recording stops) before the app fully
+terminates. The app does not quit silently while leaving a recording
+session open.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.9"
+id="tc-09-light-mode-and-dark-mode----start-and-stop-button-colors"><span
+class="header-section-number">1.2.9</span> TC-09: Light mode and dark
+mode -- Start and Stop button colors</h3>
+<p><strong>AC covered:</strong> AC-UI-1, AC-UI-2</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>macOS is in Light mode</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Open the popover. Observe the Start button color (should match the
+system accent color).</li>
+<li>Observe the Stop button color (should appear as a
+destructive/red-tinted control).</li>
+<li>Switch macOS to Dark mode (System Settings &gt; Appearance &gt;
+Dark).</li>
+<li>Open the popover again.</li>
+<li>Observe the Start button color in Dark mode.</li>
+<li>Observe the Stop button color in Dark mode.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Steps 1 and 5: Start button uses <code>controlAccentColor</code>
+(reflects the current accent color setting) in both modes. Color adjusts
+naturally with the system theme.</li>
+<li>Steps 2 and 6: Stop button uses the system destructive color
+(red-toned, not a hardcoded hex) in both Light and Dark mode. The color
+reads correctly in both themes without looking out of place.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h3 data-number="1.2.10"
+id="tc-10-non-default-accent-color----start-button-reflects-change"><span
+class="header-section-number">1.2.10</span> TC-10: Non-default accent
+color -- Start button reflects change</h3>
+<p><strong>AC covered:</strong> AC-UI-2</p>
+<p><strong>Preconditions:</strong></p>
+<ul>
+<li>App is running and not recording</li>
+<li>macOS accent color is set to a non-default value (e.g. Orange or
+Purple) via System Settings &gt; Appearance &gt; Accent color</li>
+</ul>
+<p><strong>Steps:</strong></p>
+<ol type="1">
+<li>Open the popover.</li>
+<li>Observe the Start button tint color.</li>
+<li>Change the macOS accent color to a different non-default color (e.g.
+from Orange to Purple) in System Settings.</li>
+<li>Return to the app and open the popover.</li>
+<li>Observe the Start button tint color again.</li>
+</ol>
+<p><strong>Expected result:</strong></p>
+<ul>
+<li>Step 2: Start button tint matches the currently selected accent
+color.</li>
+<li>Step 5: Start button tint updates to reflect the newly selected
+accent color. The button does not retain the old color or a hardcoded
+fallback.</li>
+</ul>
+<p><strong>Pass / Fail:</strong> ___</p>
+<hr />
+<h2 data-number="1.3" id="ac-coverage-map"><span
+class="header-section-number">1.3</span> AC Coverage Map</h2>
+<table>
+<thead>
+<tr>
+<th>AC</th>
+<th>Test case(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-UI-1</td>
+<td>TC-09</td>
+</tr>
+<tr>
+<td>AC-UI-2</td>
+<td>TC-09, TC-10</td>
+</tr>
+<tr>
+<td>AC-UI-3</td>
+<td>Visual inspection during any TC (click targets &gt;= 44pt)</td>
+</tr>
+<tr>
+<td>AC-UI-4</td>
+<td>Visual inspection during any TC (no hardcoded font sizes)</td>
+</tr>
+<tr>
+<td>AC-UI-5</td>
+<td>TC-01, TC-02, TC-03, TC-04</td>
+</tr>
+<tr>
+<td>AC-UI-6</td>
+<td>Visual inspection during any TC (no controls touching window
+edge)</td>
+</tr>
+<tr>
+<td>AC-SW-1</td>
+<td>Not directly testable via manual smoke (code-level AC; verified by
+EM in Step 4.8)</td>
+</tr>
+<tr>
+<td>AC-SW-2</td>
+<td>Not directly testable via manual smoke (project-level AC; verified
+by EM in Step 4.8)</td>
+</tr>
+<tr>
+<td>AC-SW-3</td>
+<td>Not directly testable via manual smoke (code-level AC; verified by
+EM in Step 4.8)</td>
+</tr>
+<tr>
+<td>AC-SW-4</td>
+<td>Covered indirectly by TC-02 (shortcut launch failure would surface
+an indicator)</td>
+</tr>
+<tr>
+<td>AC-SW-5</td>
+<td>TC-05</td>
+</tr>
+<tr>
+<td>AC-SW-6</td>
+<td>TC-04, TC-06</td>
+</tr>
+<tr>
+<td>AC-SW-7</td>
+<td>TC-02, TC-03, TC-08</td>
+</tr>
+<tr>
+<td>AC-SW-8</td>
+<td>TC-02, TC-03, TC-07</td>
+</tr>
+</tbody>
+</table>
+<p>Note: AC-UI-3, AC-UI-4, and AC-UI-6 are visual/structural ACs that
+apply as passive checks across all test cases. The tester should note
+any failure of these during any scenario and record it under the
+relevant TC's pass/fail entry.</p>
+<hr />
+<h2 data-number="1.4" id="test-results"><span
+class="header-section-number">1.4</span> Test Results</h2>
+<p>To be completed by the tester after execution.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS version tested</td>
+<td></td>
+</tr>
+<tr>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td>Tester</td>
+<td></td>
+</tr>
+<tr>
+<td>Overall result</td>
+<td>PASS / FAIL</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Result</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Any failing scenario must be reported to the Swift Engineer before
+this plan can be approved by EM. Include the TC ID, the observed result,
+and the macOS version in the bug report.</p>
+</body>
+</html>

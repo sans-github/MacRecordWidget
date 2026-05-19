@@ -75,9 +75,9 @@
 
 - [-] **QA Issues List** -- SKIPPED (manual smoke testing only)
 
-- [ ] **Test Planning**
-  - [ ] **5.1 QA:** produce manual smoke test plan → [Test Plan](../generated-docs/qa/test-plan.md) -- done when: file exists covering all smoke scenarios; scope: manual only, no XCUITest automation
-  - [ ] **5.2 💾 EM:** review and approve test plan -- done when: Status: Approved — EM set in file; every AC maps to at least one scenario
+- [x] **Test Planning**
+  - [x] **5.1 QA:** produce manual smoke test plan → [Test Plan](../generated-docs/qa/test-plan.md) -- done when: file exists covering all smoke scenarios; scope: manual only, no XCUITest automation
+  - [x] **5.2 💾 EM:** review and approve test plan -- done when: Status: Approved — EM set in file; every AC maps to at least one scenario
 
 - [ ] **Test Execution**
   - [ ] **5.3 QA:** execute manual smoke tests -- done when: all scenarios pass; results appended to test-plan.md
