@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Implementation Plan: Production Polish</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Implementation Plan: Production Polish</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#implementation-plan-production-polish"
+id="toc-implementation-plan-production-polish"><span
+class="toc-section-number">1</span> Implementation Plan: Production
+Polish</a>
+<ul>
+<li><a href="#summary" id="toc-summary"><span
+class="toc-section-number">1.1</span> Summary</a></li>
+<li><a href="#stage-4-engineering" id="toc-stage-4-engineering"><span
+class="toc-section-number">1.2</span> Stage 4: Engineering</a></li>
+<li><a href="#stage-5-quality-assurance"
+id="toc-stage-5-quality-assurance"><span
+class="toc-section-number">1.3</span> Stage 5: Quality
+Assurance</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 data-number="1" id="implementation-plan-production-polish"><span
+class="header-section-number">1</span> Implementation Plan: Production
+Polish</h1>
+<h2 data-number="1.1" id="summary"><span
+class="header-section-number">1.1</span> Summary</h2>
+<p>Two-track polish pass on a two-file SwiftUI macOS menu-bar app. No
+new components, no new dependencies, no infrastructure.</p>
+<table>
+<thead>
+<tr>
+<th>Track</th>
+<th>Scope</th>
+<th>Files touched</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Track 1: UI / HIG</td>
+<td>Button roles, semantic colors, typography, spacing</td>
+<td><code>MacRecordWidgetApp.swift</code></td>
+</tr>
+<tr>
+<td>Track 2: Swift modernization</td>
+<td><code>@Observable</code>, async/await, typed errors, double-tap
+guard, deployment target</td>
+<td><code>RecordingManager.swift</code>,
+<code>MacRecordWidgetApp.swift</code>, <code>project.pbxproj</code></td>
+</tr>
+</tbody>
+</table>
+<p>Active roles: Swift Engineer (implementation), macOS Designer
+(component spec), QA (manual smoke), EM (approvals).</p>
+<hr />
+<h2 data-number="1.2" id="stage-4-engineering"><span
+class="header-section-number">1.2</span> Stage 4: Engineering</h2>
+<h3 data-number="1.2.1"
+id="step-41----swift-engineer-produce-swift-detailed-design"><span
+class="header-section-number">1.2.1</span> Step 4.1 -- Swift Engineer:
+Produce Swift Detailed Design</h3>
+<p><strong>Who:</strong> Swift Engineer <strong>Artifact:</strong>
+<code>projects/20260518-production-polish/generated-docs/architecture/swift-detailed-design.md</code>
++ <code>.html</code> <strong>Done when:</strong> File exists at that
+path with all required sections, and Status: Approved -- EM is set in
+the file by EM.</p>
+<p>The design must cover:</p>
+<ul>
+<li>View tree breakdown (what changes in
+<code>MacRecordWidgetApp.swift</code>, annotated per AC)</li>
+<li><code>RecordingManager</code> refactor plan:
+<code>@Observable</code> migration, <code>async throws</code>
+signatures, <code>RecordingError</code> enum cases,
+<code>isInFlight</code> guard property</li>
+<li>Popover dismissal: confirm <code>orderOut</code> approach is
+retained; document the inline comment that will be added</li>
+<li>Error surface: how accessibility-denied and shortcut-launch-failed
+errors reach the user (NSAlert vs status label)</li>
+<li>Deployment target: confirm <code>MACOSX_DEPLOYMENT_TARGET</code> =
+14.0 in project settings</li>
+</ul>
+<h3 data-number="1.2.2"
+id="step-42----em-review-and-approve-swift-detailed-design"><span
+class="header-section-number">1.2.2</span> Step 4.2 -- EM: Review and
+approve Swift Detailed Design</h3>
+<p><strong>Who:</strong> EM <strong>Done when:</strong>
+<code>Status: Approved -- EM</code> written at top of
+<code>swift-detailed-design.md</code>.</p>
+<p>Blocking check: design must address every AC in the PRD (AC-UI-1
+through AC-UI-6, AC-SW-1 through AC-SW-8). Hard-block if any AC is
+unaddressed.</p>
+<h3 data-number="1.2.3"
+id="step-43----macos-designer-finalise-component-spec-from-approved-mocks"><span
+class="header-section-number">1.2.3</span> Step 4.3 -- macOS Designer:
+Finalise component spec from approved mocks</h3>
+<p><strong>Who:</strong> macOS Designer <strong>Artifact:</strong>
+Component spec file or section in
+<code>projects/20260518-production-polish/generated-docs/design/</code>
+(e.g. <code>component-spec.md</code>) <strong>Done when:</strong> Spec
+is present at that path and maps every UI element to its AppKit/SwiftUI
+control, semantic color token, and spacing value. EM confirms
+presence.</p>
+<p>The spec must cover:</p>
+<ul>
+<li>Start button: control type, tint/role, sizing</li>
+<li>Stop button: control type, destructive role, sizing</li>
+<li>Video toggle: control type, label style</li>
+<li>Quit button: control type, placement</li>
+<li>Popover padding, VStack spacing values</li>
+<li>All font references resolved to semantic macOS text styles</li>
+</ul>
+<h3 data-number="1.2.4"
+id="step-44----em-produce-swift-engineer-issues-list"><span
+class="header-section-number">1.2.4</span> Step 4.4 -- EM: Produce Swift
+Engineer Issues List</h3>
+<p><strong>Who:</strong> EM <strong>Done when:</strong> Issues list
+document produced and <code>Status: Approved -- EM</code> set. List must
+contain one GH issue per logical unit of work (at minimum: Track 1 UI
+changes, Track 2 observation migration, Track 2 concurrency refactor,
+Track 2 error handling, Track 2 deployment target bump).</p>
+<h3 data-number="1.2.5"
+id="step-45----swift-engineer-create-github-issues"><span
+class="header-section-number">1.2.5</span> Step 4.5 -- Swift Engineer:
+Create GitHub Issues</h3>
+<p><strong>Who:</strong> Swift Engineer <strong>Done when:</strong> All
+issues from the approved Issues List exist in GitHub with correct
+labels. EM verifies issue URLs are recorded.</p>
+<p>Depends on: Step 4.4 approved.</p>
+<h3 data-number="1.2.6"
+id="step-46----swift-engineer-implement-track-1-ui-changes"><span
+class="header-section-number">1.2.6</span> Step 4.6 -- Swift Engineer:
+Implement Track 1 UI changes</h3>
+<p><strong>Who:</strong> Swift Engineer <strong>Artifact:</strong>
+<code>MacRecordWidget/MacRecordWidgetApp.swift</code> <strong>Done
+when:</strong> All AC-UI-1 through AC-UI-6 are satisfied; app builds
+clean; no compiler warnings introduced. Verified by visual inspection
+against mocks and component spec.</p>
+<p>Changes:</p>
+<ul>
+<li>Stop button: <code>.destructive</code> role applied; no hardcoded
+color</li>
+<li>Start button: <code>.tint(.accentColor)</code> applied</li>
+<li>Control sizing audited; minimum 44pt click targets</li>
+<li>Semantic text styles applied; no <code>.system(size: N)</code>
+remaining</li>
+<li>VStack/padding values match component spec</li>
+<li>Menu bar icon logic verified unchanged</li>
+</ul>
+<h3 data-number="1.2.7"
+id="step-47----swift-engineer-implement-track-2-swift-modernization"><span
+class="header-section-number">1.2.7</span> Step 4.7 -- Swift Engineer:
+Implement Track 2 Swift modernization</h3>
+<p><strong>Who:</strong> Swift Engineer <strong>Artifacts:</strong>
+<code>MacRecordWidget/RecordingManager.swift</code>,
+<code>MacRecordWidget/MacRecordWidgetApp.swift</code>,
+<code>MacRecordWidget.xcodeproj/project.pbxproj</code> <strong>Done
+when:</strong> All AC-SW-1 through AC-SW-8 are satisfied; app builds
+clean on macOS 14 SDK; no compiler warnings; CI passes.</p>
+<p>Changes (in order, each a discrete commit):</p>
+<ol type="1">
+<li>Bump <code>MACOSX_DEPLOYMENT_TARGET</code> to 14.0 in project
+settings (AC-SW-2)</li>
+<li>Migrate <code>RecordingManager</code> to <code>@Observable</code>;
+update <code>MacRecordWidgetApp</code> to use <code>@State</code>
+(AC-SW-1)</li>
+<li>Add <code>RecordingError</code> typed enum; convert
+<code>startRecording</code> and <code>stopRecording</code> to
+<code>async throws</code> (AC-SW-4, AC-SW-5)</li>
+<li>Replace <code>DispatchQueue.global()</code> with
+<code>Task { }</code> and <code>await Task.sleep</code>; remove all raw
+<code>DispatchQueue</code> calls (AC-SW-3)</li>
+<li>Add <code>isInFlight</code> guard; disable Start/Stop buttons while
+in-flight (AC-SW-6)</li>
+<li>Move <code>isRecording = true</code> to after successful shortcut
+URL open; handle failure (AC-SW-7)</li>
+<li>Detect Accessibility denial from osascript; surface
+<code>NSAlert</code>; ensure <code>isRecording</code> stays false
+(AC-SW-5)</li>
+<li>Add inline comment to <code>orderOut</code> dismissal block
+referencing CLAUDE.md rationale (AC-SW-8)</li>
+</ol>
+<h3 data-number="1.2.8"
+id="step-48----em-review-and-approve-swift-engineer-implementation"><span
+class="header-section-number">1.2.8</span> Step 4.8 -- EM: Review and
+approve Swift Engineer implementation</h3>
+<p><strong>Who:</strong> EM <strong>Done when:</strong> EM has verified
+each AC against the submitted implementation; no open blockers; approval
+recorded.</p>
+<p>Review checklist:</p>
+<ul>
+<li>All AC-UI-1 through AC-UI-6 present in
+<code>MacRecordWidgetApp.swift</code></li>
+<li>All AC-SW-1 through AC-SW-8 present in source files</li>
+<li>No remaining <code>ObservableObject</code>,
+<code>@StateObject</code>, <code>DispatchQueue.global()</code> or
+<code>DispatchQueue.main.asyncAfter</code> (except the documented
+dismissal block)</li>
+<li>Deployment target in <code>.xcodeproj</code> is 14.0</li>
+<li>CI build passes</li>
+</ul>
+<p>Hard-block: if any AC is missing, implementation goes back to Swift
+Engineer before Stage 5 begins.</p>
+<hr />
+<h2 data-number="1.3" id="stage-5-quality-assurance"><span
+class="header-section-number">1.3</span> Stage 5: Quality Assurance</h2>
+<h3 data-number="1.3.1"
+id="step-51----qa-produce-manual-smoke-test-plan"><span
+class="header-section-number">1.3.1</span> Step 5.1 -- QA: Produce
+manual smoke test plan</h3>
+<p><strong>Who:</strong> QA <strong>Artifact:</strong>
+<code>projects/20260518-production-polish/generated-docs/qa/test-plan.md</code>
++ <code>.html</code> <strong>Done when:</strong> File exists at that
+path covering all smoke scenarios, and
+<code>Status: Approved -- EM</code> is set in the file by EM.</p>
+<p>The plan must cover (no automation -- manual only):</p>
+<ul>
+<li>Idle state: menu bar icon shows <code>mic</code> (audio) or
+<code>video</code> (video mode on)</li>
+<li>Start recording: icon turns <code>mic.fill</code> / green; popover
+dismisses</li>
+<li>Stop recording: icon returns to <code>mic</code> / non-green;
+popover dismisses</li>
+<li>Video mode toggle: disabled while recording; icon reflects video
+state</li>
+<li>Accessibility denied: start with video mode on, deny permission,
+verify alert shown, <code>isRecording</code> remains false</li>
+<li>Double-tap guard: rapid Start taps produce only one shortcut
+invocation</li>
+<li>Popover reopen while recording: double-click icon while recording;
+verify popover opens</li>
+<li>Quit while recording: confirm Stop fires before termination</li>
+<li>Light mode / dark mode: Start button uses accent color; Stop button
+uses destructive color in both modes</li>
+<li>Non-default accent color: Start button reflects changed accent
+color</li>
+</ul>
+<h3 data-number="1.3.2"
+id="step-52----em-review-and-approve-test-plan"><span
+class="header-section-number">1.3.2</span> Step 5.2 -- EM: Review and
+approve test plan</h3>
+<p><strong>Who:</strong> EM <strong>Done when:</strong>
+<code>Status: Approved -- EM</code> written at top of
+<code>test-plan.md</code>.</p>
+<p>Blocking check: every AC from the PRD must map to at least one smoke
+scenario. Reject if any AC is uncovered.</p>
+<h3 data-number="1.3.3"
+id="step-53----qa-execute-manual-smoke-tests"><span
+class="header-section-number">1.3.3</span> Step 5.3 -- QA: Execute
+manual smoke tests</h3>
+<p><strong>Who:</strong> QA <strong>Done when:</strong> All smoke
+scenarios from the approved test plan pass. Results recorded in a test
+results section appended to <code>test-plan.md</code> (pass/fail per
+scenario, macOS version tested, date).</p>
+<p>Depends on: Step 4.8 (EM approved implementation), Step 5.2 (EM
+approved test plan).</p>
+<h3 data-number="1.3.4"
+id="step-54----em-review-and-approve-test-results"><span
+class="header-section-number">1.3.4</span> Step 5.4 -- EM: Review and
+approve test results</h3>
+<p><strong>Who:</strong> EM <strong>Done when:</strong> EM has reviewed
+pass/fail results; all scenarios pass; no open blockers. Approval noted
+in delivery tracker.</p>
+<p>Hard-block: any failing scenario must be resolved by Swift Engineer
+before approval. Failed scenario goes back as a bug to Step 4.7.</p>
+</body>
+</html>

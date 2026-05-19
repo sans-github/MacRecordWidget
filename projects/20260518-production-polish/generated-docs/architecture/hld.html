@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HLD: Production Polish</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HLD: Production Polish</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#hld-production-polish"
+id="toc-hld-production-polish"><span class="toc-section-number">1</span>
+HLD: Production Polish</a>
+<ul>
+<li><a href="#architecture-summary" id="toc-architecture-summary"><span
+class="toc-section-number">1.1</span> Architecture Summary</a></li>
+<li><a href="#current-state" id="toc-current-state"><span
+class="toc-section-number">1.2</span> Current State</a></li>
+<li><a href="#planned-changes" id="toc-planned-changes"><span
+class="toc-section-number">1.3</span> Planned Changes</a></li>
+<li><a href="#file-impact" id="toc-file-impact"><span
+class="toc-section-number">1.4</span> File Impact</a></li>
+<li><a href="#deployment-target-change"
+id="toc-deployment-target-change"><span
+class="toc-section-number">1.5</span> Deployment Target Change</a></li>
+<li><a href="#risk-summary" id="toc-risk-summary"><span
+class="toc-section-number">1.6</span> Risk Summary</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 data-number="1" id="hld-production-polish"><span
+class="header-section-number">1</span> HLD: Production Polish</h1>
+<h2 data-number="1.1" id="architecture-summary"><span
+class="header-section-number">1.1</span> Architecture Summary</h2>
+<p>MacRecordWidget is a two-file SwiftUI macOS menu-bar app. This
+feature introduces no new components, no new dependencies, and no
+infrastructure changes. The work is entirely contained within the two
+existing Swift source files.</p>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New components</td>
+<td>None</td>
+<td>Scope is polish-only; adding components would introduce unnecessary
+complexity</td>
+</tr>
+<tr>
+<td>Dependency changes</td>
+<td>None</td>
+<td>All required APIs ship with macOS 14 SDK</td>
+</tr>
+<tr>
+<td>Deployment target</td>
+<td>macOS 14.0 (bumped from 13.0)</td>
+<td>Required by <code>@Observable</code> macro; acceptable because app
+is solo-use</td>
+</tr>
+<tr>
+<td>Observation model</td>
+<td><code>@Observable</code> (Observation framework)</td>
+<td>Ships with macOS 14; simpler than <code>ObservableObject</code>,
+fewer re-render surprises</td>
+</tr>
+<tr>
+<td>Concurrency</td>
+<td><code>async</code>/<code>await</code> with
+<code>Task { }</code></td>
+<td>Structured concurrency replaces raw <code>DispatchQueue</code>
+calls; safer, more readable</td>
+</tr>
+<tr>
+<td>Error handling</td>
+<td>Typed <code>enum</code> errors</td>
+<td>Replaces silent <code>print</code>/ignore; enables user-visible
+feedback</td>
+</tr>
+<tr>
+<td>Popover dismissal</td>
+<td><code>orderOut</code> on captured <code>keyWindow</code> + 100ms
+delay, with inline comment</td>
+<td>Already implemented and documented in CLAUDE.md; approach is
+retained and formally documented rather than replaced with something
+untested</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.2" id="current-state"><span
+class="header-section-number">1.2</span> Current State</h2>
+<h3 data-number="1.2.1" id="files"><span
+class="header-section-number">1.2.1</span> Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MacRecordWidget/MacRecordWidgetApp.swift</code></td>
+<td>SwiftUI <code>@main</code> entry point, <code>MenuBarExtra</code>
+scene, all view code</td>
+</tr>
+<tr>
+<td><code>MacRecordWidget/RecordingManager.swift</code></td>
+<td><code>ObservableObject</code> state holder, recording logic,
+shortcut URL dispatch</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.2.2" id="known-issues-being-addressed"><span
+class="header-section-number">1.2.2</span> Known issues being
+addressed</h3>
+<p><strong>UI / HIG:</strong></p>
+<ul>
+<li>Stop button uses hardcoded red, ignores system accent color</li>
+<li>Start button does not use <code>controlAccentColor</code></li>
+<li>No semantic text styles; font sizes may be hardcoded</li>
+<li>Control sizing not audited against HIG popover recommendations</li>
+</ul>
+<p><strong>Swift:</strong></p>
+<ul>
+<li><code>ObservableObject</code> + <code>@StateObject</code>
+(deprecated observation model for macOS 14+)</li>
+<li><code>DispatchQueue.global()</code> for background work (raw,
+unstructured)</li>
+<li>Optimistic <code>isRecording = true</code> set before shortcut fires
+(state can diverge on failure)</li>
+<li>100ms <code>asyncAfter</code> for popover dismissal (undocumented,
+fragile label; currently working but needs a comment)</li>
+<li>Accessibility denial in osascript path is silently swallowed</li>
+<li>No double-tap guard (rapid taps can fire duplicate shortcuts)</li>
+</ul>
+<hr />
+<h2 data-number="1.3" id="planned-changes"><span
+class="header-section-number">1.3</span> Planned Changes</h2>
+<h3 data-number="1.3.1"
+id="track-1-ui--hig-compliance-macrecordwidgetappswift"><span
+class="header-section-number">1.3.1</span> Track 1: UI / HIG compliance
+(<code>MacRecordWidgetApp.swift</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stop button role</td>
+<td>Apply <code>.destructive</code> role so the system destructive
+semantic color is used; never hardcode</td>
+</tr>
+<tr>
+<td>Start button tint</td>
+<td>Apply <code>.tint(.accentColor)</code> /
+<code>controlAccentColor</code> so it reflects the user's chosen accent
+color</td>
+</tr>
+<tr>
+<td>Control sizing</td>
+<td>Audit padding, frame, and font against HIG menu-bar popover
+guidelines; minimum click-target 44pt</td>
+</tr>
+<tr>
+<td>Semantic text styles</td>
+<td>Replace any hardcoded <code>.font(.system(size: N))</code> with
+<code>.font(.body)</code>, <code>.font(.caption)</code>, etc.</td>
+</tr>
+<tr>
+<td>Menu bar icon</td>
+<td>Verify existing
+<code>mic</code>/<code>mic.fill</code>/<code>video</code>/<code>video.fill</code>
+logic is correct and stays unchanged</td>
+</tr>
+<tr>
+<td>Spacing</td>
+<td>Align <code>VStack</code> spacing and <code>.padding</code> values
+to HIG-recommended popover insets</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.3.2"
+id="track-2-swift-modernization-recordingmanagerswift--macrecordwidgetappswift"><span
+class="header-section-number">1.3.2</span> Track 2: Swift modernization
+(<code>RecordingManager.swift</code> +
+<code>MacRecordWidgetApp.swift</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@Observable</code> migration</td>
+<td>Remove <code>ObservableObject</code> conformance and
+<code>@Published</code>; add <code>@Observable</code> macro to
+<code>RecordingManager</code></td>
+</tr>
+<tr>
+<td><code>@State</code> at call site</td>
+<td>Replace <code>@StateObject</code> in <code>MacRecordWidgetApp</code>
+with <code>@State</code></td>
+</tr>
+<tr>
+<td>Deployment target</td>
+<td>Bump <code>MACOSX_DEPLOYMENT_TARGET</code> to 14.0 in
+<code>MacRecordWidget.xcodeproj</code></td>
+</tr>
+<tr>
+<td>Async/await</td>
+<td>Wrap background work in <code>Task { }</code> with
+<code>await Task.sleep</code>; remove
+<code>DispatchQueue.global()</code> and
+<code>DispatchQueue.main.asyncAfter</code> for business logic</td>
+</tr>
+<tr>
+<td>Typed errors</td>
+<td>Add <code>RecordingError: Error</code> enum with cases for shortcut
+launch failure and accessibility denial</td>
+</tr>
+<tr>
+<td>Error propagation</td>
+<td><code>startRecording()</code> and <code>stopRecording()</code>
+become <code>async throws</code>; callers catch and surface errors</td>
+</tr>
+<tr>
+<td>Double-tap guard</td>
+<td>Add <code>isInFlight: Bool</code> property; set true at invocation
+start, false on completion or error; buttons disabled when true</td>
+</tr>
+<tr>
+<td>Non-optimistic state</td>
+<td>Move <code>isRecording = true</code> to after
+<code>NSWorkspace.shared.open(url)</code> returns without error</td>
+</tr>
+<tr>
+<td>Popover dismissal</td>
+<td>Retain <code>orderOut(nil)</code> approach (it works and is the
+documented gotcha); add a block comment referencing CLAUDE.md
+rationale</td>
+</tr>
+<tr>
+<td>Accessibility denial</td>
+<td>Catch process exit code from osascript; if AX permission denied, set
+<code>isRecording = false</code> and show <code>NSAlert</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.4" id="file-impact"><span
+class="header-section-number">1.4</span> File Impact</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MacRecordWidget/MacRecordWidgetApp.swift</code></td>
+<td>Track 1 UI changes; <code>@State</code> call-site update;
+error-handling UI (alert presentation)</td>
+</tr>
+<tr>
+<td><code>MacRecordWidget/RecordingManager.swift</code></td>
+<td>Track 2 full refactor</td>
+</tr>
+<tr>
+<td><code>MacRecordWidget.xcodeproj/project.pbxproj</code></td>
+<td>Deployment target bump to 14.0</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>Update to reflect <code>@Observable</code> model and finalized
+dismissal approach</td>
+</tr>
+</tbody>
+</table>
+<p>No new files. No files deleted.</p>
+<hr />
+<h2 data-number="1.5" id="deployment-target-change"><span
+class="header-section-number">1.5</span> Deployment Target Change</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MACOSX_DEPLOYMENT_TARGET</code></td>
+<td>13.0</td>
+<td>14.0</td>
+</tr>
+<tr>
+<td>CI (<code>.github/workflows/</code>)</td>
+<td>Implicit</td>
+<td>Must specify <code>macosx14</code> runner or equivalent</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>@Observable</code> macro is available from macOS 14.0.
+There is no workaround for macOS 13 -- the bump is a hard requirement
+for Track 2.</p>
+<p>Impact: sole-author, sole-user app. The author controls the target
+machine. Documented in CLAUDE.md.</p>
+<hr />
+<h2 data-number="1.6" id="risk-summary"><span
+class="header-section-number">1.6</span> Risk Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@Observable</code> breaks SwiftUI re-render in popover</td>
+<td>Medium</td>
+<td>High</td>
+<td>Verify Start/Stop visually toggle icon and button states after
+migration</td>
+</tr>
+<tr>
+<td>Removing optimistic state introduces perceived lag</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Add <code>isInFlight</code> pending state; disable buttons while in
+flight -- this doubles as the double-tap guard</td>
+</tr>
+<tr>
+<td><code>orderOut</code> dismissal regression after refactor</td>
+<td>Low</td>
+<td>High</td>
+<td>Manual smoke: record, click icon, verify popover reopens</td>
+</tr>
+<tr>
+<td>macOS 14 bump breaks CI runner</td>
+<td>Low</td>
+<td>Medium</td>
+<td>Update workflow yml to <code>macosx14</code> runner; already on
+GitHub-hosted runners</td>
+</tr>
+<tr>
+<td>Typed error surface area adds untested UI paths</td>
+<td>Low</td>
+<td>Low</td>
+<td><code>NSAlert</code> presentation is trivial; smoke test covers the
+Accessibility-denied flow</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

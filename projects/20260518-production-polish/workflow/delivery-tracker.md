@@ -26,28 +26,23 @@
 
 ### Stage 3: Technical Planning
 
-- [ ] **Engineering Kickoff**
-  - [ ] **EM:** decide on architecture engagement → confirmed: Arch skipped (no new infra, no unfamiliar tech)
+- [x] **Engineering Kickoff**
+  - [x] **EM:** decide on architecture engagement → confirmed: Arch skipped (no new infra, no unfamiliar tech) -- done when: decision recorded here
 
 - [-] **System Architecture** -- SKIPPED (no new infrastructure or unfamiliar technology)
 
-- [ ] **High-Level Design**
-  - [ ] **EM:** produce high-level design → [Eng Plans (HLD)](../generated-docs/architecture/hld.md) -- done when: Status: Approved — EM set in file
-  - [ ] 👤💾 **HUMAN:** review and approve high-level design
+- [x] **High-Level Design**
+  - [x] **EM:** produce high-level design → [Eng Plans (HLD)](../generated-docs/architecture/hld.md) -- done when: Status: Approved — EM set in file
+  - [x] 👤💾 **HUMAN:** review and approve high-level design
 
-- [ ] **Implementation Plan**
-  - [ ] **EM:** produce detailed implementation plan → [Implementation Plan](../workflow/implementation-plan.md) -- done when: Status: Approved — EM set in file
-  - [ ] 👤💾 **HUMAN:** review and approve implementation plan
-  - [ ] **EM:** seed approved steps into Stage 4 and Stage 5 of this tracker
+- [x] **Implementation Plan**
+  - [x] **EM:** produce detailed implementation plan → [Implementation Plan](../workflow/implementation-plan.md) -- done when: Status: Approved — EM set in file
+  - [x] 👤💾 **HUMAN:** review and approve implementation plan
+  - [x] **EM:** seed approved steps into Stage 4 and Stage 5 of this tracker
 
 ---
 
 ### Stage 4: Engineering
-> EM fills in detailed steps after Implementation Plan is approved.
-
-- [ ] **Swift Detailed Design**
-  - [ ] **SWIFT ENGINEER:** produce detailed design → [Swift Detailed Design](../generated-docs/architecture/swift-detailed-design.md) -- done when: Status: Approved — EM set in file
-  - [ ] 💾 **EM:** review and approve Swift detailed design
 
 - [-] **BE Detailed Design** -- SKIPPED (no backend)
 - [-] **FE Detailed Design** -- SKIPPED (no web frontend)
@@ -58,29 +53,35 @@
 - [-] **Frontend Development** -- SKIPPED (no web frontend)
 - [-] **Infrastructure** -- SKIPPED (deployment target: local)
 
+- [ ] **Swift Detailed Design**
+  - [ ] **4.1 SWIFT ENGINEER:** produce Swift Detailed Design → [Swift Detailed Design](../generated-docs/architecture/swift-detailed-design.md) -- done when: file exists with all required sections
+  - [ ] **4.2 💾 EM:** review and approve Swift Detailed Design -- done when: Status: Approved — EM set in file; all ACs addressed
+
+- [ ] **Component Spec**
+  - [ ] **4.3 macOS DESIGNER:** finalise component spec → [Component Spec](../generated-docs/design/component-spec.md) -- done when: spec maps every UI element to SwiftUI control, semantic color, and spacing value
+
 - [ ] **Swift Engineer Issues List**
-  - [ ] **EM:** produce and approve Swift Engineer issues list -- done when: Status: Approved — EM set in list
+  - [ ] **4.4 EM:** produce and approve Swift Engineer Issues List -- done when: Status: Approved — EM set in list; one issue per logical unit
+  - [ ] **4.5 SWIFT ENGINEER:** create GitHub Issues from approved list -- done when: all issues exist in GitHub with correct labels
 
 - [ ] **macOS Development**
-  - [ ] **macOS DESIGNER:** finalise component spec from approved mocks -- done when: spec present in generated-docs/design/
-  - [ ] **SWIFT ENGINEER:** implement SwiftUI views per approved mocks and component spec → `MacRecordWidget/` -- done when: all HIG/visual changes in place
-  - [ ] **SWIFT ENGINEER:** refactor RecordingManager to @Observable, async/await, typed errors, bump deployment target to 14.0 → `MacRecordWidget/` -- done when: builds clean, no warnings
-  - [ ] **SWIFT ENGINEER:** resolve popover dismissal per agreed approach in Swift Detailed Design -- done when: no orderOut hack remains
-  - [ ] 💾 **EM:** review and approve Swift Engineer implementation -- done when: Status: Approved — EM set in artifact
+  - [ ] **4.6 SWIFT ENGINEER:** implement Track 1 UI changes → `MacRecordWidget/MacRecordWidgetApp.swift` -- done when: AC-UI-1 through AC-UI-6 satisfied; builds clean; verified against mocks
+  - [ ] **4.7 SWIFT ENGINEER:** implement Track 2 Swift modernization → `MacRecordWidget/` -- done when: AC-SW-1 through AC-SW-8 satisfied; builds clean on macOS 14 SDK; CI passes
+  - [ ] **4.8 💾 EM:** review and approve Swift Engineer implementation -- done when: all ACs verified; no open blockers
 
 ---
 
 ### Stage 5: Quality Assurance
 
-- [ ] **Test Planning**
-  - [ ] **QA:** produce manual smoke test plan → [Test Plan](../generated-docs/qa/test-plan.md) -- done when: Status: Approved — EM set in file; scope: manual only, no XCUITest automation
-  - [ ] 💾 **EM:** review and approve test plan
-
 - [-] **QA Issues List** -- SKIPPED (manual smoke testing only)
 
+- [ ] **Test Planning**
+  - [ ] **5.1 QA:** produce manual smoke test plan → [Test Plan](../generated-docs/qa/test-plan.md) -- done when: file exists covering all smoke scenarios; scope: manual only, no XCUITest automation
+  - [ ] **5.2 💾 EM:** review and approve test plan -- done when: Status: Approved — EM set in file; every AC maps to at least one scenario
+
 - [ ] **Test Execution**
-  - [ ] **QA:** execute manual smoke tests against macOS app -- done when: all smoke test cases pass
-  - [ ] 💾 **EM:** review and approve test results
+  - [ ] **5.3 QA:** execute manual smoke tests -- done when: all scenarios pass; results appended to test-plan.md
+  - [ ] **5.4 💾 EM:** review and approve test results -- done when: all scenarios pass; no open blockers
 
 ---
 
