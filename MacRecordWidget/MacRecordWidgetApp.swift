@@ -16,10 +16,12 @@ struct MacRecordWidgetApp: App {
                         .accessibilityIdentifier("videoModeToggle")
                     Spacer()
                     Button {
-                        if recordingManager.isRecording {
-                            Task { try? await recordingManager.stopRecording() }
+                        Task {
+                            if recordingManager.isRecording {
+                                try? await recordingManager.stopRecording()
+                            }
+                            NSApplication.shared.terminate(nil)
                         }
-                        NSApplication.shared.terminate(nil)
                     } label: {
                         Image(systemName: "power")
                     }
