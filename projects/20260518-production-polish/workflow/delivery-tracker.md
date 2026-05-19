@@ -96,12 +96,12 @@
 ### Stage 7: README and CLAUDE.md
 
 - [x] **EM:** update `README.md` and `CLAUDE.md` to reflect production-polish changes -- done when: both files updated at repo root → [README.md](../../../README.md), [CLAUDE.md](../../../CLAUDE.md)
-- [ ] 👤💾 **HUMAN:** review and approve README and CLAUDE.md
+- [x] 👤💾 **HUMAN:** review and approve README and CLAUDE.md
 
 ---
 
 ### Stage 8: Release
 
-- [ ] **Phase Sign-off**
-  - [ ] **EM:** verify all artifacts complete and approved
-  - [ ] 👤💾 **HUMAN:** review and approve release readiness
+- [x] **Phase Sign-off**
+  - [x] **EM:** verify all artifacts complete and approved
+  - [x] 👤💾 **HUMAN:** review and approve release readiness
