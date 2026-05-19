@@ -57,11 +57,11 @@
   - [x] **4.1 SWIFT ENGINEER:** produce Swift Detailed Design → [Swift Detailed Design](../generated-docs/architecture/swift-detailed-design.md) -- done when: file exists with all required sections
   - [x] **4.2 💾 EM:** review and approve Swift Detailed Design -- done when: Status: Approved — EM set in file; all ACs addressed
 
-- [ ] **Component Spec**
-  - [ ] **4.3 macOS DESIGNER:** finalise component spec → [Component Spec](../generated-docs/design/component-spec.md) -- done when: spec maps every UI element to SwiftUI control, semantic color, and spacing value
+- [x] **Component Spec**
+  - [x] **4.3 macOS DESIGNER:** finalise component spec → [Component Spec](../generated-docs/design/component-spec.md) -- done when: spec maps every UI element to SwiftUI control, semantic color, and spacing value
 
-- [ ] **Swift Engineer Issues List**
-  - [ ] **4.4 EM:** produce and approve Swift Engineer Issues List -- done when: Status: Approved — EM set in list; one issue per logical unit
+- [x] **Swift Engineer Issues List**
+  - [x] **4.4 EM:** produce and approve Swift Engineer Issues List -- done when: Status: Approved — EM set in list; one issue per logical unit
   - [ ] **4.5 SWIFT ENGINEER:** create GitHub Issues from approved list -- done when: all issues exist in GitHub with correct labels
 
 - [ ] **macOS Development**
