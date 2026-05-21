@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget Popover Redesign — Mocks</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1e1e1e;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    color: #f0f0f0;
+    padding: 40px 32px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #a0a0a0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .states {
+    display: flex;
+    gap: 48px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .state-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .state-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #888;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Menu bar simulation */
+  .menubar-strip {
+    width: 200px;
+    height: 24px;
+    background: #2c2c2c;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 8px;
+    border: 1px solid #444;
+    border-bottom: none;
+  }
+
+  .menubar-icon {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 13px;
+    position: relative;
+  }
+
+  .menubar-icon .dot {
+    width: 5px;
+    height: 5px;
+    background: #ff9e33;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -1px;
+    right: -3px;
+  }
+
+  /* Popover container */
+  .popover {
+    width: 200px;
+    background: rgba(40, 40, 40, 0.97);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Top row: toggle + quit */
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #e0e0e0;
+    cursor: default;
+    user-select: none;
+  }
+
+  .checkbox-label input[type=checkbox] {
+    width: 12px;
+    height: 12px;
+    accent-color: #0a84ff;
+    cursor: default;
+  }
+
+  .checkbox-label.disabled {
+    opacity: 0.35;
+  }
+
+  .quit-btn {
+    width: 22px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c0c0c0;
+    font-size: 13px;
+    padding: 0;
+    transition: background 0.1s;
+  }
+
+  .quit-btn:hover { background: rgba(255,255,255,0.1); }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+  }
+
+  /* Button row */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    flex: 1;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.07);
+    color: #e8e8e8;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background 0.1s, opacity 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.13);
+  }
+
+  .btn:disabled {
+    opacity: 0.28;
+    cursor: default;
+  }
+
+  .btn.start {
+    color: #4fc3f7;
+    border-color: rgba(79,195,247,0.35);
+  }
+
+  .btn.start:hover:not(:disabled) {
+    background: rgba(79,195,247,0.12);
+  }
+
+  .btn.stop {
+    color: #f28b82;
+    border-color: rgba(242,139,130,0.35);
+  }
+
+  .btn.stop:hover:not(:disabled) {
+    background: rgba(242,139,130,0.12);
+  }
+
+  /* Icon unicode approximations */
+  .icon-mic::before    { content: "🎙"; font-size: 10px; }
+  .icon-stop::before   { content: "⏹"; font-size: 10px; }
+  .icon-power::before  { content: "⏻"; font-size: 12px; }
+
+  /* Annotation callouts */
+  .annotations {
+    margin-top: 16px;
+    width: 200px;
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .annotations li {
+    list-style: none;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .annotations li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #555;
+  }
+
+  /* Comparison section */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    margin: 40px 0 16px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+  }
+
+  .diff-table {
+    width: 100%;
+    max-width: 520px;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .diff-table th {
+    text-align: left;
+    padding: 6px 10px;
+    background: #2a2a2a;
+    color: #888;
+    font-weight: 500;
+    border: 1px solid #3a3a3a;
+  }
+
+  .diff-table td {
+    padding: 6px 10px;
+    border: 1px solid #3a3a3a;
+    vertical-align: top;
+    color: #c8c8c8;
+  }
+
+  .diff-table tr:nth-child(even) td { background: #252525; }
+
+  .removed { color: #f28b82; }
+  .added   { color: #81c995; }
+  .unchanged { color: #888; }
+</style>
+</head>
+<body>
+
+<h1>MacRecordWidget — Popover Button Layout Redesign</h1>
+
+<div class="states">
+
+  <!-- IDLE STATE -->
+  <div class="state-block">
+    <div class="state-label">Idle (not recording)</div>
+
+    <div class="menubar-strip">
+      <div class="menubar-icon">
+        <span style="color:#c0c0c0; font-size:14px;">⏺</span>
+      </div>
+    </div>
+
+    <div class="popover">
+      <!-- Top row -->
+      <div class="top-row">
+        <label class="checkbox-label">
+          <input type="checkbox"> Include Video
+        </label>
+        <button class="quit-btn" title="Quit MacRecordWidget">
+          <span class="icon-power"></span>
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- No dot. Horizontal button row. -->
+      <div class="btn-row">
+        <button class="btn start">
+          <span class="icon-mic"></span> Start
+        </button>
+        <button class="btn stop" disabled>
+          <span class="icon-stop"></span> Stop
+        </button>
+      </div>
+    </div>
+
+    <ul class="annotations">
+      <li>No status dot</li>
+      <li>Start enabled, Stop disabled</li>
+      <li>Buttons side by side</li>
+    </ul>
+  </div>
+
+  <!-- RECORDING STATE -->
+  <div class="state-block">
+    <div class="state-label">Recording (isRecording = true)</div>
+
+    <div class="menubar-strip">
+      <div class="menubar-icon">
+        <span style="color:#4caf50; font-size:14px;">⏺</span>
+        <span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="popover">
+      <!-- Top row -->
+      <div class="top-row">
+        <label class="checkbox-label disabled">
+          <input type="checkbox" disabled> Include Video
+        </label>
+        <button class="quit-btn" title="Quit MacRecordWidget">
+          <span class="icon-power"></span>
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- No dot. Horizontal button row. -->
+      <div class="btn-row">
+        <button class="btn start" disabled>
+          <span class="icon-mic"></span> Start
+        </button>
+        <button class="btn stop">
+          <span class="icon-stop"></span> Stop
+        </button>
+      </div>
+    </div>
+
+    <ul class="annotations">
+      <li>Menu bar icon turns green</li>
+      <li>Orange blink dot on icon</li>
+      <li>Start disabled, Stop enabled</li>
+      <li>Toggle disabled while recording</li>
+      <li>Popover stays open after Stop</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- Change summary -->
+<div class="section-title">What changed vs. current layout</div>
+
+<table class="diff-table">
+  <thead>
+    <tr>
+      <th>Element</th>
+      <th>Before</th>
+      <th>After</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Recording-status dot</td>
+      <td class="removed">PulsingDot above Start button (flickers when isInFlight)</td>
+      <td class="added">Removed entirely. No replacement.</td>
+    </tr>
+    <tr>
+      <td>Button orientation</td>
+      <td class="removed">VStack — Start on top, Stop below</td>
+      <td class="added">HStack — Start left, Stop right, side by side</td>
+    </tr>
+    <tr>
+      <td>Vertical space</td>
+      <td class="removed">Dot reserves height even when hidden (frame height 0 but layout gap remains)</td>
+      <td class="added">Dot and its frame removed; button row shifts up naturally</td>
+    </tr>
+    <tr>
+      <td>Stop behavior</td>
+      <td class="removed">Fires Stop shortcut, then dismisses popover via orderOut</td>
+      <td class="added">Fires Stop shortcut only. Popover stays open. Photo Booth stays running.</td>
+    </tr>
+    <tr>
+      <td>Toggle</td>
+      <td class="unchanged">Unchanged</td>
+      <td class="unchanged">Unchanged</td>
+    </tr>
+    <tr>
+      <td>Quit button</td>
+      <td class="unchanged">Unchanged</td>
+      <td class="unchanged">Unchanged</td>
+    </tr>
+    <tr>
+      <td>Menu bar icon</td>
+      <td class="unchanged">Unchanged</td>
+      <td class="unchanged">Unchanged</td>
+    </tr>
+    <tr>
+      <td>Popover width</td>
+      <td class="unchanged">200pt</td>
+      <td class="unchanged">200pt (no change needed)</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

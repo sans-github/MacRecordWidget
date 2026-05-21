@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>prd</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">prd</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#prd-popover-button-layout"
+id="toc-prd-popover-button-layout"><span
+class="toc-section-number">1</span> PRD: Popover Button Layout</a>
+<ul>
+<li><a href="#goals" id="toc-goals"><span
+class="toc-section-number">1.1</span> Goals</a></li>
+<li><a href="#background" id="toc-background"><span
+class="toc-section-number">1.2</span> Background</a></li>
+<li><a href="#changes" id="toc-changes"><span
+class="toc-section-number">1.3</span> Changes</a></li>
+<li><a href="#scope" id="toc-scope"><span
+class="toc-section-number">1.4</span> Scope</a></li>
+<li><a href="#acceptance-criteria" id="toc-acceptance-criteria"><span
+class="toc-section-number">1.5</span> Acceptance criteria</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 data-number="1" id="prd-popover-button-layout"><span
+class="header-section-number">1</span> PRD: Popover Button Layout</h1>
+<h2 data-number="1.1" id="goals"><span
+class="header-section-number">1.1</span> Goals</h2>
+<p>Tighten the MacRecordWidget popover by removing a flickering UI
+element, consolidating the Start/Stop controls into a single row, and
+stopping recordings without closing Photo Booth so users can chain
+sessions immediately.</p>
+<p><strong>Non-goals:</strong> no changes to the Quit button, no changes
+to Start behavior, no replacement for the removed dot indicator.</p>
+<p><strong>Success metric:</strong> a user can stop a recording and
+start a new one from Photo Booth without touching the menu bar
+widget.</p>
+<h2 data-number="1.2" id="background"><span
+class="header-section-number">1.2</span> Background</h2>
+<p>The current popover stacks Start and Stop buttons vertically with a
+recording-status dot above Start. The dot flickers and adds no
+actionable information. Photo Booth closes when Stop is pressed, which
+forces the user back to the menu bar to reopen it for a follow-up
+recording.</p>
+<h2 data-number="1.3" id="changes"><span
+class="header-section-number">1.3</span> Changes</h2>
+<h3 data-number="1.3.1" id="1-remove-the-recording-status-dot"><span
+class="header-section-number">1.3.1</span> 1. Remove the
+recording-status dot</h3>
+<p>The flickering dot above the Start button is removed entirely.
+Nothing replaces it. The vertical space it occupied is reclaimed by
+shifting the button row up.</p>
+<h3 data-number="1.3.2" id="2-horizontal-button-row"><span
+class="header-section-number">1.3.2</span> 2. Horizontal button row</h3>
+<p>Start and Stop buttons move from a vertical stack to a single
+horizontal row, side by side. They shift up to fill the space freed by
+removing the dot. All other popover content (Quit button, Toggle) is
+untouched.</p>
+<h3 data-number="1.3.3"
+id="3-stop-behavior-leave-photo-booth-running-keep-popover-open"><span
+class="header-section-number">1.3.3</span> 3. Stop behavior: leave Photo
+Booth running, keep popover open</h3>
+<p><code>stopRecording()</code> currently fires the Stop shortcut only
+and does not close Photo Booth (Photo Booth is the Quit button's
+responsibility). The implementation must confirm this is already the
+case, or make it so.</p>
+<p>The desired end state: pressing Stop fires the Stop shortcut, leaves
+Photo Booth open, and keeps the popover open so the user can immediately
+press Start again for a follow-up recording without reopening the
+widget.</p>
+<h2 data-number="1.4" id="scope"><span
+class="header-section-number">1.4</span> Scope</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>In scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI</td>
+<td>Remove dot, horizontal button row, shift up</td>
+</tr>
+<tr>
+<td>RecordingManager</td>
+<td>Confirm/fix <code>stopRecording()</code> does not close Photo
+Booth</td>
+</tr>
+<tr>
+<td>Start behavior</td>
+<td>No change</td>
+</tr>
+<tr>
+<td>Quit button</td>
+<td>No change</td>
+</tr>
+<tr>
+<td>Video toggle</td>
+<td>No change</td>
+</tr>
+</tbody>
+</table>
+<h2 data-number="1.5" id="acceptance-criteria"><span
+class="header-section-number">1.5</span> Acceptance criteria</h2>
+<ul>
+<li>The recording-status dot does not appear in the popover under any
+state.</li>
+<li>Start and Stop buttons are side by side on a single row.</li>
+<li>Pressing Stop fires the Stop shortcut, leaves Photo Booth running,
+and keeps the popover open.</li>
+<li>Pressing Start behaves identically to the pre-change behavior.</li>
+<li>The Quit button continues to close Photo Booth and quit the
+app.</li>
+</ul>
+</body>
+</html>
