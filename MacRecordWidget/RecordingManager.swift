@@ -76,12 +76,6 @@ final class RecordingManager {
         }
 
         isRecording = false
-
-        if videoEnabled {
-            NSWorkspace.shared.runningApplications
-                .first(where: { $0.bundleIdentifier == "com.apple.PhotoBooth" })?
-                .terminate()
-        }
     }
 
     private func launchPhotoBooth() {

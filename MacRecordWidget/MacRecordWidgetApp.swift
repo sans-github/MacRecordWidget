@@ -33,13 +33,7 @@ struct MacRecordWidgetApp: App {
 
                 Divider()
 
-                // Pulsing dot: provides in-flight visual feedback while isInFlight is true.
-                // Hidden from VoiceOver because the disabled button state already communicates
-                // the in-flight condition.
-                PulsingDot(isInFlight: recordingManager.isInFlight, isStarting: !recordingManager.isRecording)
-                    .frame(height: recordingManager.isInFlight ? 8 : 0)
-
-                VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     Button {
                         Task { await startAndDismiss() }
                     } label: {
@@ -53,7 +47,7 @@ struct MacRecordWidgetApp: App {
                     .accessibilityIdentifier("startButton")
 
                     Button {
-                        Task { await stopAndDismiss() }
+                        Task { await stopOnly() }
                     } label: {
                         Label("Stop", systemImage: "stop.fill")
                             .frame(maxWidth: .infinity)
@@ -90,19 +84,12 @@ struct MacRecordWidgetApp: App {
     }
 
     @MainActor
-    private func stopAndDismiss() async {
-        let panel = NSApp.keyWindow
+    private func stopOnly() async {
         do {
             try await recordingManager.stopRecording()
         } catch {
             presentAlert(for: error)
         }
-        // DISMISSAL: Use orderOut(nil) on the captured keyWindow rather than
-        // popover.close(). Calling close() while recording is active breaks the
-        // double-click-to-reopen behavior (popover enters an inconsistent state).
-        // The 100ms delay allows the button animation to complete first.
-        // See CLAUDE.md "Gotchas" for full explanation.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { panel?.orderOut(nil) }
     }
 
     @MainActor
@@ -122,34 +109,6 @@ struct MacRecordWidgetApp: App {
         }
         alert.addButton(withTitle: "OK")
         alert.runModal()
-    }
-}
-
-// MARK: - PulsingDot
-
-private struct PulsingDot: View {
-    let isInFlight: Bool
-    let isStarting: Bool
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulsing = false
-
-    var body: some View {
-        Circle()
-            .fill(isStarting ? Color.accentColor : .red)
-            .frame(width: 8, height: 8)
-            .scaleEffect((!reduceMotion && pulsing) ? 0.7 : 1.0)
-            .opacity(isInFlight ? 1 : 0)
-            .accessibilityHidden(true)
-            .onChange(of: isInFlight) { _, newValue in
-                if newValue && !reduceMotion {
-                    withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
-                        pulsing = true
-                    }
-                } else {
-                    pulsing = false
-                }
-            }
     }
 }
 
