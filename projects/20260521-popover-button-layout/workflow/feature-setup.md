@@ -41,16 +41,16 @@ Toggle rules:
 
 - [ ] **System Architecture** *(skip if no new infrastructure or unfamiliar technology)*
   - [ ] **ARCH:** produce system architecture → [System Architecture]
-  - [ ] 👤💾 **HUMAN:** review and approve system architecture
+  - [-] 👤💾 **HUMAN:** review and approve system architecture
 
 - [ ] **High-Level Design**
   - [ ] **EM:** produce high-level design → [Eng Plans (HLD)]
   - [ ] **EM <> DevOps:** collaboration loop -- review infra decisions in HLD, align on Terraform approach and AWS component choices *(skip if deployment target is local)*
-  - [ ] 👤💾 **HUMAN:** review and approve high-level design
+  - [-] 👤💾 **HUMAN:** review and approve high-level design
 
 - [ ] **Implementation Plan**
   - [ ] **EM:** produce detailed implementation plan → [Implementation Plan]; write Stage 4 and Stage 5 steps to `workflow/implementation-plan.md` as a standalone file; every step must include a done condition (e.g. "done when: Status: Approved written to file" or "done when: human confirms")
-  - [ ] 👤💾 **HUMAN:** review and approve implementation plan
+  - [-] 👤💾 **HUMAN:** review and approve implementation plan
   - [ ] **EM:** seed approved steps into Stage 4 and Stage 5 of `delivery-tracker.md`, replacing the skeleton
 
 ---
@@ -109,7 +109,7 @@ Toggle rules:
 
 - [ ] **Infrastructure** *(skip if no new infrastructure)*
   - [ ] **DEVOPS:** produce deployment plan → [Deployment Plan]
-  - [ ] 👤💾 **HUMAN:** review and approve deployment plan
+  - [-] 👤💾 **HUMAN:** review and approve deployment plan
   - [ ] **DEVOPS:** provision infrastructure per approved architecture → [Infrastructure]
   - [ ] **QA + DEVOPS:** smoke test loop *(skip if deployment target is local)*
     - [ ] **DEVOPS:** hand off live server URL to QA
@@ -123,21 +123,21 @@ Toggle rules:
 ### Stage 5: Quality Assurance
 > Skeleton -- EM fills in these steps during Implementation Planning, only if this stage is `[ ]`. If `[-]`, skip entirely and do not revisit.
 
-- [ ] **Test Planning**
-  - [ ] **QA:** produce test plan aligned to API contract and implementation → [Test Plan]
-  - [ ] 💾 **EM:** review and approve test plan
+- [-] **Test Planning**
+  - [-] **QA:** produce test plan aligned to API contract and implementation → [Test Plan]
+  - [-] 💾 **EM:** review and approve test plan
 
-- [ ] **QA Issues List**
-  - [ ] **EM:** produce and approve QA issues list -- done when: Status: Approved — EM set in list; QA creates GH issues and begins implementation
+- [-] **QA Issues List**
+  - [-] **EM:** produce and approve QA issues list -- done when: Status: Approved — EM set in list; QA creates GH issues and begins implementation
 
-- [ ] **Test Execution**
-  - [ ] **QA:** implement automated tests against BE
-  - [ ] **QA:** implement automated tests against FE
-  - [ ] **QA:** implement automated tests against Swift Engineer output *(skip if no macOS app)*
-  - [ ] **QA + BE:** resolve backend test blockers
-  - [ ] **QA + FE:** resolve frontend test blockers
-  - [ ] **QA + SWIFT ENGINEER:** resolve macOS test blockers *(skip if no macOS app)*
-  - [ ] 💾 **EM:** review and approve test results
+- [-] **Test Execution**
+  - [-] **QA:** implement automated tests against BE
+  - [-] **QA:** implement automated tests against FE
+  - [-] **QA:** implement automated tests against Swift Engineer output *(skip if no macOS app)*
+  - [-] **QA + BE:** resolve backend test blockers
+  - [-] **QA + FE:** resolve frontend test blockers
+  - [-] **QA + SWIFT ENGINEER:** resolve macOS test blockers *(skip if no macOS app)*
+  - [-] 💾 **EM:** review and approve test results
 
 ---
 
