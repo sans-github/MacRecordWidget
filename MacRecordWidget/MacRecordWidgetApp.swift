@@ -7,59 +7,57 @@ struct MacRecordWidgetApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Toggle("Include Video", isOn: $recordingManager.videoEnabled)
-                        .toggleStyle(.checkbox)
-                        .disabled(recordingManager.isRecording)
-                        .accessibilityLabel("Include video in recording")
-                        .accessibilityIdentifier("videoModeToggle")
-                    Spacer()
-                    Button {
-                        Task {
-                            if recordingManager.isRecording {
-                                try? await recordingManager.stopRecording()
-                            }
-                            NSApplication.shared.terminate(nil)
+            HStack(spacing: 8) {
+                Toggle(isOn: $recordingManager.videoEnabled) {
+                    Image(systemName: recordingManager.videoEnabled ? "video.fill" : "video")
+                }
+                .toggleStyle(.switch)
+                .disabled(recordingManager.isRecording)
+                .accessibilityLabel("Include video in recording")
+                .accessibilityIdentifier("videoModeToggle")
+
+                Spacer()
+
+                Button {
+                    Task { await startOnly() }
+                } label: {
+                    Image(systemName: "record.circle.fill")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .disabled(recordingManager.isRecording || recordingManager.isInFlight)
+                .accessibilityLabel("Start recording")
+                .accessibilityIdentifier("startButton")
+
+                Button {
+                    Task { await stopOnly() }
+                } label: {
+                    Image(systemName: "stop.fill")
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
+                .accessibilityLabel("Stop recording")
+                .accessibilityIdentifier("stopButton")
+
+                Button {
+                    Task {
+                        if recordingManager.isRecording {
+                            try? await recordingManager.stopRecording()
                         }
-                    } label: {
-                        Image(systemName: "power")
+                        NSApplication.shared.terminate(nil)
                     }
-                    .buttonStyle(.plain)
-                    .help("Quit MacRecordWidget")
-                    .accessibilityLabel("Quit MacRecordWidget")
-                    .accessibilityIdentifier("quitButton")
+                } label: {
+                    Image(systemName: "power")
                 }
-
-                Divider()
-
-                HStack(spacing: 8) {
-                    Button {
-                        Task { await startAndDismiss() }
-                    } label: {
-                        Label("Start", systemImage: "mic.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.accentColor)
-                    .disabled(recordingManager.isRecording || recordingManager.isInFlight)
-                    .accessibilityLabel("Start recording")
-                    .accessibilityIdentifier("startButton")
-
-                    Button {
-                        Task { await stopOnly() }
-                    } label: {
-                        Label("Stop", systemImage: "stop.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(Color(NSColor.systemRed))
-                    .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
-                    .accessibilityLabel("Stop recording")
-                    .accessibilityIdentifier("stopButton")
-                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .help("Quit MacRecordWidget")
+                .accessibilityLabel("Quit MacRecordWidget")
+                .accessibilityIdentifier("quitButton")
             }
-            .padding(16)
+            .padding(12)
             .frame(width: 200)
         } label: {
             MenuBarIcon(isRecording: recordingManager.isRecording)
@@ -68,19 +66,12 @@ struct MacRecordWidgetApp: App {
     }
 
     @MainActor
-    private func startAndDismiss() async {
-        let panel = NSApp.keyWindow
+    private func startOnly() async {
         do {
             try await recordingManager.startRecording()
         } catch {
             presentAlert(for: error)
         }
-        // DISMISSAL: Use orderOut(nil) on the captured keyWindow rather than
-        // popover.close(). Calling close() while recording is active breaks the
-        // double-click-to-reopen behavior (popover enters an inconsistent state).
-        // The 100ms delay allows the button animation to complete first.
-        // See CLAUDE.md "Gotchas" for full explanation.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { panel?.orderOut(nil) }
     }
 
     @MainActor
