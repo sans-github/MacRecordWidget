@@ -7,21 +7,22 @@ struct MacRecordWidgetApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 Toggle(isOn: $recordingManager.videoEnabled) {
                     Image(systemName: recordingManager.videoEnabled ? "video.fill" : "video")
+                        .font(.system(size: 13))
                 }
                 .toggleStyle(.switch)
+                .controlSize(.small)
                 .disabled(recordingManager.isRecording)
                 .accessibilityLabel("Include video in recording")
                 .accessibilityIdentifier("videoModeToggle")
-
-                Spacer()
 
                 Button {
                     Task { await startOnly() }
                 } label: {
                     Image(systemName: "record.circle.fill")
+                        .font(.system(size: 13))
                         .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
@@ -34,6 +35,7 @@ struct MacRecordWidgetApp: App {
                     Task { await stopOnly() }
                 } label: {
                     Image(systemName: "stop.fill")
+                        .font(.system(size: 13))
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
@@ -50,6 +52,7 @@ struct MacRecordWidgetApp: App {
                     }
                 } label: {
                     Image(systemName: "power")
+                        .font(.system(size: 13))
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
@@ -57,7 +60,9 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
             }
-            .padding(12)
+            .focusEffectDisabled()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .frame(width: 200)
         } label: {
             MenuBarIcon(isRecording: recordingManager.isRecording)
