@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>prd</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">prd</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#prd-macrecordwidget-master"
+id="toc-prd-macrecordwidget-master"><span
+class="toc-section-number">1</span> PRD: MacRecordWidget (Master)</a>
+<ul>
+<li><a href="#goals" id="toc-goals"><span
+class="toc-section-number">1.1</span> Goals</a></li>
+<li><a href="#elevator-pitch" id="toc-elevator-pitch"><span
+class="toc-section-number">1.2</span> Elevator pitch</a></li>
+<li><a href="#problem" id="toc-problem"><span
+class="toc-section-number">1.3</span> Problem</a></li>
+<li><a href="#target-audience" id="toc-target-audience"><span
+class="toc-section-number">1.4</span> Target audience</a></li>
+<li><a href="#features-shipped" id="toc-features-shipped"><span
+class="toc-section-number">1.5</span> Features (shipped)</a></li>
+<li><a href="#conceptual-data-model"
+id="toc-conceptual-data-model"><span
+class="toc-section-number">1.6</span> Conceptual data model</a></li>
+<li><a href="#roadmap" id="toc-roadmap"><span
+class="toc-section-number">1.7</span> Roadmap</a></li>
+<li><a href="#app-flows" id="toc-app-flows"><span
+class="toc-section-number">1.8</span> App flows</a></li>
+<li><a href="#acceptance-criteria" id="toc-acceptance-criteria"><span
+class="toc-section-number">1.9</span> Acceptance criteria</a></li>
+<li><a href="#risks-and-mitigations"
+id="toc-risks-and-mitigations"><span
+class="toc-section-number">1.10</span> Risks and mitigations</a></li>
+</ul></li>
+</ul>
+</nav>
+<p>Status: Approved — Human Approved: 2026-05-21</p>
+<h1 data-number="1" id="prd-macrecordwidget-master"><span
+class="header-section-number">1</span> PRD: MacRecordWidget
+(Master)</h1>
+<p>Consolidated product baseline. Covers all shipped phases: production
+polish (2026-05-18) and popover button layout (2026-05-21).</p>
+<h2 data-number="1.1" id="goals"><span
+class="header-section-number">1.1</span> Goals</h2>
+<p><strong>Product goal:</strong> one-click voice and video recording
+from the macOS menu bar, with no window, no dock icon, and no context
+switch.</p>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Success metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-friction recording</td>
+<td>Start or stop a recording in one click from the menu bar.</td>
+</tr>
+<tr>
+<td>Chained sessions</td>
+<td>Stop a recording and start a new one without reopening the widget or
+relaunching Photo Booth.</td>
+</tr>
+<tr>
+<td>Native macOS feel</td>
+<td>Controls use standard macOS control types and sizing. Correct in
+light and dark mode.</td>
+</tr>
+<tr>
+<td>Reliable lifecycle</td>
+<td>Rapid or double taps never fire a duplicate shortcut. Failed
+launches never leave the UI in a false state.</td>
+</tr>
+<tr>
+<td>Idiomatic Swift</td>
+<td>No deprecated observation APIs. No raw <code>DispatchQueue</code>.
+No optimistic state divergence.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Non-goals:</strong></p>
+<ul>
+<li>No backend, web frontend, or infrastructure</li>
+<li>No recording modes beyond the two Shortcuts ("Start", "Stop")</li>
+<li>No settings persistence (video mode resets each launch)</li>
+<li>No App Store submission prep (icons, metadata, entitlements)</li>
+<li>No XCUITest automation (manual smoke testing only)</li>
+</ul>
+<hr />
+<h2 data-number="1.2" id="elevator-pitch"><span
+class="header-section-number">1.2</span> Elevator pitch</h2>
+<p>MacRecordWidget is a menu bar app that starts and stops a recording
+session in one click. It fires two user-created Shortcuts ("Start" and
+"Stop"), quits Voice Memos first so macOS does not throw an
+audio-service error, and optionally opens Photo Booth for video. The
+whole UI is a single 200pt row of four icon controls.</p>
+<hr />
+<h2 data-number="1.3" id="problem"><span
+class="header-section-number">1.3</span> Problem</h2>
+<p>Starting a recording normally means finding an app, waiting for it to
+launch, and clicking through its UI. Voice Memos also blocks the
+Shortcuts audio path if it is already open, which produces a cryptic
+<code>VMAudioServiceErrorDomain</code> error 5.</p>
+<p>Prior versions of the widget added their own friction:</p>
+<ul>
+<li>A recording-status dot in the popover flickered and carried no
+actionable information</li>
+<li>Start and Stop were stacked vertically, making the popover taller
+than its content needed</li>
+<li>The popover dismissed itself after Start, so stopping required
+reopening it from the menu bar</li>
+</ul>
+<hr />
+<h2 data-number="1.4" id="target-audience"><span
+class="header-section-number">1.4</span> Target audience</h2>
+<p><strong>Primary:</strong> the developer and sole author, who uses the
+app daily and maintains it. <strong>Secondary:</strong> anyone who
+installs the build and has the two Shortcuts configured. They get a
+native-looking, non-blocking recorder.</p>
+<hr />
+<h2 data-number="1.5" id="features-shipped"><span
+class="header-section-number">1.5</span> Features (shipped)</h2>
+<ul>
+<li>Menu bar icon (<code>record.circle</code>) that turns green while
+recording, with a blinking amber badge dot that respects Reduce
+Motion</li>
+<li><code>.window</code>-style <code>MenuBarExtra</code> popover, single
+horizontal row, 200pt wide</li>
+<li>Switch-style video toggle with a camera icon label
+(<code>video</code> / <code>video.fill</code>), disabled while
+recording</li>
+<li>Red <code>record.circle.fill</code> Start button, plain style</li>
+<li><code>stop.fill</code> Stop button, plain style</li>
+<li><code>power</code> Quit button, which stops an in-progress recording
+then terminates the app</li>
+<li>Voice Memos is quit before the Start shortcut fires, with a 1.5s
+wait</li>
+<li>Photo Booth opens on Start when video mode is on, in window mode
+(not full screen)</li>
+<li>In-flight guard prevents a duplicate shortcut invocation</li>
+<li>Typed errors (<code>shortcutLaunchFailed</code>,
+<code>accessibilityDenied</code>) surfaced through an
+<code>NSAlert</code></li>
+<li>Popover stays open through Start and Stop; it closes only when the
+user clicks the menu bar icon</li>
+<li>No focus ring on any control (<code>focusEffectDisabled</code>)</li>
+</ul>
+<hr />
+<h2 data-number="1.6" id="conceptual-data-model"><span
+class="header-section-number">1.6</span> Conceptual data model</h2>
+<ul>
+<li>The app holds one <strong>Recording session</strong> state, in
+memory only, never persisted.</li>
+<li>A Recording session has three flags: recording or idle, video
+enabled or audio only, and in flight or settled.</li>
+<li>A Recording session drives two <strong>Shortcuts</strong> by name:
+"Start" and "Stop". Both must exist in the user's Shortcuts app.</li>
+<li>A Recording session may own one <strong>Photo Booth</strong> launch,
+only when video is enabled.</li>
+</ul>
+<hr />
+<h2 data-number="1.7" id="roadmap"><span
+class="header-section-number">1.7</span> Roadmap</h2>
+<h3 data-number="1.7.1" id="shipped"><span
+class="header-section-number">1.7.1</span> Shipped</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Date</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production polish</td>
+<td>2026-05-18</td>
+<td>HIG pass on controls, <code>@Observable</code> migration, macOS 14
+target, structured concurrency, typed errors, in-flight guard,
+non-optimistic state</td>
+</tr>
+<tr>
+<td>Popover button layout</td>
+<td>2026-05-21</td>
+<td>Popover status dot removed, single horizontal row, popover stays
+open through Start and Stop, Photo Booth left running on Stop</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.7.2" id="deferred"><span
+class="header-section-number">1.7.2</span> Deferred</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why deferred</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Settings persistence (remember video mode)</td>
+<td>Low value for a solo user; resets are cheap</td>
+</tr>
+<tr>
+<td>XCUITest automation</td>
+<td>Manual smoke testing covers a four-control UI</td>
+</tr>
+<tr>
+<td>App Store submission (icons, metadata, entitlements)</td>
+<td>Distribution is via GitHub Actions artifact</td>
+</tr>
+<tr>
+<td>Additional recording modes or Shortcuts</td>
+<td>No demand yet; would expand the single-row UI</td>
+</tr>
+<tr>
+<td>Full-screen Photo Booth</td>
+<td>Removed deliberately to avoid the Accessibility permission
+prompt</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.8" id="app-flows"><span
+class="header-section-number">1.8</span> App flows</h2>
+<h3 data-number="1.8.1" id="site-map"><span
+class="header-section-number">1.8.1</span> Site map</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menu bar icon</td>
+<td>Always-visible status. Green while recording. Click toggles the
+popover.</td>
+</tr>
+<tr>
+<td>Popover</td>
+<td>The entire UI: one 200pt row with video toggle, Start, Stop,
+Quit.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.8.2" id="user-roles-and-access"><span
+class="header-section-number">1.8.2</span> User roles and access</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App user (single role)</td>
+<td>All four controls. No auth, no multi-user concept.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.8.3" id="user-journeys"><span
+class="header-section-number">1.8.3</span> User journeys</h3>
+<p><strong>1. Start a recording</strong></p>
+<ol type="1">
+<li>Click the menu bar icon; the popover opens</li>
+<li>Optionally flip the video toggle on</li>
+<li>Tap Start; Voice Memos quits, the Start shortcut fires, Photo Booth
+opens if video is on, the popover stays open</li>
+</ol>
+<p><strong>2. Stop and immediately restart</strong></p>
+<ol type="1">
+<li>With the popover already open, tap Stop; the Stop shortcut
+fires</li>
+<li>Photo Booth stays open and the popover stays open</li>
+<li>Tap Start again for the next session, without touching the menu bar
+icon</li>
+</ol>
+<p><strong>3. Quit while recording</strong></p>
+<ol type="1">
+<li>Tap the Quit (power) button during a recording</li>
+<li>The Stop shortcut fires first</li>
+<li>The app terminates</li>
+</ol>
+<hr />
+<h2 data-number="1.9" id="acceptance-criteria"><span
+class="header-section-number">1.9</span> Acceptance criteria</h2>
+<h3 data-number="1.9.1" id="popover-layout"><span
+class="header-section-number">1.9.1</span> Popover layout</h3>
+<ul>
+<li><strong>AC-L-1:</strong> The popover is a single <code>HStack</code>
+row, 200pt wide, ordered: video toggle, Start, Stop, Quit.</li>
+<li><strong>AC-L-2:</strong> No recording-status dot appears anywhere in
+the popover, in any state.</li>
+<li><strong>AC-L-3:</strong> Every control is icon-only with an
+<code>accessibilityLabel</code> and a stable
+<code>accessibilityIdentifier</code>.</li>
+<li><strong>AC-L-4:</strong> No control shows a focus ring.</li>
+<li><strong>AC-L-5:</strong> Control icons are visually even in size and
+spacing across the row.</li>
+</ul>
+<h3 data-number="1.9.2" id="controls"><span
+class="header-section-number">1.9.2</span> Controls</h3>
+<ul>
+<li><strong>AC-C-1:</strong> The video toggle uses
+<code>.toggleStyle(.switch)</code> at <code>.controlSize(.small)</code>,
+labelled with <code>video</code> when off and <code>video.fill</code>
+when on.</li>
+<li><strong>AC-C-2:</strong> The video toggle is disabled while
+recording.</li>
+<li><strong>AC-C-3:</strong> Start renders as a red
+<code>record.circle.fill</code> and is disabled while recording or while
+an invocation is in flight.</li>
+<li><strong>AC-C-4:</strong> Stop renders as <code>stop.fill</code> and
+is disabled when not recording or while an invocation is in flight.</li>
+<li><strong>AC-C-5:</strong> Quit renders as <code>power</code>, carries
+a tooltip, and is never disabled.</li>
+</ul>
+<h3 data-number="1.9.3" id="menu-bar-icon"><span
+class="header-section-number">1.9.3</span> Menu bar icon</h3>
+<ul>
+<li><strong>AC-M-1:</strong> The icon is <code>record.circle</code>,
+rendered hierarchically, primary-coloured when idle and green while
+recording.</li>
+<li><strong>AC-M-2:</strong> While recording, an amber badge dot blinks
+at the bottom trailing corner.</li>
+<li><strong>AC-M-3:</strong> With Reduce Motion enabled, the badge dot
+is fully opaque and does not blink.</li>
+<li><strong>AC-M-4:</strong> The badge dot is hidden from
+accessibility.</li>
+</ul>
+<h3 data-number="1.9.4" id="popover-lifecycle"><span
+class="header-section-number">1.9.4</span> Popover lifecycle</h3>
+<ul>
+<li><strong>AC-P-1:</strong> The popover stays open after Start.</li>
+<li><strong>AC-P-2:</strong> The popover stays open after Stop.</li>
+<li><strong>AC-P-3:</strong> The popover closes only when the user
+clicks the menu bar icon.</li>
+<li><strong>AC-P-4:</strong> No code path calls
+<code>popover.close()</code> or <code>panel?.orderOut(nil)</code> after
+Start or Stop.</li>
+</ul>
+<h3 data-number="1.9.5" id="recording-behaviour"><span
+class="header-section-number">1.9.5</span> Recording behaviour</h3>
+<ul>
+<li><strong>AC-R-1:</strong> If Voice Memos is running, it is terminated
+and the app waits 1.5s before firing the Start shortcut.</li>
+<li><strong>AC-R-2:</strong> Start fires
+<code>shortcuts://run-shortcut?name=Start</code> with a timestamped
+recording name as text input.</li>
+<li><strong>AC-R-3:</strong> Stop fires
+<code>shortcuts://run-shortcut?name=Stop</code> and does not close Photo
+Booth.</li>
+<li><strong>AC-R-4:</strong> Photo Booth opens on Start only when video
+mode is on, and does not go full screen.</li>
+<li><strong>AC-R-5:</strong> Quit stops an in-progress recording before
+terminating.</li>
+</ul>
+<h3 data-number="1.9.6" id="swift-and-reliability"><span
+class="header-section-number">1.9.6</span> Swift and reliability</h3>
+<ul>
+<li><strong>AC-SW-1:</strong> <code>RecordingManager</code> is
+<code>@Observable</code> and held with <code>@State</code>. No
+<code>ObservableObject</code>, <code>@StateObject</code>, or
+<code>@ObservedObject</code> remain.</li>
+<li><strong>AC-SW-2:</strong> The deployment target is macOS 14.0 in the
+project file and in CI.</li>
+<li><strong>AC-SW-3:</strong> No raw <code>DispatchQueue</code> calls
+remain. Background work uses <code>async</code>/<code>await</code>
+inside <code>Task { }</code>.</li>
+<li><strong>AC-SW-4:</strong> A failed shortcut launch throws
+<code>RecordingError.shortcutLaunchFailed</code> and surfaces as an
+<code>NSAlert</code>.</li>
+<li><strong>AC-SW-5:</strong> Tapping Start or Stop while an invocation
+is in flight produces no second shortcut invocation.</li>
+<li><strong>AC-SW-6:</strong> <code>isRecording</code> changes only
+after the shortcut URL opens successfully. A failed open leaves it
+unchanged.</li>
+</ul>
+<hr />
+<h2 data-number="1.10" id="risks-and-mitigations"><span
+class="header-section-number">1.10</span> Risks and mitigations</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The two Shortcuts are missing or renamed</td>
+<td>Medium</td>
+<td>High</td>
+<td><code>NSWorkspace.open</code> failure throws a typed error and the
+alert names the required Shortcut</td>
+</tr>
+<tr>
+<td>Voice Memos takes longer than 1.5s to exit</td>
+<td>Low</td>
+<td>Medium</td>
+<td><code>VMAudioServiceErrorDomain</code> error 5 surfaces in
+Shortcuts; the wait is documented in CLAUDE.md and can be
+lengthened</td>
+</tr>
+<tr>
+<td>Icon-only controls are unlearnable for a new user</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Every control carries an accessibility label; Quit carries a
+tooltip</td>
+</tr>
+<tr>
+<td>Popover staying open is mistaken for a hung UI</td>
+<td>Low</td>
+<td>Low</td>
+<td>The menu bar icon turns green and the badge blinks, so recording
+state is visible outside the popover</td>
+</tr>
+<tr>
+<td>macOS 14 minimum excludes macOS 13 users</td>
+<td>Low</td>
+<td>High</td>
+<td>Documented minimum; solo-use app</td>
+</tr>
+<tr>
+<td>No settings persistence means video mode resets each launch</td>
+<td>Low</td>
+<td>Low</td>
+<td>Accepted; the toggle is one click</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

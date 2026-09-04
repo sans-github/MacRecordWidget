@@ -1,99 +1,99 @@
 Status: Approved — Human
-Approved: 2026-05-18
+Approved: 2026-05-21
 
-# PRD: Production Polish
+# PRD: MacRecordWidget (Master)
+
+Consolidated product baseline. Covers all shipped phases: production polish (2026-05-18) and popover button layout (2026-05-21).
 
 ## Goals
 
-**Goal:** Bring MacRecordWidget's UI and Swift source to a shippable standard before any feature work proceeds.
+**Product goal:** one-click voice and video recording from the macOS menu bar, with no window, no dock icon, and no context switch.
 
 | Goal | Success metric |
 |------|---------------|
-| HIG-compliant popover UI | All controls use semantic macOS colors, standard sizing, and correct button roles. A new user can orient the UI without confusion. |
-| Idiomatic Swift codebase | Zero use of deprecated observation APIs. No raw DispatchQueue calls. No optimistic state divergence. |
-| Reliable recording lifecycle | Double-tap and rapid toggle produce no duplicate shortcut invocations. Accessibility denial is handled gracefully. |
-| Maintainable popover dismissal | Dismissal code is documented, intentional, and free of async timing hacks. |
+| Zero-friction recording | Start or stop a recording in one click from the menu bar. |
+| Chained sessions | Stop a recording and start a new one without reopening the widget or relaunching Photo Booth. |
+| Native macOS feel | Controls use standard macOS control types and sizing. Correct in light and dark mode. |
+| Reliable lifecycle | Rapid or double taps never fire a duplicate shortcut. Failed launches never leave the UI in a false state. |
+| Idiomatic Swift | No deprecated observation APIs. No raw `DispatchQueue`. No optimistic state divergence. |
 
 **Non-goals:**
-- No new user-facing features
-- No new Shortcuts, no new recording modes
-- No backend, no web frontend, no infrastructure changes
-- No XCUITest automation (manual smoke testing only for this pass)
-- No App Store submission preparation (icons, metadata, entitlements review deferred)
+- No backend, web frontend, or infrastructure
+- No recording modes beyond the two Shortcuts ("Start", "Stop")
+- No settings persistence (video mode resets each launch)
+- No App Store submission prep (icons, metadata, entitlements)
+- No XCUITest automation (manual smoke testing only)
+
+---
+
+## Elevator pitch
+
+MacRecordWidget is a menu bar app that starts and stops a recording session in one click. It fires two user-created Shortcuts ("Start" and "Stop"), quits Voice Memos first so macOS does not throw an audio-service error, and optionally opens Photo Booth for video. The whole UI is a single 200pt row of four icon controls.
 
 ---
 
 ## Problem
 
-The app works but is not shippable. Two distinct issues make it unsuitable for distribution.
+Starting a recording normally means finding an app, waiting for it to launch, and clicking through its UI. Voice Memos also blocks the Shortcuts audio path if it is already open, which produces a cryptic `VMAudioServiceErrorDomain` error 5.
 
-**UI issues (user-visible):**
-- Stop button uses a hardcoded red that ignores the system accent color and looks wrong in non-default themes
-- Start button does not use `controlAccentColor`, so it blends with generic controls
-- Control sizing is inconsistent with HIG recommendations for menu-bar popovers
-- Typography does not use semantic macOS text styles (caption, body, etc.)
-
-**Code issues (maintainability and reliability):**
-- `ObservableObject` + `@StateObject` are the old observation model; macOS 14 ships `@Observable` which is simpler and more efficient
-- Background work uses raw `DispatchQueue.global()` calls instead of structured concurrency (`async`/`await`)
-- Recording state is set optimistically before the shortcut fires, so a failed launch leaves the UI in a wrong state with no recovery
-- Popover dismissal relies on a 100ms `asyncAfter` hack that is undocumented and fragile (breaks on slow machines or under load)
-- Accessibility permission denial in the `osascript` path is silently swallowed
+Prior versions of the widget added their own friction:
+- A recording-status dot in the popover flickered and carried no actionable information
+- Start and Stop were stacked vertically, making the popover taller than its content needed
+- The popover dismissed itself after Start, so stopping required reopening it from the menu bar
 
 ---
 
 ## Target audience
 
-**Primary:** The developer (sole author) who will distribute and maintain this app. This polish pass makes the codebase something they are comfortable shipping and maintaining.
-
-**Secondary:** End users who install the app. They benefit from a UI that looks native and correct on any macOS theme, and from reliability improvements that prevent silent failures.
+**Primary:** the developer and sole author, who uses the app daily and maintains it.
+**Secondary:** anyone who installs the build and has the two Shortcuts configured. They get a native-looking, non-blocking recorder.
 
 ---
 
-## Scope
+## Features (shipped)
 
-Two parallel tracks. Both must complete before this feature closes.
+- Menu bar icon (`record.circle`) that turns green while recording, with a blinking amber badge dot that respects Reduce Motion
+- `.window`-style `MenuBarExtra` popover, single horizontal row, 200pt wide
+- Switch-style video toggle with a camera icon label (`video` / `video.fill`), disabled while recording
+- Red `record.circle.fill` Start button, plain style
+- `stop.fill` Stop button, plain style
+- `power` Quit button, which stops an in-progress recording then terminates the app
+- Voice Memos is quit before the Start shortcut fires, with a 1.5s wait
+- Photo Booth opens on Start when video mode is on, in window mode (not full screen)
+- In-flight guard prevents a duplicate shortcut invocation
+- Typed errors (`shortcutLaunchFailed`, `accessibilityDenied`) surfaced through an `NSAlert`
+- Popover stays open through Start and Stop; it closes only when the user clicks the menu bar icon
+- No focus ring on any control (`focusEffectDisabled`)
 
-### Track 1: UI / HIG compliance
+---
 
-| Item | What changes |
-|------|-------------|
-| Stop button | Apply `.destructive` role or equivalent tint so it uses the system destructive color, not hardcoded red |
-| Start button | Apply `controlAccentColor` tint so it uses the user's chosen accent color |
-| Control sizing | Audit every control against HIG menu-bar popover recommendations; resize as needed |
-| Typography | Replace any hardcoded font sizes with semantic macOS text styles |
-| Menu bar icon | Confirm icon state changes (mic/mic.fill, video/video.fill, green while recording) are correct and consistent |
-| Spacing and layout | Align padding and gaps to HIG-recommended values for popovers |
+## Conceptual data model
 
-### Track 2: Swift modernization
-
-| Item | What changes |
-|------|-------------|
-| Observation model | Migrate `RecordingManager` from `ObservableObject`/`@StateObject` to `@Observable`/`@State` (requires macOS 14 deployment target) |
-| Deployment target | Bump from macOS 13.0 to macOS 14.0 in the project settings |
-| Background work | Replace `DispatchQueue.global()` calls with `async`/`await` and structured concurrency |
-| Error propagation | Introduce typed errors for the shortcut-launch and osascript paths instead of silent `print`/ignore |
-| Accessibility denial | Detect and surface Accessibility permission denial gracefully (alert or status indicator) instead of silent failure |
-| Double-tap guard | Add a guard that prevents a second Start or Stop from firing while the first invocation is in flight |
-| Optimistic state | Remove optimistic state setting; update `isRecording` only after the shortcut URL fires successfully or fails with an error |
-| Popover dismissal | Replace the `100ms asyncAfter` with a documented, consistent approach that survives the edge cases noted in CLAUDE.md |
+- The app holds one **Recording session** state, in memory only, never persisted.
+- A Recording session has three flags: recording or idle, video enabled or audio only, and in flight or settled.
+- A Recording session drives two **Shortcuts** by name: "Start" and "Stop". Both must exist in the user's Shortcuts app.
+- A Recording session may own one **Photo Booth** launch, only when video is enabled.
 
 ---
 
 ## Roadmap
 
-### This feature (production polish pass)
+### Shipped
 
-All Track 1 and Track 2 items listed above. No exceptions.
+| Phase | Date | Contents |
+|-------|------|----------|
+| Production polish | 2026-05-18 | HIG pass on controls, `@Observable` migration, macOS 14 target, structured concurrency, typed errors, in-flight guard, non-optimistic state |
+| Popover button layout | 2026-05-21 | Popover status dot removed, single horizontal row, popover stays open through Start and Stop, Photo Booth left running on Stop |
 
-**Rationale for doing both tracks together:** The UI redesign and the Swift refactor touch the same two files. Doing them separately would require two rounds of review and integration risk. They are also both blockers for any future feature work -- new features built on top of the current code or UI would inherit the problems.
+### Deferred
 
-### Deferred (not in this feature)
-
-- App Store submission (icons, metadata, entitlements review)
-- XCUITest automation
-- Additional recording modes or Shortcuts integrations
-- Settings persistence (e.g. remembering video mode across launches)
+| Item | Why deferred |
+|------|-------------|
+| Settings persistence (remember video mode) | Low value for a solo user; resets are cheap |
+| XCUITest automation | Manual smoke testing covers a four-control UI |
+| App Store submission (icons, metadata, entitlements) | Distribution is via GitHub Actions artifact |
+| Additional recording modes or Shortcuts | No demand yet; would expand the single-row UI |
+| Full-screen Photo Booth | Removed deliberately to avoid the Accessibility permission prompt |
 
 ---
 
@@ -103,54 +103,82 @@ All Track 1 and Track 2 items listed above. No exceptions.
 
 | Surface | Purpose |
 |---------|---------|
-| Menu bar icon | Always-visible status indicator; click opens the popover |
-| Popover | Main UI: video mode toggle, Start button, Stop button, Quit button |
+| Menu bar icon | Always-visible status. Green while recording. Click toggles the popover. |
+| Popover | The entire UI: one 200pt row with video toggle, Start, Stop, Quit. |
 
-### User roles
+### User roles and access
 
 | Role | Access |
 |------|--------|
-| App user (single role) | Full access to all controls. No auth, no multi-user concept. |
+| App user (single role) | All four controls. No auth, no multi-user concept. |
 
 ### User journeys
 
-**1. Start a recording session**
-1. User clicks the menu bar icon; popover opens
-2. User optionally toggles video mode on
-3. User taps Start; popover dismisses; recording begins (Voice Memos quits, shortcut fires, Photo Booth opens if video)
+**1. Start a recording**
+1. Click the menu bar icon; the popover opens
+2. Optionally flip the video toggle on
+3. Tap Start; Voice Memos quits, the Start shortcut fires, Photo Booth opens if video is on, the popover stays open
 
-**2. Stop a recording session**
-1. User clicks the menu bar icon while recording; popover opens (icon is green)
-2. User taps Stop; popover dismisses; shortcut fires to end recording
+**2. Stop and immediately restart**
+1. With the popover already open, tap Stop; the Stop shortcut fires
+2. Photo Booth stays open and the popover stays open
+3. Tap Start again for the next session, without touching the menu bar icon
 
-**3. Accessibility permission denied (video mode)**
-1. User taps Start with video mode on
-2. macOS prompts for Accessibility permission; user denies
-3. App surfaces a clear error (alert or status indicator); `isRecording` remains false; no partial state
+**3. Quit while recording**
+1. Tap the Quit (power) button during a recording
+2. The Stop shortcut fires first
+3. The app terminates
 
 ---
 
 ## Acceptance criteria
 
-### Track 1: UI / HIG compliance
+### Popover layout
 
-- **AC-UI-1:** Stop button uses the system destructive color. It must look correct in both light mode and dark mode, and when the user's accent color is changed.
-- **AC-UI-2:** Start button uses `controlAccentColor`. It must reflect the user's chosen accent color.
-- **AC-UI-3:** All controls (toggle, buttons) meet the minimum HIG-recommended touch/click target size for menu-bar popovers.
-- **AC-UI-4:** All text uses semantic macOS text styles or SF Pro dynamic type. No hardcoded font sizes.
-- **AC-UI-5:** Menu bar icon correctly shows `mic` (audio, idle), `mic.fill` (audio, recording, green), `video` (video, idle), `video.fill` (video, recording, green).
-- **AC-UI-6:** Popover padding and control spacing are consistent with HIG popover recommendations (no controls touching the window edge, no excessive whitespace).
+- **AC-L-1:** The popover is a single `HStack` row, 200pt wide, ordered: video toggle, Start, Stop, Quit.
+- **AC-L-2:** No recording-status dot appears anywhere in the popover, in any state.
+- **AC-L-3:** Every control is icon-only with an `accessibilityLabel` and a stable `accessibilityIdentifier`.
+- **AC-L-4:** No control shows a focus ring.
+- **AC-L-5:** Control icons are visually even in size and spacing across the row.
 
-### Track 2: Swift modernization
+### Controls
 
-- **AC-SW-1:** `RecordingManager` uses `@Observable`. `MacRecordWidgetApp` uses `@State` to hold it. No `ObservableObject`, `@StateObject`, or `@ObservedObject` remain.
-- **AC-SW-2:** Deployment target is macOS 14.0 in both the project file and any CI configuration.
-- **AC-SW-3:** No raw `DispatchQueue` calls remain. All background work uses `async`/`await` with `Task { }`.
-- **AC-SW-4:** The shortcut-launch path propagates a typed error on failure. The caller handles it (log + user-visible indicator).
-- **AC-SW-5:** The osascript path propagates a typed error on Accessibility denial. The app shows an alert or status label; `isRecording` is not set to true.
-- **AC-SW-6:** Tapping Start or Stop while the previous invocation is still in flight produces no second shortcut invocation. The button is disabled or ignores the tap until the first invocation completes.
-- **AC-SW-7:** `isRecording` is updated only after the shortcut URL opens successfully. A failed open leaves `isRecording` unchanged.
-- **AC-SW-8:** Popover dismissal behavior matches the documented approach in CLAUDE.md: popover can be reopened by double-click while recording; the dismissal approach is explained in an inline comment.
+- **AC-C-1:** The video toggle uses `.toggleStyle(.switch)` at `.controlSize(.small)`, labelled with `video` when off and `video.fill` when on.
+- **AC-C-2:** The video toggle is disabled while recording.
+- **AC-C-3:** Start renders as a red `record.circle.fill` and is disabled while recording or while an invocation is in flight.
+- **AC-C-4:** Stop renders as `stop.fill` and is disabled when not recording or while an invocation is in flight.
+- **AC-C-5:** Quit renders as `power`, carries a tooltip, and is never disabled.
+
+### Menu bar icon
+
+- **AC-M-1:** The icon is `record.circle`, rendered hierarchically, primary-coloured when idle and green while recording.
+- **AC-M-2:** While recording, an amber badge dot blinks at the bottom trailing corner.
+- **AC-M-3:** With Reduce Motion enabled, the badge dot is fully opaque and does not blink.
+- **AC-M-4:** The badge dot is hidden from accessibility.
+
+### Popover lifecycle
+
+- **AC-P-1:** The popover stays open after Start.
+- **AC-P-2:** The popover stays open after Stop.
+- **AC-P-3:** The popover closes only when the user clicks the menu bar icon.
+- **AC-P-4:** No code path calls `popover.close()` or `panel?.orderOut(nil)` after Start or Stop.
+
+### Recording behaviour
+
+- **AC-R-1:** If Voice Memos is running, it is terminated and the app waits 1.5s before firing the Start shortcut.
+- **AC-R-2:** Start fires `shortcuts://run-shortcut?name=Start` with a timestamped recording name as text input.
+- **AC-R-3:** Stop fires `shortcuts://run-shortcut?name=Stop` and does not close Photo Booth.
+- **AC-R-4:** Photo Booth opens on Start only when video mode is on, and does not go full screen.
+- **AC-R-5:** Quit stops an in-progress recording before terminating.
+
+### Swift and reliability
+
+- **AC-SW-1:** `RecordingManager` is `@Observable` and held with `@State`. No `ObservableObject`, `@StateObject`, or `@ObservedObject` remain.
+- **AC-SW-2:** The deployment target is macOS 14.0 in the project file and in CI.
+- **AC-SW-3:** No raw `DispatchQueue` calls remain. Background work uses `async`/`await` inside `Task { }`.
+- **AC-SW-4:** A failed shortcut launch throws `RecordingError.shortcutLaunchFailed` and surfaces as an `NSAlert`.
+- **AC-SW-5:** Tapping Start or Stop while an invocation is in flight produces no second shortcut invocation.
+- **AC-SW-6:** `isRecording` changes only after the shortcut URL opens successfully. A failed open leaves it unchanged.
 
 ---
 
@@ -158,8 +186,9 @@ All Track 1 and Track 2 items listed above. No exceptions.
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| `@Observable` migration breaks the popover's reactivity (SwiftUI re-render not triggered) | Medium | High | Test Start/Stop state changes visually after migration; `@Observable` + `@State` is the documented path for macOS 14 |
-| Removing optimistic state makes the UI feel sluggish (button press has no immediate feedback) | Medium | Medium | Add a loading/pending state to the button while the invocation is in flight; this also satisfies AC-SW-6 |
-| Popover dismissal replacement breaks the double-click-to-reopen behavior | Medium | High | Regression test: record, click status icon, verify popover opens; the CLAUDE.md gotcha section documents exactly why `orderOut` is used |
-| macOS 14 deployment target breaks users on macOS 13 | Low | High | Document the new minimum explicitly; this is a solo-use app so the author controls the machine |
-| Typed error propagation adds surface area that needs UI treatment | Low | Low | Errors surface as a sheet or `NSAlert`; no persistent error state needed for a two-button app |
+| The two Shortcuts are missing or renamed | Medium | High | `NSWorkspace.open` failure throws a typed error and the alert names the required Shortcut |
+| Voice Memos takes longer than 1.5s to exit | Low | Medium | `VMAudioServiceErrorDomain` error 5 surfaces in Shortcuts; the wait is documented in CLAUDE.md and can be lengthened |
+| Icon-only controls are unlearnable for a new user | Medium | Medium | Every control carries an accessibility label; Quit carries a tooltip |
+| Popover staying open is mistaken for a hung UI | Low | Low | The menu bar icon turns green and the badge blinks, so recording state is visible outside the popover |
+| macOS 14 minimum excludes macOS 13 users | Low | High | Documented minimum; solo-use app |
+| No settings persistence means video mode resets each launch | Low | Low | Accepted; the toggle is one click |

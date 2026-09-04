@@ -3,319 +3,170 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MacRecordWidget — Popover: Recording in Progress</title>
+<title>MacRecordWidget — Popover: Recording</title>
 <style>
 :root {
-  --bg-window:          #ECECEC;
-  --bg-popover:         #F2F2F2;
-  --label-primary:      rgba(0,0,0,0.85);
-  --label-secondary:    rgba(0,0,0,0.50);
-  --separator:          rgba(0,0,0,0.12);
-  --accent:             #007AFF;
-  --accent-label:       #FFFFFF;
-  --destructive:        rgba(255,59,48,0.90);
-  --btn-surface:        rgba(0,0,0,0.06);
-  --btn-border:         rgba(0,0,0,0.14);
-  --toggle-track-off:   rgba(0,0,0,0.16);
-  --toggle-track-on:    #34C759;
-  --toggle-thumb:       #FFFFFF;
-  --icon-green:         #34C759;
-  --shadow:             rgba(0,0,0,0.18);
-  --recording-badge-bg: rgba(52,199,89,0.14);
-  --recording-badge-fg: #1A7A30;
+  --bg-window:       #ECECEC;
+  --bg-popover:      #F6F6F6;
+  --bg-menubar:      #E4E4E4;
+  --label-primary:   rgba(0,0,0,0.85);
+  --label-secondary: rgba(0,0,0,0.50);
+  --label-tertiary:  rgba(0,0,0,0.26);
+  --separator:       rgba(0,0,0,0.12);
+  --accent:          #007AFF;
+  --record-red:      #FF3B30;
+  --sys-green:       #34C759;
+  --amber:           #FF9E33;
+  --toggle-off:      rgba(0,0,0,0.16);
+  --toggle-thumb:    #FFFFFF;
+  --hover-fill:      rgba(0,0,0,0.07);
+  --pressed-fill:    rgba(0,0,0,0.14);
+  --shadow:          rgba(0,0,0,0.18);
+  --code-bg:         rgba(0,0,0,0.06);
 }
-
-#dm-toggle { display: none; }
-#dm-toggle:checked ~ * {
-  --bg-window: #1E1E1E;
-  --bg-popover: #2C2C2E;
-  --label-primary: rgba(255,255,255,0.85);
-  --label-secondary: rgba(255,255,255,0.55);
-  --separator: rgba(255,255,255,0.12);
-  --accent: #0A84FF;
-  --btn-surface: rgba(255,255,255,0.10);
-  --btn-border: rgba(255,255,255,0.16);
-  --toggle-track-off: rgba(255,255,255,0.20);
-  --shadow: rgba(0,0,0,0.50);
-  --recording-badge-bg: rgba(52,199,89,0.20);
-  --recording-badge-fg: #30D158;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+    --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+    --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+    --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+    --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+    --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+    --code-bg: rgba(255,255,255,0.10);
+  }
 }
-
+#dm:checked ~ .page {
+  --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+}
+#dm:checked ~ .page { background: #1E1E1E; }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
+#dm { display: none; }
+.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px; }
+.wrap { max-width: 620px; margin: 0 auto; }
+.dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
+h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+.sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; }
+h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
+code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+a { color: var(--accent); }
 
-body {
-  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-  font-size: 13px;
-  background: var(--bg-window);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px 40px;
-  transition: background 0.2s;
-}
+/* menu bar strip */
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
+.mb-icon.rec { color: var(--sys-green); }
+.mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
+.blink { animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
 
-.dm-label {
-  align-self: flex-end;
-  margin-bottom: 16px;
-  font-size: 11px;
-  color: var(--label-secondary);
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+/* popover: 200pt wide, 12pt h / 8pt v padding, HStack spacing 12pt */
+.popover { width: 200px; background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; }
+.row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.tgl-group { display: flex; align-items: center; gap: 6px; }
+.tgl-icon { width: 16px; height: 16px; color: var(--label-primary); flex: none; }
+.switch { width: 26px; height: 15px; border-radius: 8px; background: var(--toggle-off); position: relative; flex: none; }
+.switch.on { background: var(--sys-green); }
+.switch::after { content: ""; position: absolute; top: 1.5px; left: 1.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--toggle-thumb); box-shadow: 0 1px 2px rgba(0,0,0,0.28); }
+.switch.on::after { left: auto; right: 1.5px; }
+.btn { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--label-primary); background: none; border: none; padding: 0; flex: none; }
+.btn.rec { color: var(--record-red); }
+.btn svg { width: 16px; height: 16px; }
+.dim { opacity: 0.30; }
+.spacer { flex: 1 1 auto; }
 
-.state-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--label-secondary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
+/* state matrix */
+.matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.cell { background: var(--bg-popover); border-radius: 8px; box-shadow: 0 0 0 0.5px var(--separator); padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cell .chip { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+.chip.hover { background: var(--hover-fill); }
+.chip.pressed { background: var(--pressed-fill); }
+.chip.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.cell small { font-size: 10px; color: var(--label-secondary); text-align: center; line-height: 1.35; }
 
-/* Menu bar strip showing green icon */
-.menubar-strip {
-  width: 220px;
-  background: linear-gradient(to bottom, #D0D0D0, #C8C8C8);
-  border-radius: 4px 4px 0 0;
-  display: flex;
-  align-items: center;
-  padding: 4px 10px;
-  gap: 6px;
-}
-#dm-toggle:checked ~ * .menubar-strip {
-  background: linear-gradient(to bottom, #3A3A3A, #323232);
-}
-.menubar-icon-green {
-  font-size: 13px;
-  color: var(--icon-green);
-  line-height: 1;
-}
-.menubar-label { font-size: 10px; color: var(--label-secondary); }
-
-.popover {
-  width: 220px;
-  background: var(--bg-popover);
-  border-radius: 0 0 8px 8px;
-  box-shadow:
-    0 0 0 0.5px rgba(0,0,0,0.20),
-    0 4px 20px var(--shadow),
-    0 1px 4px rgba(0,0,0,0.10);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Recording status badge */
-.recording-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--recording-badge-bg);
-  border-radius: 6px;
-  padding: 5px 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--recording-badge-fg);
-}
-.recording-dot {
-  width: 7px; height: 7px;
-  background: var(--icon-green);
-  border-radius: 50%;
-  flex-shrink: 0;
-  /* pulse animation */
-  animation: pulse 1.8s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.8); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .recording-dot { animation: none; }
-}
-
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.toggle-label {
-  font-size: 13px;
-  color: var(--label-secondary); /* disabled appearance */
-}
-.toggle-switch {
-  position: relative;
-  width: 36px; height: 20px;
-  flex-shrink: 0;
-  opacity: 0.40; /* disabled */
-}
-.toggle-track {
-  position: absolute;
-  inset: 0;
-  background: var(--toggle-track-off);
-  border-radius: 10px;
-}
-.toggle-thumb-el {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 16px; height: 16px;
-  background: var(--toggle-thumb);
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.30);
-}
-
-.btn-quit {
-  width: 22px; height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-  color: var(--label-secondary);
-  font-size: 11px;
-  padding: 0;
-}
-.btn-quit::before { content: "⏻"; font-size: 12px; }
-
-.divider {
-  height: 1px;
-  background: var(--separator);
-  margin: 0 -12px 8px -12px;
-}
-
-.btn-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.btn {
-  width: 100%;
-  height: 28px;
-  border-radius: 6px;
-  border: 0.5px solid transparent;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 12px;
-}
-
-.btn-start {
-  background: var(--btn-surface);
-  color: var(--label-secondary);
-  border-color: rgba(0,0,0,0.10);
-  opacity: 0.40;
-  cursor: default;
-  pointer-events: none;
-}
-
-/* Stop — destructive, prominent, enabled */
-.btn-stop {
-  background: var(--destructive);
-  color: #FFFFFF;
-  border-color: transparent;
-  box-shadow: 0 1px 3px rgba(255,59,48,0.30);
-}
-.btn-stop:hover { filter: brightness(1.08); }
-.btn-stop:active { filter: brightness(0.88); }
-
-.icon-mic::before    { content: "🎙"; font-size: 12px; }
-.icon-stop::before   { content: "⏹"; font-size: 11px; }
-
-.annotations {
-  margin-top: 24px;
-  width: 220px;
-  font-size: 11px;
-  color: var(--label-secondary);
-  line-height: 1.6;
-}
-.annotations h3 {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--label-primary);
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.ann-row { display: flex; gap: 6px; margin-bottom: 2px; }
-.ann-key { color: var(--destructive); font-weight: 600; min-width: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator); vertical-align: top; line-height: 1.45; }
+th { background: var(--code-bg); font-weight: 600; }
+ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; }
+ul.ann li { padding-left: 14px; position: relative; margin-bottom: 3px; }
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+.nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
 </style>
 </head>
 <body>
-
-<input type="checkbox" id="dm-toggle">
-<label for="dm-toggle" class="dm-label">Dark mode</label>
-
-<div class="state-label">State: Recording in Progress — Audio Mode</div>
-
-<div class="menubar-strip">
-  <span class="menubar-icon-green">🎙</span>
-  <span class="menubar-label">mic.fill — green (recording active)</span>
-</div>
-
+<input type="checkbox" id="dm">
+<div class="page"><div class="wrap">
+<label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
+<p class="nav"><a href="index.html">&larr; All mocks</a></p>
+<h1>Popover — Recording</h1>
+<p class="sub">A recording is running. Stop is the only enabled action in the row.</p>
+<div class="stage">
+  <div class="caption">Menu bar while recording</div>
+  <div class="menubar"><span class="mb-icon rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.9" stroke="currentColor" stroke-width="1.3" opacity="0.55"/><circle cx="8" cy="8" r="3.6" fill="currentColor"/></svg><span class="mb-dot blink"></span></span></div>
+  <div class="caption">Popover</div>
 <div class="popover">
-
-  <!-- Recording badge -->
-  <div class="recording-badge">
-    <div class="recording-dot"></div>
-    Recording
-  </div>
-
-  <!-- Header: toggle (disabled) + quit -->
-  <div class="header-row">
-    <div class="toggle-row">
-      <div class="toggle-switch">
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb-el"></div>
-      </div>
-      <span class="toggle-label">Include Video</span>
+  <div class="row">
+    <div class="tgl-group dim">
+      <span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
+      <span class="switch off"></span>
     </div>
-    <button class="btn-quit" title="Quit" aria-label="Quit MacRecordWidget"></button>
+    <span class="btn rec dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+    <span class="btn "><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+    <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
   </div>
-
-  <div class="divider"></div>
-
-  <div class="btn-stack">
-    <button class="btn btn-start disabled" aria-disabled="true" aria-label="Start recording (unavailable while recording)">
-      <span class="icon-mic"></span>
-      Start
-    </button>
-    <button class="btn btn-stop" aria-label="Stop recording">
-      <span class="icon-stop"></span>
-      Stop
-    </button>
+</div>
+</div>
+<h2>Menu bar icon states</h2>
+<div class="matrix">
+  <div class="cell"><span class="mb-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.9" stroke="currentColor" stroke-width="1.3" opacity="0.55"/><circle cx="8" cy="8" r="3.6" fill="currentColor"/></svg></span><small>Idle<br><code>.primary</code></small></div>
+  <div class="cell"><span class="mb-icon rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.9" stroke="currentColor" stroke-width="1.3" opacity="0.55"/><circle cx="8" cy="8" r="3.6" fill="currentColor"/></svg><span class="mb-dot blink"></span></span><small>Recording<br>green + blinking amber dot</small></div>
+  <div class="cell"><span class="mb-icon rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.9" stroke="currentColor" stroke-width="1.3" opacity="0.55"/><circle cx="8" cy="8" r="3.6" fill="currentColor"/></svg><span class="mb-dot"></span></span><small>Recording, Reduce Motion<br>dot static at full opacity</small></div>
+</div>
+<p class="note">The dot is 5&times;5pt, offset x:2 y:2 from the bottom trailing corner, and blinks on an 0.8s ease-in-out that auto-reverses forever. With Reduce Motion on it is drawn once, at full opacity, and never animates. Colour is a fixed amber (#FF9E33) so it stays legible against both a light and a dark menu bar; it is the one non-semantic colour in the app, and it earns that because the system menu bar tint does not follow the app appearance.</p>
+<h2>Row while recording</h2>
+<ul class="ann">
+  <li>The video toggle is disabled. Mode cannot change mid-recording.</li>
+  <li>Start is disabled and dimmed. Stop is at full opacity and is now the only thing the user can act on.</li>
+  <li>Quit stays enabled. Quitting while recording stops the recording first, then terminates.</li>
+  <li>The panel stays open after Stop is pressed, so a second take can be started without reopening it.</li>
+</ul>
+<h2>In-flight (both actions briefly unavailable)</h2>
+<div class="stage">
+<div class="popover">
+  <div class="row">
+    <div class="tgl-group dim">
+      <span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
+      <span class="switch off"></span>
+    </div>
+    <span class="btn rec dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+    <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+    <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
   </div>
-
 </div>
-
-<div class="annotations">
-  <h3>Component spec — recording state</h3>
-  <div class="ann-row"><span class="ann-key">A</span><span>Recording badge: custom <code>HStack</code> with animated <code>Circle</code> fill (<code>Color.green</code>) + <code>Text("Recording")</code>. Respects Reduce Motion — animation stops when preference is on. Background: <code>Color.green.opacity(0.12)</code>, corner radius 6pt.</span></div>
-  <div class="ann-row"><span class="ann-key">B</span><span>Toggle: <code>.disabled(true)</code> while <code>isRecording</code>. Visually: <code>opacity(0.40)</code>. SwiftUI handles this automatically via <code>.disabled()</code>.</span></div>
-  <div class="ann-row"><span class="ann-key">C</span><span>Start: <code>.disabled(true)</code>. Uses <code>.buttonStyle(.bordered)</code> in disabled state — accent fill does not apply when disabled.</span></div>
-  <div class="ann-row"><span class="ann-key">D</span><span>Stop: <code>.buttonStyle(.borderedProminent)</code> + <code>.tint(.red)</code>. Enabled. This is the primary action in this state — it is visually dominant.</span></div>
-  <div class="ann-row"><span class="ann-key">E</span><span>Menu bar icon: <code>mic.fill</code> with <code>.foregroundStyle(.green)</code>. Switches to this state when <code>isRecording == true</code>.</span></div>
-  <div class="ann-row"><span class="ann-key">F</span><span>AC-UI-1 satisfied: Stop button uses system destructive tint (<code>.tint(.red)</code>), not hardcoded hex. Correct in all accent color themes and both appearances.</span></div>
+<div class="caption">isInFlight — Start and Stop both dimmed</div>
 </div>
-
+<p class="note">A second invocation is refused while the first is still running. Rather than a spinner, both action icons dim; the row height never changes, so nothing shifts under the pointer.</p>
+<h2>Control mapping</h2>
+<table>
+<tr><th>Element</th><th>SwiftUI control</th><th>Key modifiers</th><th>Accessibility</th></tr>
+<tr><td>Video toggle</td><td><code>Toggle</code> with <code>Image(systemName:)</code> label</td><td><code>.toggleStyle(.switch)</code>, <code>.controlSize(.small)</code>, label <code>.font(.system(size: 13))</code>, <code>.disabled(isRecording)</code></td><td>label "Include video in recording"; id <code>videoModeToggle</code></td></tr>
+<tr><td>Start recording</td><td><code>Button</code> — SF Symbol <code>record.circle.fill</code></td><td><code>.buttonStyle(.plain)</code>, <code>.foregroundStyle(.red)</code>, <code>.contentShape(Rectangle())</code>, <code>.disabled(isRecording || isInFlight)</code></td><td>label "Start recording"; id <code>startButton</code></td></tr>
+<tr><td>Stop recording</td><td><code>Button</code> — SF Symbol <code>stop.fill</code></td><td><code>.buttonStyle(.plain)</code>, <code>.contentShape(Rectangle())</code>, <code>.disabled(!isRecording || isInFlight)</code></td><td>label "Stop recording"; id <code>stopButton</code></td></tr>
+<tr><td>Quit</td><td><code>Button</code> — SF Symbol <code>power</code></td><td><code>.buttonStyle(.plain)</code>, <code>.help("Quit MacRecordWidget")</code></td><td>label "Quit MacRecordWidget"; id <code>quitButton</code></td></tr>
+<tr><td>Row container</td><td><code>HStack(spacing: 12)</code></td><td><code>.focusEffectDisabled()</code>, <code>.padding(.horizontal, 12)</code>, <code>.padding(.vertical, 8)</code>, <code>.frame(width: 200)</code></td><td>reading order: toggle, start, stop, quit</td></tr>
+<tr><td>Menu bar item</td><td><code>MenuBarExtra</code> label — SF Symbol <code>record.circle</code></td><td><code>.menuBarExtraStyle(.window)</code>, <code>.symbolRenderingMode(.hierarchical)</code>, <code>.foregroundStyle(isRecording ? .green : .primary)</code></td><td>system-provided status item label</td></tr>
+<tr><td>Recording dot</td><td><code>Circle()</code> in a <code>ZStack(alignment: .bottomTrailing)</code></td><td>5&times;5, <code>.offset(x: 2, y: 2)</code>, blink via <code>.easeInOut(0.8).repeatForever()</code>; static when <code>accessibilityReduceMotion</code></td><td><code>.accessibilityHidden(true)</code> — state is carried by the icon colour and by the popover buttons</td></tr>
+<tr><td>Error report</td><td><code>NSAlert</code> (<code>.critical</code>) via AppKit interop</td><td><code>runModal()</code> with a single OK button</td><td>alert text is read by VoiceOver on presentation</td></tr>
+</table>
+</div></div>
 </body>
 </html>

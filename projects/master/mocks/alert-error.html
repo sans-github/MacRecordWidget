@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MacRecordWidget — Master Mocks</title>
+<title>MacRecordWidget — Error alert</title>
 <style>
 :root {
   --bg-window:       #ECECEC;
@@ -101,69 +101,47 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 .caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
 .nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
 </style>
-<style>
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--bg-popover); border-radius: 10px; box-shadow: 0 0 0 0.5px var(--separator), 0 2px 8px var(--shadow); padding: 14px; text-decoration: none; color: inherit; display: block; }
-.card:hover { box-shadow: 0 0 0 0.5px var(--separator), 0 5px 16px var(--shadow); }
-.card h3 { font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
-.card p { font-size: 11.5px; color: var(--label-secondary); line-height: 1.5; }
-.hero { display: flex; justify-content: center; padding: 22px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); margin-bottom: 22px; }
-</style>
 </head>
 <body>
 <input type="checkbox" id="dm">
 <div class="page"><div class="wrap">
 <label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
-
-<h1>MacRecordWidget — master mocks</h1>
-<p class="sub">The shipping UI as of the popover button layout release. One menu bar item, one 200pt panel, one row of four controls. Every page below covers light and dark.</p>
-
-<div class="hero">
-  <div class="popover">
-    <div class="row">
-      <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span><span class="switch"></span></div>
-      <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
-      <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
-      <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
-    </div>
+<p class="nav"><a href="index.html">&larr; All mocks</a></p>
+<h1>Error — modal alert</h1>
+<p class="sub">Failures are reported by a critical <code>NSAlert</code>, not inside the popover. The 200pt row has no space for a message and no state to show one in.</p>
+<div class="stage">
+  <div style="width:420px;background:var(--bg-popover);border-radius:12px;box-shadow:0 10px 40px var(--shadow),0 0 0 0.5px var(--separator);padding:20px;text-align:center;">
+    <div style="width:52px;height:52px;border-radius:12px;background:var(--code-bg);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:26px;">&#9888;&#65039;</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;">Could Not Start Recording</div>
+    <div style="font-size:11px;color:var(--label-secondary);line-height:1.5;margin-bottom:16px;">The recording shortcut could not be launched. Make sure a Shortcut named &ldquo;Start&rdquo; (or &ldquo;Stop&rdquo;) exists in the Shortcuts app. Detail: NSWorkspace.open returned false</div>
+    <div style="display:flex;justify-content:flex-end;"><span style="background:var(--accent);color:#fff;font-size:12px;font-weight:500;padding:4px 20px;border-radius:6px;">OK</span></div>
   </div>
 </div>
-
-<div class="grid">
-  <a class="card" href="popover-idle.html"><h3>Idle</h3><p>Default state. Video off, Start available, Stop dimmed. Includes the hover, pressed, focus, disabled and in-flight matrix.</p></a>
-  <a class="card" href="popover-video-mode.html"><h3>Video mode armed</h3><p>Toggle on. Symbol swaps to <code>video.fill</code> so the state reads without colour. Photo Booth opens on the next Start.</p></a>
-  <a class="card" href="popover-recording.html"><h3>Recording</h3><p>Stop is the only enabled action. Menu bar icon turns green with a blinking amber dot, static under Reduce Motion.</p></a>
-  <a class="card" href="alert-error.html"><h3>Error alert</h3><p>Failures surface as a critical <code>NSAlert</code>, not inside the panel. All three error cases listed.</p></a>
-</div>
-
-<h2>Layout</h2>
+<h2>Alert cases</h2>
 <table>
-<tr><th>Property</th><th>Value</th></tr>
-<tr><td>Panel</td><td><code>MenuBarExtra</code> with <code>.menuBarExtraStyle(.window)</code></td></tr>
-<tr><td>Width</td><td>200pt, fixed</td></tr>
-<tr><td>Padding</td><td>12pt horizontal, 8pt vertical</td></tr>
-<tr><td>Row</td><td><code>HStack(spacing: 12)</code>, <code>.focusEffectDisabled()</code></td></tr>
-<tr><td>Order</td><td>video toggle, Start, Stop, Quit</td></tr>
-<tr><td>Symbol size</td><td>13pt for every control in the row</td></tr>
-<tr><td>Colour</td><td>Semantic throughout: <code>.primary</code>, <code>.red</code>, <code>.green</code>. The amber recording dot is the single fixed colour, and only in the menu bar.</td></tr>
+<tr><th>Case</th><th>Title</th><th>Body</th></tr>
+<tr><td><code>.shortcutLaunchFailed</code></td><td>Could Not Start Recording</td><td>Names the missing Shortcut and appends the underlying reason.</td></tr>
+<tr><td>Any other error</td><td>Recording Error</td><td><code>error.localizedDescription</code>.</td></tr>
+<tr><td><code>.accessibilityDenied</code></td><td>Accessibility Permission Required</td><td>Still handled in code, but unreachable in the shipped build: the osascript full-screen call that needed the permission was removed. Documented here only so the mock matches the source.</td></tr>
 </table>
-
-<h2>Menu bar and keyboard</h2>
-<p class="note">The app has no application menu bar. It is a <code>MenuBarExtra</code>-only agent app: there is no <code>WindowGroup</code>, no <code>Settings</code> scene, and no <code>commands {}</code> block, so no App, File, Edit, View, Window or Help menu exists and no keyboard shortcut is registered. Quit is reachable only through the power button in the panel, not &#8984;Q.</p>
-<p class="note">Inside the panel, Tab moves focus across the four controls in reading order and Space activates the focused one; the focus ring is suppressed by <code>.focusEffectDisabled()</code>, so focus is not visible while tabbing. Both of these are deliberate consequences of the current design rather than specified behaviour, and both are open questions for the next design pass.</p>
-
-<h2>Accessibility</h2>
+<h2>Behaviour after an error</h2>
+<ul class="ann">
+  <li><code>isRecording</code> is only set after the shortcut URL opens, so a failed Start leaves the row exactly as it was. There is no half-recording state to recover from.</li>
+  <li>The alert is app-modal and has one button. Dismissing it returns the user to the popover.</li>
+  <li>The alert appears over whatever is frontmost, because a menu bar panel cannot host a sheet.</li>
+</ul>
+<h2>Control mapping</h2>
 <table>
-<tr><th>Control</th><th>VoiceOver label</th><th>Identifier</th></tr>
-<tr><td>Video toggle</td><td>Include video in recording</td><td><code>videoModeToggle</code></td></tr>
-<tr><td>Start</td><td>Start recording</td><td><code>startButton</code></td></tr>
-<tr><td>Stop</td><td>Stop recording</td><td><code>stopButton</code></td></tr>
-<tr><td>Quit</td><td>Quit MacRecordWidget (also the tooltip)</td><td><code>quitButton</code></td></tr>
-<tr><td>Recording dot</td><td>hidden from VoiceOver</td><td>&mdash;</td></tr>
+<tr><th>Element</th><th>SwiftUI control</th><th>Key modifiers</th><th>Accessibility</th></tr>
+<tr><td>Video toggle</td><td><code>Toggle</code> with <code>Image(systemName:)</code> label</td><td><code>.toggleStyle(.switch)</code>, <code>.controlSize(.small)</code>, label <code>.font(.system(size: 13))</code>, <code>.disabled(isRecording)</code></td><td>label "Include video in recording"; id <code>videoModeToggle</code></td></tr>
+<tr><td>Start recording</td><td><code>Button</code> — SF Symbol <code>record.circle.fill</code></td><td><code>.buttonStyle(.plain)</code>, <code>.foregroundStyle(.red)</code>, <code>.contentShape(Rectangle())</code>, <code>.disabled(isRecording || isInFlight)</code></td><td>label "Start recording"; id <code>startButton</code></td></tr>
+<tr><td>Stop recording</td><td><code>Button</code> — SF Symbol <code>stop.fill</code></td><td><code>.buttonStyle(.plain)</code>, <code>.contentShape(Rectangle())</code>, <code>.disabled(!isRecording || isInFlight)</code></td><td>label "Stop recording"; id <code>stopButton</code></td></tr>
+<tr><td>Quit</td><td><code>Button</code> — SF Symbol <code>power</code></td><td><code>.buttonStyle(.plain)</code>, <code>.help("Quit MacRecordWidget")</code></td><td>label "Quit MacRecordWidget"; id <code>quitButton</code></td></tr>
+<tr><td>Row container</td><td><code>HStack(spacing: 12)</code></td><td><code>.focusEffectDisabled()</code>, <code>.padding(.horizontal, 12)</code>, <code>.padding(.vertical, 8)</code>, <code>.frame(width: 200)</code></td><td>reading order: toggle, start, stop, quit</td></tr>
+<tr><td>Menu bar item</td><td><code>MenuBarExtra</code> label — SF Symbol <code>record.circle</code></td><td><code>.menuBarExtraStyle(.window)</code>, <code>.symbolRenderingMode(.hierarchical)</code>, <code>.foregroundStyle(isRecording ? .green : .primary)</code></td><td>system-provided status item label</td></tr>
+<tr><td>Recording dot</td><td><code>Circle()</code> in a <code>ZStack(alignment: .bottomTrailing)</code></td><td>5&times;5, <code>.offset(x: 2, y: 2)</code>, blink via <code>.easeInOut(0.8).repeatForever()</code>; static when <code>accessibilityReduceMotion</code></td><td><code>.accessibilityHidden(true)</code> — state is carried by the icon colour and by the popover buttons</td></tr>
+<tr><td>Error report</td><td><code>NSAlert</code> (<code>.critical</code>) via AppKit interop</td><td><code>runModal()</code> with a single OK button</td><td>alert text is read by VoiceOver on presentation</td></tr>
 </table>
-<p class="note">Reduce Motion removes the dot blink. Increase Contrast and greyscale are covered by the <code>video</code>/<code>video.fill</code> symbol swap and by the enabled/disabled dimming, neither of which depends on hue. Dynamic Type does not apply: the row contains no text.</p>
-
 </div></div>
 </body>
 </html>
