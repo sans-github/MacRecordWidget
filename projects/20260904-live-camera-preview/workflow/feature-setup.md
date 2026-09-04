@@ -36,108 +36,108 @@ Toggle rules:
 
 ### Stage 3: Technical Planning
 
-- [ ] **Engineering Kickoff**
-  - [ ] **EM:** decide on architecture engagement → [Feature Setup]
+- [-] **Engineering Kickoff**
+  - [-] **EM:** decide on architecture engagement → [Feature Setup]
 
-- [ ] **System Architecture** *(skip if no new infrastructure or unfamiliar technology)*
-  - [ ] **ARCH:** produce system architecture → [System Architecture]
-  - [ ] 👤💾 **HUMAN:** review and approve system architecture
+- [-] **System Architecture** *(skip if no new infrastructure or unfamiliar technology)*
+  - [-] **ARCH:** produce system architecture → [System Architecture]
+  - [-] 👤💾 **HUMAN:** review and approve system architecture
 
-- [ ] **High-Level Design**
-  - [ ] **EM:** produce high-level design → [Eng Plans (HLD)]
-  - [ ] **EM <> DevOps:** collaboration loop -- review infra decisions in HLD, align on Terraform approach and AWS component choices *(skip if deployment target is local)*
-  - [ ] 👤💾 **HUMAN:** review and approve high-level design
+- [-] **High-Level Design**
+  - [-] **EM:** produce high-level design → [Eng Plans (HLD)]
+  - [-] **EM <> DevOps:** collaboration loop -- review infra decisions in HLD, align on Terraform approach and AWS component choices *(skip if deployment target is local)*
+  - [-] 👤💾 **HUMAN:** review and approve high-level design
 
-- [ ] **Implementation Plan**
-  - [ ] **EM:** produce detailed implementation plan → [Implementation Plan]; write Stage 4 and Stage 5 steps to `workflow/implementation-plan.md` as a standalone file; every step must include a done condition (e.g. "done when: Status: Approved written to file" or "done when: human confirms")
-  - [ ] 👤💾 **HUMAN:** review and approve implementation plan
-  - [ ] **EM:** seed approved steps into Stage 4 and Stage 5 of `delivery-tracker.md`, replacing the skeleton
+- [-] **Implementation Plan**
+  - [-] **EM:** produce detailed implementation plan → [Implementation Plan]; write Stage 4 and Stage 5 steps to `workflow/implementation-plan.md` as a standalone file; every step must include a done condition (e.g. "done when: Status: Approved written to file" or "done when: human confirms")
+  - [-] 👤💾 **HUMAN:** review and approve implementation plan
+  - [-] **EM:** seed approved steps into Stage 4 and Stage 5 of `delivery-tracker.md`, replacing the skeleton
 
 ---
 
 ### Stage 4: Engineering
-> Skeleton -- EM fills in these steps during Implementation Planning, only if this stage is `[ ]`. If `[-]`, skip entirely and do not revisit.
+> Skeleton -- EM fills in these steps during Implementation Planning, only if this stage is `[-]`. If `[-]`, skip entirely and do not revisit.
 
-- [ ] **BE Detailed Design**
-  - [ ] **BE:** produce detailed design → [BE Detailed Design] -- done when: Status: Approved — EM set in file
-  - [ ] 💾 **EM:** review and approve BE detailed design -- done when: Status: Approved — EM set in file
+- [-] **BE Detailed Design**
+  - [-] **BE:** produce detailed design → [BE Detailed Design] -- done when: Status: Approved — EM set in file
+  - [-] 💾 **EM:** review and approve BE detailed design -- done when: Status: Approved — EM set in file
 
-- [ ] **FE Detailed Design**
-  - [ ] **FE:** produce detailed design → [FE Detailed Design] -- done when: Status: Approved — EM set in file
-  - [ ] 💾 **EM:** review and approve FE detailed design -- done when: Status: Approved — EM set in file
+- [-] **FE Detailed Design**
+  - [-] **FE:** produce detailed design → [FE Detailed Design] -- done when: Status: Approved — EM set in file
+  - [-] 💾 **EM:** review and approve FE detailed design -- done when: Status: Approved — EM set in file
 
-- [ ] **Swift Detailed Design** *(skip if no macOS app)*
-  - [ ] **SWIFT ENGINEER:** produce detailed design → [Swift Detailed Design] -- done when: Status: Approved — EM set in file
-  - [ ] 💾 **EM:** review and approve Swift detailed design -- done when: Status: Approved — EM set in file
+- [-] **Swift Detailed Design** *(skip if no macOS app)*
+  - [-] **SWIFT ENGINEER:** produce detailed design → [Swift Detailed Design] -- done when: Status: Approved — EM set in file
+  - [-] 💾 **EM:** review and approve Swift detailed design -- done when: Status: Approved — EM set in file
 
-- [ ] **API Contract**
-  - [ ] **BE + FE:** align on API contract → [API Contract]
-  - [ ] 💾 **EM:** review and approve API contract
+- [-] **API Contract**
+  - [-] **BE + FE:** align on API contract → [API Contract]
+  - [-] 💾 **EM:** review and approve API contract
 
-- [ ] **BE Issues List**
-  - [ ] **EM:** produce and approve BE issues list -- done when: Status: Approved — EM set in list; BE creates GH issues and begins implementation
+- [-] **BE Issues List**
+  - [-] **EM:** produce and approve BE issues list -- done when: Status: Approved — EM set in list; BE creates GH issues and begins implementation
 
-- [ ] **Backend Development**
-  - [ ] **BE:** implement database schema and migration scripts → [DB Schema Files], [DB Migrations]
-  - [ ] 💾 **EM + BE:** review and approve DB schema -- done when: Status: Approved — EM set in schema file; ORM DDL generation disabled; migration tool configured to run on startup; blocks migrations and seed work
-  - [ ] **BE:** implement API endpoints → `src/`
-  - [ ] **BE:** implement logging -- done when: `be-logging` checklist fully checked off (structured JSON appender, TraceIdFilter, MDC correlation, access log, layer coverage)
-  - [ ] **BE:** write unit and integration tests
-  - [ ] 💾 **EM:** review and approve BE implementation -- done when: logging checklist verified; openapi.json exported and committed (Spring Boot only); Status: Approved — EM set in artifact
-  - [ ] **EM:** approve BE artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against BE
+- [-] **Backend Development**
+  - [-] **BE:** implement database schema and migration scripts → [DB Schema Files], [DB Migrations]
+  - [-] 💾 **EM + BE:** review and approve DB schema -- done when: Status: Approved — EM set in schema file; ORM DDL generation disabled; migration tool configured to run on startup; blocks migrations and seed work
+  - [-] **BE:** implement API endpoints → `src/`
+  - [-] **BE:** implement logging -- done when: `be-logging` checklist fully checked off (structured JSON appender, TraceIdFilter, MDC correlation, access log, layer coverage)
+  - [-] **BE:** write unit and integration tests
+  - [-] 💾 **EM:** review and approve BE implementation -- done when: logging checklist verified; openapi.json exported and committed (Spring Boot only); Status: Approved — EM set in artifact
+  - [-] **EM:** approve BE artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against BE
 
-- [ ] **FE Issues List**
-  - [ ] **EM:** produce and approve FE issues list -- done when: Status: Approved — EM set in list; FE creates GH issues and begins implementation
+- [-] **FE Issues List**
+  - [-] **EM:** produce and approve FE issues list -- done when: Status: Approved — EM set in list; FE creates GH issues and begins implementation
 
-- [ ] **Frontend Development**
-  - [ ] **FE:** implement UI components per approved mocks → `src/`
-  - [ ] **FE:** integrate with API
-  - [ ] **FE:** implement logging -- done when: `fe-logging` checklist fully checked off (logger module, sessionId, traceId propagation from response headers, API call coverage, error boundary logging)
-  - [ ] **FE:** write component and end-to-end tests
-  - [ ] 💾 **EM:** review and approve FE implementation -- done when: logging checklist verified; Status: Approved — EM set in artifact
-  - [ ] **EM:** approve FE artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against FE
+- [-] **Frontend Development**
+  - [-] **FE:** implement UI components per approved mocks → `src/`
+  - [-] **FE:** integrate with API
+  - [-] **FE:** implement logging -- done when: `fe-logging` checklist fully checked off (logger module, sessionId, traceId propagation from response headers, API call coverage, error boundary logging)
+  - [-] **FE:** write component and end-to-end tests
+  - [-] 💾 **EM:** review and approve FE implementation -- done when: logging checklist verified; Status: Approved — EM set in artifact
+  - [-] **EM:** approve FE artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against FE
 
-- [ ] **Swift Engineer Issues List** *(skip if no macOS app)*
-  - [ ] **EM:** produce and approve Swift Engineer issues list -- done when: Status: Approved — EM set in list; Swift Engineer creates GH issues and begins implementation
+- [-] **Swift Engineer Issues List** *(skip if no macOS app)*
+  - [-] **EM:** produce and approve Swift Engineer issues list -- done when: Status: Approved — EM set in list; Swift Engineer creates GH issues and begins implementation
 
-- [ ] **macOS Development** *(skip if no macOS app)*
-  - [ ] **SWIFT ENGINEER:** implement SwiftUI views per approved mocks and component spec → `src/`
-  - [ ] **SWIFT ENGINEER:** implement data layer (SwiftData / Core Data / networking) → `src/`
-  - [ ] **SWIFT ENGINEER:** write unit tests and XCUITests -- done when: `swift-testing` checklist fully checked off
-  - [ ] 💾 **EM:** review and approve Swift Engineer implementation -- done when: Status: Approved — EM set in artifact
-  - [ ] **EM:** approve Swift Engineer artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against Swift Engineer output
+- [-] **macOS Development** *(skip if no macOS app)*
+  - [-] **SWIFT ENGINEER:** implement SwiftUI views per approved mocks and component spec → `src/`
+  - [-] **SWIFT ENGINEER:** implement data layer (SwiftData / Core Data / networking) → `src/`
+  - [-] **SWIFT ENGINEER:** write unit tests and XCUITests -- done when: `swift-testing` checklist fully checked off
+  - [-] 💾 **EM:** review and approve Swift Engineer implementation -- done when: Status: Approved — EM set in artifact
+  - [-] **EM:** approve Swift Engineer artifacts + test docs -- done when: Status: Approved noted; unblocks QA automation against Swift Engineer output
 
-- [ ] **Infrastructure** *(skip if no new infrastructure)*
-  - [ ] **DEVOPS:** produce deployment plan → [Deployment Plan]
-  - [ ] 👤💾 **HUMAN:** review and approve deployment plan
-  - [ ] **DEVOPS:** provision infrastructure per approved architecture → [Infrastructure]
-  - [ ] **QA + DEVOPS:** smoke test loop *(skip if deployment target is local)*
-    - [ ] **DEVOPS:** hand off live server URL to QA
-    - [ ] **QA:** run API-level and E2E smoke checks against live server
+- [-] **Infrastructure** *(skip if no new infrastructure)*
+  - [-] **DEVOPS:** produce deployment plan → [Deployment Plan]
+  - [-] 👤💾 **HUMAN:** review and approve deployment plan
+  - [-] **DEVOPS:** provision infrastructure per approved architecture → [Infrastructure]
+  - [-] **QA + DEVOPS:** smoke test loop *(skip if deployment target is local)*
+    - [-] **DEVOPS:** hand off live server URL to QA
+    - [-] **QA:** run API-level and E2E smoke checks against live server
     - If any check fails: QA reports failing test case and error details to DevOps → DevOps remediates → QA re-runs; loop repeats until all pass
     - Done when: all smoke checks exit 0
-  - [ ] 💾 **EM:** review and approve infrastructure
+  - [-] 💾 **EM:** review and approve infrastructure
 
 ---
 
 ### Stage 5: Quality Assurance
-> Skeleton -- EM fills in these steps during Implementation Planning, only if this stage is `[ ]`. If `[-]`, skip entirely and do not revisit.
+> Skeleton -- EM fills in these steps during Implementation Planning, only if this stage is `[-]`. If `[-]`, skip entirely and do not revisit.
 
-- [ ] **Test Planning**
-  - [ ] **QA:** produce test plan aligned to API contract and implementation → [Test Plan]
-  - [ ] 💾 **EM:** review and approve test plan
+- [-] **Test Planning**
+  - [-] **QA:** produce test plan aligned to API contract and implementation → [Test Plan]
+  - [-] 💾 **EM:** review and approve test plan
 
-- [ ] **QA Issues List**
-  - [ ] **EM:** produce and approve QA issues list -- done when: Status: Approved — EM set in list; QA creates GH issues and begins implementation
+- [-] **QA Issues List**
+  - [-] **EM:** produce and approve QA issues list -- done when: Status: Approved — EM set in list; QA creates GH issues and begins implementation
 
-- [ ] **Test Execution**
-  - [ ] **QA:** implement automated tests against BE
-  - [ ] **QA:** implement automated tests against FE
-  - [ ] **QA:** implement automated tests against Swift Engineer output *(skip if no macOS app)*
-  - [ ] **QA + BE:** resolve backend test blockers
-  - [ ] **QA + FE:** resolve frontend test blockers
-  - [ ] **QA + SWIFT ENGINEER:** resolve macOS test blockers *(skip if no macOS app)*
-  - [ ] 💾 **EM:** review and approve test results
+- [-] **Test Execution**
+  - [-] **QA:** implement automated tests against BE
+  - [-] **QA:** implement automated tests against FE
+  - [-] **QA:** implement automated tests against Swift Engineer output *(skip if no macOS app)*
+  - [-] **QA + BE:** resolve backend test blockers
+  - [-] **QA + FE:** resolve frontend test blockers
+  - [-] **QA + SWIFT ENGINEER:** resolve macOS test blockers *(skip if no macOS app)*
+  - [-] 💾 **EM:** review and approve test results
 
 ---
 

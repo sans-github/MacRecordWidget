@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live Camera Preview — Size Study (exploratory)</title>
+<style>
+:root{
+  --page-bg:#f5f5f7; --page-fg:#1d1d1f; --page-fg2:#6e6e73; --page-card:#ffffff;
+  --page-line:#d2d2d7; --accent:#0a84ff; --good:#1a7f37; --warn:#b26a00; --bad:#c4351d;
+}
+@media (prefers-color-scheme: dark){
+  :root{--page-bg:#161618;--page-fg:#f2f2f7;--page-fg2:#9a9aa0;--page-card:#1f1f22;--page-line:#3a3a3e;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page-bg);color:var(--page-fg);
+  font:13px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px}
+h2{font-size:17px;font-weight:700;margin:44px 0 6px}
+h3{font-size:15px;font-weight:600;margin:28px 0 8px}
+p.sub{color:var(--page-fg2);margin:0 0 4px;max-width:76ch}
+.note{background:var(--page-card);border:1px solid var(--page-line);border-radius:10px;padding:14px 16px;margin:16px 0;max-width:88ch}
+.badge{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;background:var(--warn);color:#fff;vertical-align:3px;margin-left:8px}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:12px}
+th,td{border:1px solid var(--page-line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--page-card);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px}
+.rec{color:var(--good);font-weight:600}
+.no{color:var(--bad);font-weight:600}
+.mid{color:var(--warn);font-weight:600}
+
+/* ---------- screen reference ---------- */
+.screens{display:flex;flex-wrap:wrap;gap:22px;margin-top:14px}
+.screenbox{background:var(--page-card);border:1px solid var(--page-line);border-radius:10px;padding:12px}
+.screen{position:relative;background:linear-gradient(160deg,#3c4f6d,#1d2a3d 55%,#101822);
+  border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.mbar{position:absolute;left:0;right:0;top:0;background:rgba(240,240,245,.72);
+  backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.mbar i{display:block;background:#333;border-radius:1px;opacity:.55}
+.ghost{position:absolute;border:1.5px solid rgba(255,255,255,.85);border-radius:3px;
+  background:rgba(255,255,255,.14);}
+.ghost.solid{background:rgba(255,255,255,.5)}
+.ghost b{position:absolute;left:3px;top:2px;font-size:9px;font-weight:700;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);letter-spacing:.04em}
+.caption{font-size:11px;color:var(--page-fg2);margin-top:8px;line-height:1.45}
+.caption strong{color:var(--page-fg);font-size:12px}
+
+/* ---------- popover mock ---------- */
+.pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;overflow-x:auto;padding-bottom:6px}
+.apr{--bg:#ececf0;--fg:#000;--fg2:rgba(0,0,0,.55);--fg3:rgba(0,0,0,.28);
+     --ctl:#ffffff;--ctlb:rgba(0,0,0,.16);--sep:rgba(0,0,0,.12);--sh:0 6px 22px rgba(0,0,0,.28)}
+.apr.dark{--bg:#2c2c2e;--fg:#fff;--fg2:rgba(255,255,255,.62);--fg3:rgba(255,255,255,.3);
+     --ctl:#48484a;--ctlb:rgba(255,255,255,.16);--sep:rgba(255,255,255,.14);--sh:0 6px 22px rgba(0,0,0,.6)}
+.pop{background:var(--bg);color:var(--fg);border-radius:10px;box-shadow:var(--sh);
+  border:.5px solid var(--ctlb);padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;height:22px}
+.sw{width:26px;height:15px;border-radius:8px;background:var(--accent);position:relative;flex:0 0 auto}
+.sw.off{background:var(--fg3)}
+.sw::after{content:"";position:absolute;top:1.5px;left:12.5px;width:12px;height:12px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw.off::after{left:1.5px}
+.ic{display:flex;align-items:center;justify-content:center;color:var(--fg);flex:0 0 auto}
+.ic.red{color:#ff3b30}
+.ic.dim{color:var(--fg2)}
+.spacer{flex:1 1 auto}
+.prev{border-radius:6px;overflow:hidden;position:relative;flex:0 0 auto;
+  background:
+   radial-gradient(120px 90px at 50% 38%, #f0c9a4 0%, #d6a074 42%, rgba(214,160,116,0) 66%),
+   linear-gradient(180deg,#2f4f63 0%,#22394a 55%,#16252f 100%);}
+.prev::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 2px,transparent 2px 4px)}
+.prev .tag{position:absolute;left:6px;bottom:5px;z-index:2;font-size:9px;font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,.9);background:rgba(0,0,0,.42);padding:1px 5px;border-radius:4px}
+.prev .mirr{position:absolute;right:6px;bottom:5px;z-index:2;font-size:9px;
+  color:rgba(255,255,255,.9);background:rgba(0,0,0,.42);padding:1px 5px;border-radius:4px}
+.popup{height:20px;border-radius:5px;background:var(--ctl);border:.5px solid var(--ctlb);
+  display:flex;align-items:center;gap:5px;padding:0 5px 0 7px;font-size:11px;color:var(--fg);
+  box-shadow:0 .5px 1px rgba(0,0,0,.12);min-width:0}
+.popup span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chev{margin-left:auto;color:var(--fg2);font-size:9px}
+.chk{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--fg);white-space:nowrap}
+.box{width:13px;height:13px;border-radius:3px;background:var(--accent);color:#fff;font-size:10px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.menu-open{position:relative}
+.dd{position:absolute;top:26px;right:0;z-index:5;background:var(--bg);border:.5px solid var(--ctlb);
+  border-radius:7px;box-shadow:var(--sh);padding:4px;width:186px;font-size:11.5px}
+.dd div{padding:3px 8px 3px 20px;border-radius:4px;position:relative;white-space:nowrap;color:var(--fg)}
+.dd div.sel::before{content:"✓";position:absolute;left:6px}
+.dd div.hi{background:var(--accent);color:#fff}
+.dd hr{border:0;border-top:.5px solid var(--sep);margin:4px 2px}
+.dd .hdr{color:var(--fg2);padding-left:8px;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.apl{font-size:10px;color:var(--page-fg2);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.opt{background:var(--page-card);border:1px solid var(--page-line);border-radius:12px;padding:18px 20px;margin:18px 0}
+.opt h3{margin-top:0}
+.dims{font-size:12px;color:var(--page-fg2);font-variant-numeric:tabular-nums;margin:0 0 12px}
+.dims b{color:var(--page-fg)}
+ul.pc{margin:12px 0 0;padding-left:18px}
+ul.pc li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Live camera preview — size study<span class="badge">Exploratory · not final mocks</span></h1>
+<p class="sub">MacRecordWidget · <span class="mono">MenuBarExtra(.window)</span> popover. Purpose of this document: pick a preview size before any real mocks are drawn. Placement below the control row is settled and not revisited here.</p>
+
+<div class="note">
+<strong>How to read this.</strong> All four popovers in the &ldquo;to scale&rdquo; section are drawn at one shared scale against a to-scale 1440&times;932pt screen (your 2880&times;1864 Retina display in logical points). Relative sizes are honest. The detail mocks further down are drawn at 1&times; (1pt = 1px) so control layout is legible — those are <em>not</em> for size comparison with each other.
+</div>
+
+<h2>Summary</h2>
+<table>
+<thead><tr><th>Option</th><th>Preview</th><th>Total panel</th><th class="num">Panel % of screen</th><th class="num">Preview % of screen</th><th>Picker + mirror live</th><th>Verdict</th></tr></thead>
+<tbody id="sumbody"></tbody>
+</table>
+<p class="sub"><strong>Recommendation: M (320&times;180).</strong> Rationale at the bottom.</p>
+
+<h2>1 · True relative proportions, all four on one screen</h2>
+<p class="sub">All four panels hanging from the same menu bar anchor, top right, drawn at the same scale over a to-scale 1440&times;932pt screen. This is the honest size comparison.</p>
+<div id="overlay"></div>
+
+<h2>2 · Each option on the screen, one at a time</h2>
+<div class="screens" id="screens"></div>
+
+<h2>3 · Detail mocks at 1&times; — light and dark</h2>
+<p class="sub">Real control row on top (video toggle, record, stop, power), preview below, then the camera picker and mirror control where they fit. Each block also shows what has to change to fit the controls.</p>
+<div id="details"></div>
+
+<h2>4 · Where the camera picker and mirror toggle go</h2>
+<table>
+<thead><tr><th>Size</th><th>Camera picker</th><th>Mirror toggle</th><th>Control the engineer builds</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td><b>S</b> 176pt</td><td>Inside an <span class="mono">ellipsis.circle</span> menu in the top row</td><td>Checkmark item in the same menu</td><td><span class="mono">Menu</span> + <span class="mono">Picker(.inline)</span> + <span class="mono">Toggle</span></td><td>Both settings are hidden behind a click. Fails &ldquo;show, don&rsquo;t make them remember.&rdquo;</td></tr>
+<tr><td><b>M</b> 320pt</td><td>Popup button under the preview, full width minus the mirror button</td><td>Icon-only <span class="mono">Toggle(.button)</span> beside it</td><td><span class="mono">Picker(.menu)</span> + <span class="mono">Toggle(.button)</span></td><td>Both visible, no hidden state. Camera names truncate past ~26 chars.</td></tr>
+<tr><td><b>L</b> 480pt</td><td>Popup button, comfortable width</td><td>Labelled checkbox <span class="mono">&ldquo;Mirror&rdquo;</span></td><td><span class="mono">Picker(.menu)</span> + <span class="mono">Toggle</span></td><td>Nothing truncates. Room to spare.</td></tr>
+<tr><td><b>XL</b> 1090pt</td><td>Popup button, mostly empty space</td><td>Labelled checkbox</td><td>Same as L</td><td>Same two controls stretched across 1090pt of nothing. The extra width buys no control affordance at all.</td></tr>
+</tbody>
+</table>
+
+<h2>5 · Recommendation</h2>
+<div class="note">
+<p style="margin-top:0"><strong class="rec">Ship M — 320&times;180 preview, 344&times;256pt panel, 6.6% of screen.</strong></p>
+<p>The preview here is display-only: Photo Booth is the capturer. So the only job the preview has is <em>&ldquo;am I framed, lit, and pointed at the right camera?&rdquo;</em> — a glance, answered in about a second, then the user hits record. 320&times;180 answers that at normal viewing distance. It is also the smallest size where the camera picker and mirror toggle both fit as visible controls, which matters more than pixels: at S they have to hide in a menu, and a persisted setting the user cannot see is a setting they will get wrong.</p>
+<p><strong class="mid">L (480&times;270) is a defensible fallback</strong> if you sit far from the display or want to check fine detail like text on a whiteboard. 13% of screen is large for a menu bar extra but still reads as a panel, not a window. I would not pick it by default — it costs 2&times; the screen area to answer the same question.</p>
+<p><strong class="no">XL (1090&times;614) should not ship.</strong> Being direct, since you asked for it: this is not a menu bar popover any more, it is a window wearing a popover&rsquo;s corner radius. Three concrete problems, not just style:</p>
+<ul class="pc">
+<li><strong>It dismisses on any outside click.</strong> A <span class="mono">MenuBarExtra(.window)</span> panel is transient by design. The moment you click your browser, your slides, anything, a preview covering 57% of your screen vanishes. A surface that big invites the user to treat it as persistent, and it is not. That mismatch is the whole problem.</li>
+<li><strong>The HIG is explicit that a menu bar extra is a quick, transient control surface</strong> for lightweight always-available access — not a viewer. This is a departure I cannot justify on platform grounds, and I am flagging it rather than designing around it.</li>
+<li><strong>It buys nothing over L.</strong> Same two controls, same framing decision, 4.4&times; the screen area. Preview alone is 49.9% of the screen; with the control rows the panel is 57.3%.</li>
+</ul>
+<p>If the real requirement behind XL is <em>&ldquo;I want to watch myself full size while recording,&rdquo;</em> that is a different feature and a different container: a separate resizable <span class="mono">Window</span> scene (&ldquo;Camera Preview&rdquo;, ⌥⌘P, floating level optional) that persists across clicks, remembers its frame, and can be moved to a second display. That is the native answer. It should be scoped as its own item rather than smuggled into the popover — I have not designed it here.</p>
+<p><strong>Panel width changes when the toggle flips.</strong> At M, L, or XL the panel grows from 200pt to the wider size the moment video is switched on, and shrinks back when off. That resize is visible and slightly jarring on every toggle. Two mitigations, both cheap: keep the panel at its wide width permanently (the row just gets more trailing space), or animate the change and gate it on <span class="mono">accessibilityReduceMotion</span>. Worth a decision at mock time — <span class="mono">S</span> is the only option that avoids the question entirely, which is its one real advantage.</p>
+</div>
+
+<p class="sub" style="margin-top:26px">Open questions for PM before final mocks: (1) does the panel stay wide when video is off, or resize; (2) is the persisted camera choice per-app or shared with Photo Booth&rsquo;s own selection; (3) what shows in the preview area when camera permission is denied or no camera is present — that empty/error state is not covered in this study.</p>
+
+<script>
+const SCREEN_W=1440, SCREEN_H=932, SCREEN_AREA=SCREEN_W*SCREEN_H, MENUBAR=24;
+
+const I={
+ video:'<svg viewBox="0 0 24 16" width="17" height="12"><rect x=".5" y="1.5" width="15" height="13" rx="3.2" fill="currentColor"/><path d="M17.4 8 23.2 4.2v7.6z" fill="currentColor"/></svg>',
+ rec:'<svg viewBox="0 0 20 20" width="18" height="18"><circle cx="10" cy="10" r="9" fill="currentColor"/><circle cx="10" cy="10" r="5.4" fill="#fff" opacity=".92"/><circle cx="10" cy="10" r="4.2" fill="currentColor"/></svg>',
+ stop:'<svg viewBox="0 0 20 20" width="15" height="15"><rect x="3" y="3" width="14" height="14" rx="2.6" fill="currentColor"/></svg>',
+ power:'<svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 2.6V9.4"/><path d="M5.6 5.4a6.4 6.4 0 1 0 8.8 0"/></svg>',
+ dots:'<svg viewBox="0 0 20 20" width="15" height="15"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="6" cy="10" r="1.3" fill="currentColor"/><circle cx="10" cy="10" r="1.3" fill="currentColor"/><circle cx="14" cy="10" r="1.3" fill="currentColor"/></svg>',
+ cam:'<svg viewBox="0 0 16 12" width="12" height="9"><rect x=".5" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.5 3.4v5.2z" fill="currentColor"/></svg>',
+ mirror:'<svg viewBox="0 0 18 14" width="13" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5v11"/><path d="M5.5 4 2.5 7l3 3"/><path d="M12.5 4l3 3-3 3"/></svg>'
+};
+
+// pad 8 vertical / 12 horizontal, row 22, gap 8, control strip 22
+const OPTS=[
+ {k:'S',  name:'S — panel width',      pw:176,  ph:99,  panelW:200,  panelH:145, ctl:'menu',
+  pro:'Panel size is unchanged from today, so nothing resizes and it still reads as a menu, not a window.',
+  con:'99pt tall is a thumbnail — enough to confirm the camera is alive, marginal for checking framing. Picker and mirror have to hide inside a menu.',
+  verdict:'mid', vtext:'Viable, controls suffer'},
+ {k:'M',  name:'M — recommended',      pw:320,  ph:180, panelW:344,  panelH:256, ctl:'compact',
+  pro:'Smallest size where framing is genuinely readable and both the camera picker and the mirror toggle fit as visible controls. Still unmistakably a menu bar panel.',
+  con:'Panel jumps 200 → 344pt when the video toggle flips. Long camera names truncate in the popup button.',
+  verdict:'rec', vtext:'Recommended'},
+ {k:'L',  name:'L — comfortable',      pw:480,  ph:270, panelW:504,  panelH:346, ctl:'full',
+  pro:'Fine detail is legible from across a desk; controls have room for full labels, nothing truncates.',
+  con:'13% of the screen for a transient panel. Starts to feel like a window you would want to keep open — but it still dismisses on outside click.',
+  verdict:'mid', vtext:'Defensible fallback'},
+ {k:'XL', name:'XL — half the screen', pw:1090, ph:614, panelW:1114, panelH:690, ctl:'full',
+  pro:'Life-size self-view. That is the entire benefit.',
+  con:'Not a menu bar popover any more. Blocks 57% of the screen and disappears on any outside click. Buys no extra control affordance over L. Against HIG guidance for a menu bar extra.',
+  verdict:'no', vtext:'Do not ship'}
+];
+const pct=(w,h)=>(w*h/SCREEN_AREA*100);
+
+/* ---------- popover markup ---------- */
+function popover(o,scale,dark,live){
+  const s=v=>(v*scale);
+  const px=v=>s(v)+'px';
+  const ctlRow=()=>{
+    if(o.ctl==='menu') return '';
+    if(o.ctl==='compact') return `<div class="row" style="height:${px(22)}">
+        <div class="popup" style="flex:1 1 auto;height:${px(20)};font-size:${px(11)};border-radius:${px(5)};padding:0 ${px(5)} 0 ${px(7)};gap:${px(5)}">
+          <span class="ic dim" style="width:${px(12)}">${I.cam}</span><span>FaceTime HD Camera</span><span class="chev">⌄</span></div>
+        <div class="popup" style="width:${px(28)};height:${px(20)};justify-content:center;padding:0;border-radius:${px(5)}" title="Mirror preview">
+          <span class="ic">${I.mirror}</span></div></div>`;
+    return `<div class="row" style="height:${px(22)};gap:${px(12)}">
+        <div class="popup" style="width:${px(Math.min(260,o.pw*0.55))};height:${px(20)};font-size:${px(11)};border-radius:${px(5)};padding:0 ${px(5)} 0 ${px(7)};gap:${px(5)}">
+          <span class="ic dim" style="width:${px(12)}">${I.cam}</span><span>FaceTime HD Camera</span><span class="chev">⌄</span></div>
+        <div class="chk" style="font-size:${px(11)};gap:${px(5)}"><span class="box" style="width:${px(13)};height:${px(13)};font-size:${px(10)};border-radius:${px(3)}">✓</span>Mirror</div>
+        <div class="spacer"></div></div>`;
+  };
+  const menuBtn = o.ctl==='menu'
+    ? `<div class="ic dim menu-open">${I.dots}${live?`<div class="dd"><div class="hdr">Camera</div><div class="sel">FaceTime HD Camera</div><div class="hi">Logitech C920</div><hr><div class="sel">Mirror preview</div></div>`:''}</div>`
+    : '';
+  return `<div class="apr ${dark?'dark':''}"><div class="pop" style="width:${px(o.panelW)};padding:${px(8)} ${px(12)};gap:${px(8)};border-radius:${px(10)}">
+    <div class="row" style="height:${px(22)};gap:${px(12)}">
+      <div class="sw" style="width:${px(26)};height:${px(15)};border-radius:${px(8)}"></div>
+      <div class="ic" style="width:${px(17)}">${I.video}</div>
+      <div class="spacer"></div>
+      <div class="ic red" style="width:${px(18)}">${I.rec}</div>
+      <div class="ic" style="width:${px(15)}">${I.stop}</div>
+      ${menuBtn}
+      <div class="ic dim" style="width:${px(15)}">${I.power}</div>
+    </div>
+    <div class="prev" style="width:${px(o.pw)};height:${px(o.ph)};border-radius:${px(6)}">
+      ${scale>=0.9?`<span class="tag">${o.pw}&times;${o.ph}</span><span class="mirr">Mirrored</span>`:''}
+    </div>
+    ${ctlRow()}
+  </div></div>`;
+}
+
+/* ---------- summary ---------- */
+document.getElementById('sumbody').innerHTML = OPTS.map(o=>`
+ <tr><td><b>${o.k}</b></td>
+ <td class="mono">${o.pw}&times;${o.ph}pt</td>
+ <td class="mono">${o.panelW}&times;${o.panelH}pt</td>
+ <td class="num">${pct(o.panelW,o.panelH).toFixed(1)}%</td>
+ <td class="num">${pct(o.pw,o.ph).toFixed(1)}%</td>
+ <td>${o.ctl==='menu'?'Hidden in a menu':'Visible below preview'}</td>
+ <td class="${o.verdict}">${o.vtext}</td></tr>`).join('');
+
+/* ---------- combined overlay ---------- */
+(function(){
+  const sc=0.42, W=SCREEN_W*sc, H=SCREEN_H*sc;
+  const boxes=[...OPTS].reverse().map(o=>{
+    const w=o.panelW*sc,h=o.panelH*sc;
+    return `<div class="ghost ${o.k==='S'?'solid':''}" style="right:${8*sc}px;top:${(MENUBAR+4)*sc}px;width:${w}px;height:${h}px"><b>${o.k}</b></div>`;
+  }).join('');
+  document.getElementById('overlay').innerHTML=`<div class="screenbox" style="display:inline-block">
+    <div class="screen" style="width:${W}px;height:${H}px">
+      <div class="mbar" style="height:${MENUBAR*sc}px;padding-right:${8*sc}px">
+        <i style="width:${9*sc}px;height:${9*sc}px"></i><i style="width:${34*sc}px;height:${7*sc}px"></i></div>
+      ${boxes}
+    </div>
+    <div class="caption"><strong>1440 &times; 932 pt · shown at ${Math.round(sc*100)}%</strong><br>
+    Nested outlines, all anchored where the panel actually opens. S 2.2% · M 6.6% · L 13.0% · XL 57.3% of the screen.</div>
+  </div>`;
+})();
+
+/* ---------- per-option screens ---------- */
+document.getElementById('screens').innerHTML=OPTS.map(o=>{
+  const sc=0.30, W=SCREEN_W*sc, H=SCREEN_H*sc;
+  return `<div class="screenbox">
+    <div class="screen" style="width:${W}px;height:${H}px">
+      <div class="mbar" style="height:${MENUBAR*sc}px;padding-right:${8*sc}px">
+        <i style="width:${9*sc}px;height:${9*sc}px"></i><i style="width:${34*sc}px;height:${7*sc}px"></i></div>
+      <div style="position:absolute;right:${8*sc}px;top:${(MENUBAR+4)*sc}px">${popover(o,sc,false,false)}</div>
+    </div>
+    <div class="caption"><strong>${o.k} — ${o.panelW}&times;${o.panelH}pt panel</strong><br>
+      preview ${o.pw}&times;${o.ph}pt (16:9) · panel covers <b>${pct(o.panelW,o.panelH).toFixed(1)}%</b> of screen · preview alone ${pct(o.pw,o.ph).toFixed(1)}%</div>
+  </div>`;
+}).join('');
+
+/* ---------- detail mocks ---------- */
+document.getElementById('details').innerHTML=OPTS.map(o=>`
+ <div class="opt">
+  <h3 class="${o.verdict}">${o.k} · ${o.name}</h3>
+  <p class="dims">Preview <b>${o.pw}&times;${o.ph}pt</b> · panel <b>${o.panelW}&times;${o.panelH}pt</b> ·
+   <b>${pct(o.panelW,o.panelH).toFixed(1)}%</b> of a 1440&times;932pt screen ·
+   ${o.panelW===200?'panel width unchanged from today (200pt)':`panel widens from 200pt to ${o.panelW}pt when video is on`}</p>
+  <div class="pair">
+    <div><p class="apl">Light</p>${popover(o,1,false,o.ctl==='menu')}</div>
+    <div><p class="apl">Dark</p>${popover(o,1,true,false)}</div>
+  </div>
+  <ul class="pc">
+   <li><b>Pro:</b> ${o.pro}</li>
+   <li><b>Con:</b> ${o.con}</li>
+  </ul>
+ </div>`).join('');
+</script>
+</div>
+</body>
+</html>

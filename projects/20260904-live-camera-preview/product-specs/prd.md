@@ -10,5 +10,7 @@ requirements:
   additional_context: |
     Settled with the user before the PRD: preview sits BELOW the button row (not above). Preview keeps running during recording. Session stops when the popover closes; the user accepts the camera activity light cycling. Mirroring is a user-facing toggle, not a fixed default. Camera picker is in scope.
     Engineering prerequisites surfaced during the interview, not yet in scope: NSCameraUsageDescription does not exist in the app's Info.plist today, and persistence of the camera and mirror choices needs a storage location since the app has none yet.
+    DECIDED by the user after reviewing the size study (generated-docs/design/preview-size-study.html): preview size is L, 480x270pt (16:9), giving a total panel of 504x346pt, about 13% of the 1440x932pt screen. The Designer recommended M (320x180) and advised against XL (1090x614, 57% of screen); the user chose L. At 480pt wide both the camera picker and the mirror toggle fit as visible controls rather than hiding in an overflow menu.
+    OPEN, raised by the Designer and not yet resolved: (a) the panel resizes from 200pt to 504pt every time the video toggle flips, which is visible and needs either a permanently wide panel or an animation gated on accessibilityReduceMotion; (b) the permission-denied and no-camera-present states are not covered by the size study and still need design.
   gathered_by: orchestrator-inline
 ---
