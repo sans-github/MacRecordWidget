@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>kickoff-plan</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">kickoff-plan</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#kickoff-plan-live-camera-preview"
+id="toc-kickoff-plan-live-camera-preview"><span
+class="toc-section-number">1</span> Kickoff Plan: Live Camera
+Preview</a>
+<ul>
+<li><a href="#summary" id="toc-summary"><span
+class="toc-section-number">1.1</span> Summary</a></li>
+<li><a href="#1-what-i-understood" id="toc-1-what-i-understood"><span
+class="toc-section-number">1.2</span> 1. What I understood</a></li>
+<li><a href="#2-open-questions" id="toc-2-open-questions"><span
+class="toc-section-number">1.3</span> 2. Open questions</a></li>
+<li><a href="#3-next-step" id="toc-3-next-step"><span
+class="toc-section-number">1.4</span> 3. Next step</a></li>
+</ul></li>
+</ul>
+</nav>
+<blockquote>
+<p>Status: Approved — Human Approved: 2026-09-04</p>
+</blockquote>
+<h1 data-number="1" id="kickoff-plan-live-camera-preview"><span
+class="header-section-number">1</span> Kickoff Plan: Live Camera
+Preview</h1>
+<p><strong>Feature folder:</strong>
+<code>projects/20260904-live-camera-preview</code> <strong>Prepared
+by:</strong> EM <strong>Date:</strong> 2026-09-04</p>
+<h2 data-number="1.1" id="summary"><span
+class="header-section-number">1.1</span> Summary</h2>
+<p>MacRecordWidget is a two-file SwiftUI menu bar app whose popover is
+currently a single 200pt-wide row of four controls. This feature adds a
+live camera preview underneath that row: flipping the video toggle on
+opens a 480x270pt (16:9) preview so the user can frame the shot before
+recording, instead of finding out the angle was wrong once Photo Booth
+is already rolling. The preview is display-only — Photo Booth remains
+the actual capturer and the preview never writes a file. Two new
+persisted user controls come with it: a camera picker across connected
+devices and a mirror toggle (default on). The camera session starts on
+toggle-on, stops when the popover closes, and resumes on reopen.
+Permission, no-camera, and disconnected-mid-session states all degrade
+to an inline message and must never block the record or stop
+buttons.</p>
+<p><strong>This is a design-only pass.</strong>
+<code>feature-setup.md</code> has Stage 3 (Technical Planning), Stage 4
+(Engineering), and Stage 5 (QA) marked <code>[-]</code>. Active stages
+are 1, 2, 6, 7, and 8. No Swift code will be written in this pass. The
+output is an approved PRD and an approved set of mocks, merged into the
+master baseline, with documentation and sign-off closing the pass.</p>
+<h3 data-number="1.1.1" id="delivery-phases"><span
+class="header-section-number">1.1.1</span> Delivery phases</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Status</th>
+<th>What it produces</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Discovery</td>
+<td>Active</td>
+<td>Full PRD from the requirements frontmatter</td>
+<td>PM 👤</td>
+</tr>
+<tr>
+<td>2. Design</td>
+<td>Active</td>
+<td>Mocks for all preview states and controls</td>
+<td>macOS Designer 👤</td>
+</tr>
+<tr>
+<td>3. Technical Planning</td>
+<td>Skipped</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>4. Engineering</td>
+<td>Skipped</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5. Quality Assurance</td>
+<td>Skipped</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6. Master Baseline Update</td>
+<td>Active (never skippable)</td>
+<td>Merged master PRD + master mocks</td>
+<td>PM + macOS Designer 👤</td>
+</tr>
+<tr>
+<td>7. README and CLAUDE.md</td>
+<td>Active (never skippable)</td>
+<td>Docs updated</td>
+<td>EM 👤</td>
+</tr>
+<tr>
+<td>8. Release</td>
+<td>Active (never skippable)</td>
+<td>Sign-off</td>
+<td>EM 👤</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.1.2" id="key-risks-at-a-glance"><span
+class="header-section-number">1.1.2</span> Key risks at a glance</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Risk</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🔴</td>
+<td>Master baseline is stale</td>
+<td>The previous feature (<code>20260521-popover-button-layout</code>)
+shipped code but never ran its Stage 6. <code>projects/master/</code>
+does not describe the single-row popover this feature builds on.
+<code>product-baseline-rule.md</code> hard-blocks PM and Designer on
+this.</td>
+</tr>
+<tr>
+<td>🟡</td>
+<td>Stage 8 active while Stage 5 skipped</td>
+<td>Broken stage dependency by construction. Stages 6/7/8 cannot be
+turned off. Needs a redefined meaning, not a halt.</td>
+</tr>
+<tr>
+<td>🟡</td>
+<td>Four open <code>RecordingManager</code> defects</td>
+<td>The preview adds AVFoundation and more concurrency to the same class
+that already has an off-main-actor mutation bug.</td>
+</tr>
+<tr>
+<td>🟡</td>
+<td>No <code>NSCameraUsageDescription</code>, no persistence layer</td>
+<td>Both are hard engineering prerequisites with no home in this pass,
+since Stage 4 is off.</td>
+</tr>
+<tr>
+<td>🟢</td>
+<td>Panel resize 200pt → 504pt</td>
+<td>Unresolved design question carried over from the size study.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.2" id="1-what-i-understood"><span
+class="header-section-number">1.2</span> 1. What I understood</h2>
+<h3 data-number="1.2.1" id="big-picture"><span
+class="header-section-number">1.2.1</span> Big picture</h3>
+<p>The video toggle currently does one thing: it decides whether
+<code>startRecording()</code> also launches Photo Booth. This feature
+gives that toggle a second, immediate consequence — it opens an
+AVFoundation capture preview inside the popover itself. The preview is a
+parallel, read-only view of a camera device; it does not participate in
+recording at all. That separation is the whole design: the preview is a
+framing aid, Photo Booth is the recorder, and the two are deliberately
+allowed to disagree about which camera they are using. The panel grows
+from 200x~76pt to 504x346pt while the toggle is on and collapses when it
+is off. Two persisted settings (selected camera, mirror on/off) are new
+state the app has nowhere to put today.</p>
+<h3 data-number="1.2.2" id="folder-structure-check"><span
+class="header-section-number">1.2.2</span> Folder structure check</h3>
+<table>
+<thead>
+<tr>
+<th>Required</th>
+<th>Present</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>projects/20260904-live-camera-preview/workflow/feature-setup.md</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projects/20260904-live-camera-preview/product-specs/prd.md</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>projects/20260904-live-camera-preview/generated-docs/design/</code></td>
+<td>✅ (contains <code>preview-size-study.html</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>All required paths exist. <code>workflow/delivery-tracker.md</code>
+also exists, seeded with only the legend line — expected, and not seeded
+further until this plan is approved.</p>
+<h3 data-number="1.2.3" id="input-quality-check"><span
+class="header-section-number">1.2.3</span> Input quality check</h3>
+<p><strong>Clean:</strong></p>
+<ul>
+<li><code>prd.md</code> contains a requirements frontmatter block and no
+PRD body. This is the expected post-<code>/feature-init</code> state.
+Not flagged, PM not invoked; Stage 1 produces the full PRD.</li>
+<li>No unfilled placeholders, <code>TODO</code>, or <code>TBD</code> in
+<code>feature-setup.md</code> or <code>prd.md</code>.</li>
+<li>Deployment target is <code>local</code>, consistent with a menu bar
+app built unsigned via GitHub Actions. No DevOps or infra work in
+scope.</li>
+<li>The settled decisions in the frontmatter (preview below the row,
+size L, preview live during recording, session stops on popover close,
+mirror toggle default on, camera picker in scope, picker affects preview
+only) are internally consistent and consistent with the current
+code.</li>
+</ul>
+<p><strong>🔴 Blocker — master baseline is stale.</strong>
+<code>projects/master/</code> was last updated 2026-05-19. The
+<code>20260521-popover-button-layout</code> feature shipped after that
+(commits <code>bb6cfa4</code>, <code>ab33c53</code>) and its Stage 6 is
+still unchecked in
+<code>projects/20260521-popover-button-layout/workflow/delivery-tracker.md</code>.
+Neither <code>projects/master/product-specs/prd.md</code> nor any file
+in <code>projects/master/mocks/</code> mentions the single-row button
+layout that is now live. <code>product-baseline-rule.md</code> states PM
+must not author a new PRD and Designer must not create new mocks until
+master is current. Since this feature's preview sits directly below that
+button row, the mocks would be drawn against a baseline that does not
+exist in the product. See open question 1 — this needs a human decision
+before Stage 1 starts.</p>
+<p><strong>🟡 Broken stage dependency (documented, not
+blocking).</strong> <code>feature-setup.md</code> has Stage 8 Release
+active with Stage 5 QA skipped, which the kickoff prompt would normally
+block on. Stages 6, 7, and 8 are never-skippable by rule, so this cannot
+be resolved by toggling. It is an inherent consequence of a design-only
+pass, not a configuration mistake. Proposed handling is in Risks
+below.</p>
+<p><strong>🟡 Two design questions left open in the
+frontmatter.</strong> The Designer already raised, and did not resolve:
+(a) the panel resizing 200pt → 504pt on every toggle flip, and (b) the
+permission-denied and no-camera states not being covered by the size
+study. Both land inside Stage 2, but (a) needs a human call because it
+changes the resting state of the panel — see open question 2.</p>
+<p><strong>Not a contradiction, but worth stating:</strong> the human
+chose preview size L over the Designer's M recommendation after
+reviewing <code>generated-docs/design/preview-size-study.html</code>.
+That decision is settled and Stage 2 will not reopen it.</p>
+<h3 data-number="1.2.4" id="risks-and-unknowns"><span
+class="header-section-number">1.2.4</span> Risks and unknowns</h3>
+<p><strong>1. Stage 8 Release with no implementation to release
+(🟡).</strong> Stage 5 QA is skipped and Stage 4 produces no code, so
+there is nothing to test and nothing to ship. Rather than halt, I
+propose redefining Stages 7 and 8 for this pass:</p>
+<ul>
+<li><strong>Stage 7</strong> — <code>README.md</code> and
+<code>CLAUDE.md</code> are updated to describe the <em>approved design
+intent</em> for the live camera preview, clearly marked as
+designed-not-yet-implemented, plus the recorded engineering
+prerequisites (<code>NSCameraUsageDescription</code>, persistence
+location, AVFoundation adoption). No claim that the feature exists in
+the shipped app. The <code>scripts/dev.sh</code> step in Stage 7 does
+not apply — this is an Xcode app with no BE or FE processes to spawn,
+and per project memory nothing is built locally. It should be marked
+SKIPPED with that reason when the tracker is seeded.</li>
+<li><strong>Stage 8</strong> — becomes <strong>design sign-off</strong>,
+not release readiness. EM verifies that the PRD and mocks are approved,
+that every state in the PRD has a mock, that master is current, and that
+the open engineering prerequisites are documented and carried forward.
+The human approves that the design is complete and ready for a future
+implementation pass. No build, no artifact, no version bump.</li>
+</ul>
+<p>I want this confirmed explicitly (open question 3) rather than
+assumed, because "release" appearing checked in the tracker could later
+be misread as "the feature shipped."</p>
+<p><strong>2. Existing <code>RecordingManager</code> defects intersect
+this feature directly (🟡).</strong> Four items were logged to
+<code>BACKLOG.md</code> triage today against
+<code>MacRecordWidget/RecordingManager.swift</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Interaction with this feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Class is not <code>@MainActor</code>;
+<code>isRecording</code>/<code>isInFlight</code> mutate off-main</td>
+<td><strong>Highest relevance.</strong> The preview adds an
+<code>AVCaptureSession</code> (which must be configured and started off
+the main thread) plus new observable state
+(<code>selectedDeviceID</code>, <code>mirrored</code>, permission
+status, session running). Building that on top of a class that already
+races is how you get intermittent UI bugs that are very hard to
+reproduce. Whoever implements the preview should fix the actor isolation
+<strong>first</strong>, as a prerequisite, not alongside.</td>
+</tr>
+<tr>
+<td><code>NSWorkspace.open</code> returning true proves nothing about
+the Shortcut existing</td>
+<td>Unrelated to the preview. Independent fix, no sequencing
+constraint.</td>
+</tr>
+<tr>
+<td>Dead <code>RecordingError.accessibilityDenied</code> case</td>
+<td>Mildly relevant: this feature introduces a <em>real</em>
+permission-denied path (camera). Leaving a stale accessibility-denied
+error next to a new camera-denied error invites confusion in the error
+enum and the alert copy. Cheap to remove while the error surface is
+being touched.</td>
+</tr>
+<tr>
+<td>Locale-dependent recording filename</td>
+<td>Unrelated. Independent fix.</td>
+</tr>
+</tbody>
+</table>
+<p>My recommendation: fix the <code>@MainActor</code> isolation and
+delete the dead error case as a prerequisite to any preview
+implementation; treat the other two as independent backlog items on
+their own schedule. <strong>None of this can happen in this
+pass</strong> — Stage 4 is off. So the concrete ask is that these be
+recorded as sequencing constraints in the PRD's
+engineering-prerequisites section, so the future implementation pass
+inherits them. Open question 4 confirms this.</p>
+<p><strong>3. Engineering prerequisites with no home in a design-only
+pass (🟡).</strong> Two hard prerequisites exist and neither has an
+owner in the active stages:</p>
+<ul>
+<li><code>MacRecordWidget/Info.plist</code> currently contains only
+<code>LSUIElement</code>. There is no
+<code>NSCameraUsageDescription</code>. Without it, the first
+<code>AVCaptureDevice.requestAccess(for: .video)</code> call causes an
+immediate crash, not a denial. This is not optional and not a
+nicety.</li>
+<li>The app has no persistence of any kind today — no
+<code>UserDefaults</code> usage, no SwiftData, no settings store. The
+mirror toggle and camera selection both must survive relaunch.</li>
+</ul>
+<p>Since Stage 3 and 4 are skipped, these must be captured as an
+explicit "engineering prerequisites" section in the PRD so they are not
+rediscovered later. They should not be quietly implemented in this
+pass.</p>
+<p><strong>4. Panel resize behavior is unresolved (🟢).</strong> A 200pt
+→ 504pt jump on every toggle flip is a 2.5x width change in a menu bar
+panel anchored to the status item. Two viable directions, both for the
+Designer to mock, but the choice affects the idle appearance of the app:
+a permanently 504pt-wide panel (stable, but a large idle footprint for
+four buttons) versus an animated resize gated on
+<code>accessibilityReduceMotion</code> (small at rest, motion on every
+flip). Open question 2.</p>
+<p><strong>5. Source layout deviates from the documented convention
+(🟢).</strong> <code>tech-config.md</code> and the EM hard constraints
+say source code lives under <code>src/</code>. In this repo
+<code>src/</code> is empty and the Swift sources live in
+<code>MacRecordWidget/</code> alongside
+<code>MacRecordWidget.xcodeproj</code>, which is the standard Xcode
+layout. This predates the feature and is not something to change here —
+relocating source files would require rewriting the Xcode project's file
+references for no functional gain. I am flagging it so it is a recorded,
+deliberate exception rather than drift, and recommending it be logged to
+<code>BACKLOG.md</code> triage (Area: <code>Swift</code>, Type:
+<code>debt</code>) and reflected in <code>tech-config.md</code> at some
+point. Open question 7.</p>
+<p><strong>6. <code>tech-config.md</code> impact assessment.</strong>
+<code>tech-config.md</code> has not changed for this feature and this
+feature does not require a change to it. The macOS row (Swift 5.10 +
+SwiftUI, Observation, SwiftData, URLSession) still covers the work. No
+refactor, no regression risk from config drift. The only caveat is the
+SwiftData-versus-<code>@AppStorage</code> question in the stack section
+below, which is a within-platform choice, not a config change.</p>
+<p><strong>7. Known limitation accepted by the human.</strong> The
+camera picker affects the preview only. Photo Booth records from
+whatever camera Photo Booth is set to, which may be a different device.
+The human accepted this and asked for no user-facing warning. The
+residual risk is a support-style complaint ("I previewed my BRIO but the
+recording is the FaceTime camera"). It is documented in the PRD as a
+limitation and that is the extent of the mitigation. Open question 6
+confirms the design carries no affordance at all.</p>
+<h3 data-number="1.2.5" id="out-of-scope"><span
+class="header-section-number">1.2.5</span> Out of scope</h3>
+<ul>
+<li><strong>Any Swift implementation.</strong> Stages 3, 4, and 5 are
+skipped. No code, no detailed design, no HLD, no tests are produced in
+this pass.</li>
+<li><strong>System architecture and technical planning.</strong> Stage 3
+skipped — no <code>sys-arch.md</code>, no <code>hld.md</code>, no
+<code>implementation-plan.md</code>.</li>
+<li><strong>QA.</strong> No test plan, no XCUITests, no automation.
+Stage 5 skipped.</li>
+<li><strong>Recording via the preview.</strong> The preview never writes
+a file. Photo Booth remains the sole capturer.</li>
+<li><strong>Changing what Photo Booth records.</strong> The camera
+picker does not drive Photo Booth's device selection.</li>
+<li><strong>Audio.</strong> No audio monitoring, level meters, or
+microphone selection.</li>
+<li><strong>Backend, frontend, database, infrastructure.</strong> None
+exist and none are added. Deployment target is <code>local</code>.</li>
+<li><strong>Signing, notarization, distribution.</strong> CI continues
+to build unsigned.</li>
+<li><strong>Fixing the <code>RecordingManager</code> backlog
+items.</strong> Recorded as prerequisites for a future pass, not fixed
+here.</li>
+<li><strong>Full-screen Photo Booth, Accessibility permission.</strong>
+Deliberately removed previously; stays removed.</li>
+</ul>
+<h3 data-number="1.2.6" id="software-stack"><span
+class="header-section-number">1.2.6</span> Software stack</h3>
+<p>An existing stack is in place. Confirmed by inspecting the repo:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS app</td>
+<td>Swift 5.10 + SwiftUI, <code>MenuBarExtra(.window)</code></td>
+<td><code>MacRecordWidget/MacRecordWidgetApp.swift</code> (146
+lines)</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Observation framework (<code>@Observable</code>)</td>
+<td><code>MacRecordWidget/RecordingManager.swift</code> (84 lines)</td>
+</tr>
+<tr>
+<td>Integration</td>
+<td><code>NSWorkspace.open</code> against <code>shortcuts://</code>
+URLs</td>
+<td>Requires user-created "Start" and "Stop" Shortcuts</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>Xcode project, GitHub Actions, unsigned artifact</td>
+<td>Deployment target macOS 14.0</td>
+</tr>
+<tr>
+<td>Persistence</td>
+<td><strong>None today</strong></td>
+<td>New requirement from this feature</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><strong>None</strong></td>
+<td>Stage 5 skipped; not added here</td>
+</tr>
+<tr>
+<td>BE / FE / DB / Infra</td>
+<td>Not present, not needed</td>
+<td><code>src/</code> is empty</td>
+</tr>
+</tbody>
+</table>
+<p>This matches the <code>macOS</code> row of
+<code>tech-config.md</code>. No layer is missing for the requirements,
+and nothing in the PRD is unaddressable with this stack.</p>
+<p><strong>Additions this feature implies, with my
+assessment:</strong></p>
+<ul>
+<li><strong>AVFoundation</strong> — required for
+<code>AVCaptureSession</code>, <code>AVCaptureVideoPreviewLayer</code>,
+and <code>AVCaptureDevice.DiscoverySession</code>. This is a first-party
+framework in the platform SDK, not a third-party dependency, and it is
+the only way to render a live camera preview on macOS. In my reading of
+the contract-first rule, first-party Apple frameworks are part of the
+already-approved macOS platform stack and do not constitute "adopting an
+unlisted technology," so no Arch sign-off is needed. I am surfacing it
+explicitly anyway, per the kickoff prompt, and note that Arch is not
+engaged in this pass at all since Stage 3 is skipped. If the human
+disagrees, this needs an Arch review before Stage 2 concludes.</li>
+<li><strong>Persistence — recommend <code>@AppStorage</code> /
+<code>UserDefaults</code>, not SwiftData.</strong>
+<code>tech-config.md</code> lists SwiftData for the macOS layer. For two
+scalar values (a device unique ID string and a boolean), SwiftData is
+materially over-weight: it means a model container, a schema, migration
+concerns, and app-startup cost for what is a two-key preference store.
+<code>@AppStorage</code> is the proven, idiomatic SwiftUI choice for
+user preferences at this size, ships with the platform, and needs no new
+dependency. Concrete alternative if the human prefers to stay literal to
+<code>tech-config.md</code>: adopt SwiftData now to avoid a migration
+later — but there is no plausible growth path here that turns two
+preferences into a relational model, so I do not recommend it. This is a
+design-time recommendation to be recorded in the PRD, not an
+implementation decision, since Stage 4 is off. Open question 5.</li>
+</ul>
+<p><strong>No new library, package, or SPM dependency is
+proposed.</strong> The stack stays the smallest thing that covers the
+requirements: SwiftUI + Observation + AVFoundation +
+<code>@AppStorage</code>.</p>
+<p><strong>Source layout note.</strong> Per the EM hard constraint, no
+feature-named subfolder will be created under <code>src/</code>. The
+existing Xcode layout under <code>MacRecordWidget/</code> is retained
+(see risk 5).</p>
+<hr />
+<h2 data-number="1.3" id="2-open-questions"><span
+class="header-section-number">1.3</span> 2. Open questions</h2>
+<ol type="1">
+<li>❓✅ <strong>Master baseline is stale and hard-blocks Stage 1 and
+Stage 2.</strong> <code>projects/master/</code> predates the shipped
+<code>20260521-popover-button-layout</code> single-row popover, and that
+feature's Stage 6 was never run. Which do you want: (a) backfill master
+now from the <code>20260521</code> feature before this feature starts,
+(b) fold the backfill into this feature's Stage 6 and accept that the
+Designer works against the live code rather than master for Stage 2, or
+(c) explicitly waive the rule for this pass? -- <strong>Resolved
+2026-09-04:</strong> Backfill master now. PM and Designer bring
+<code>projects/master/</code> current with the shipped
+<code>20260521-popover-button-layout</code> feature BEFORE this
+feature's PRD is authored.</li>
+<li>❓✅ <strong>Panel resize behavior.</strong> Should the popover be
+permanently 504pt wide (stable, larger idle footprint), or animate 200pt
+→ 504pt on toggle with the animation gated on
+<code>accessibilityReduceMotion</code> (small at rest, motion on every
+flip)? This changes the idle look of the app, so I do not want the
+Designer choosing it alone. -- <strong>Resolved 2026-09-04:</strong>
+Animate 200pt to 504pt on toggle, with the animation gated on
+<code>accessibilityReduceMotion</code>.</li>
+<li>❓✅ <strong>Stage 7 and Stage 8 semantics for a design-only
+pass.</strong> Do you accept the redefinition proposed in Risks — Stage
+7 documents design intent only and clearly marks the feature as not
+implemented (with the <code>scripts/dev.sh</code> step marked SKIPPED as
+non-applicable to an Xcode app), and Stage 8 becomes design sign-off
+rather than release readiness? -- <strong>Resolved 2026-09-04:</strong>
+Accepted as proposed. Stage 7 documents design intent clearly marked
+not-implemented, Stage 8 becomes design sign-off, and the
+<code>scripts/dev.sh</code> step is seeded as SKIPPED.</li>
+<li>❓✅ <strong><code>RecordingManager</code> backlog items.</strong>
+Confirm they are <em>not</em> fixed in this pass (Stage 4 is off), and
+that instead the PRD records the <code>@MainActor</code> isolation fix
+and the dead <code>accessibilityDenied</code> case removal as
+prerequisites that must land before or with the preview implementation.
+Or do you want a separate implementation-enabled pass scheduled for them
+first? -- <strong>Resolved 2026-09-04:</strong> Confirmed deferred. The
+<code>RecordingManager</code> backlog items are not fixed in this pass;
+the PRD records the <code>@MainActor</code> isolation fix as a
+prerequisite for implementation.</li>
+<li>❓✅ <strong>Persistence mechanism.</strong> Confirm
+<code>@AppStorage</code> / <code>UserDefaults</code> for the mirror and
+camera-selection settings, rather than SwiftData as listed in
+<code>tech-config.md</code>. -- <strong>Resolved 2026-09-04:</strong>
+<code>@AppStorage</code> / <code>UserDefaults</code>, not SwiftData. Log
+the deviation from <code>tech-config.md</code> alongside the Q7
+exception.</li>
+<li>❓✅ <strong>Preview/Photo Booth camera mismatch.</strong> The PRD
+documents it as a known limitation with no user warning. Confirm the
+mocks should carry no affordance at all for it — not even a subtle hint
+in the picker — so the Designer does not invent one. -- <strong>Resolved
+2026-09-04:</strong> CHANGED from the earlier requirements capture. The
+preview must carry a passive indicator naming the camera it is showing
+(e.g. "Logitech BRIO"), so a mismatch with Photo Booth is visible. No
+alarming warning affordance. The PRD's known-limitation wording must be
+updated to match.</li>
+<li>❓✅ <strong>Source layout exception.</strong> Confirm the Swift
+sources stay in <code>MacRecordWidget/</code> rather than moving under
+<code>src/</code>, and that this exception should be logged to
+<code>BACKLOG.md</code> triage and reflected in
+<code>tech-config.md</code> later. -- <strong>Resolved
+2026-09-04:</strong> Sources stay in <code>MacRecordWidget/</code>; log
+the exception to the <code>src/</code> convention in
+<code>tech-config.md</code>.</li>
+</ol>
+<hr />
+<h2 data-number="1.4" id="3-next-step"><span
+class="header-section-number">1.4</span> 3. Next step</h2>
+<p>Once approved — and once question 1 is resolved, since it hard-blocks
+PM — PM produces the full PRD at
+<code>projects/20260904-live-camera-preview/product-specs/prd.md</code>
+from the existing requirements frontmatter, which is the first unchecked
+step in <code>delivery-tracker.md</code>.</p>
+</body>
+</html>
