@@ -25,9 +25,9 @@ Prerequisite added at kickoff. `projects/master/` predates the shipped `20260521
 
 ### Stage 2: Design
 
-- [ ] **UI / UX Design**
-  - [ ] 💾 **macOS DESIGNER:** produce mocks at the approved L size (480x270 preview, 504x346 panel) → `projects/20260904-live-camera-preview/generated-docs/design/` -- done when: mocks cover the default, permission-denied, no-camera, and disconnected states, plus the camera picker, mirror toggle, and passive camera-name indicator
-  - [ ] 👤💾 **HUMAN:** review and approve mocks -- done when: human approves
+- [x] **UI / UX Design**
+  - [x] 💾 **macOS DESIGNER:** produce mocks at the approved L size (480x270 preview, 504x346 panel) → [generated-docs/design/index.html](../generated-docs/design/index.html) -- done when: mocks cover the default, permission-denied, no-camera, and disconnected states, plus the camera picker, mirror toggle, and passive camera-name indicator
+  - [x] 👤💾 **HUMAN:** review and approve mocks -- done when: human approves
 
 ### Stage 3: Technical Planning
 

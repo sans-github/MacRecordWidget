@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacRecordWidget — Live camera preview — mocks</title>
+<style>
+:root {
+  --bg-window:       #ECECEC;
+  --bg-popover:      #F6F6F6;
+  --bg-menubar:      #E4E4E4;
+  --label-primary:   rgba(0,0,0,0.85);
+  --label-secondary: rgba(0,0,0,0.50);
+  --label-tertiary:  rgba(0,0,0,0.26);
+  --separator:       rgba(0,0,0,0.12);
+  --accent:          #007AFF;
+  --record-red:      #FF3B30;
+  --sys-green:       #34C759;
+  --amber:           #FF9E33;
+  --toggle-off:      rgba(0,0,0,0.16);
+  --toggle-thumb:    #FFFFFF;
+  --hover-fill:      rgba(0,0,0,0.07);
+  --pressed-fill:    rgba(0,0,0,0.14);
+  --shadow:          rgba(0,0,0,0.18);
+  --code-bg:         rgba(0,0,0,0.06);
+  --bg-control:      #FFFFFF;
+  --control-border:  rgba(0,0,0,0.18);
+  --preview-well:    #111113;
+  --msg-well:        #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; } }
+#dm:checked ~ .page { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; }
+#dm:checked ~ .page { background: #1E1E1E; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
+#dm { display: none; }
+.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 56px; }
+.wrap { max-width: 760px; margin: 0 auto; }
+.dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
+h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+.sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
+h2 { font-size: 13px; font-weight: 600; margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3 { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
+p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 10px; }
+p.note strong { color: var(--label-primary); font-weight: 600; }
+code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+a { color: var(--accent); }
+.nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
+.caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); margin-bottom: 6px; }
+.stage.wide { padding: 24px 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator); vertical-align: top; line-height: 1.45; }
+th { background: var(--code-bg); font-weight: 600; }
+ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 8px; }
+ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
+.rec-box { border: 0.5px solid var(--separator); border-left: 3px solid var(--accent); border-radius: 6px; padding: 12px 14px; background: var(--bg-popover); margin-bottom: 14px; }
+.rec-box h3 { margin-top: 0; }
+
+/* menu bar strip */
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
+.mb-icon.rec { color: var(--sys-green); }
+.mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
+.blink { animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
+
+/* popover shell */
+.popover { background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; }
+.popover.collapsed { width: 200px; }
+.popover.expanded { width: 504px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: center; gap: 12px; height: 22px; }
+.btnrow { width: 200px; }
+.tgl-group { display: flex; align-items: center; gap: 6px; }
+.tgl-icon { width: 16px; height: 16px; color: var(--label-primary); flex: none; }
+.switch { width: 26px; height: 15px; border-radius: 8px; background: var(--toggle-off); position: relative; flex: none; }
+.switch.on { background: var(--sys-green); }
+.switch::after { content: ""; position: absolute; top: 1.5px; left: 1.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--toggle-thumb); box-shadow: 0 1px 2px rgba(0,0,0,0.28); }
+.switch.on::after { left: auto; right: 1.5px; }
+.btn { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--label-primary); background: none; border: none; padding: 0; flex: none; }
+.btn.rec { color: var(--record-red); }
+.btn svg { width: 16px; height: 16px; }
+.dim { opacity: 0.30; }
+
+/* preview well */
+.preview { width: 480px; height: 270px; border-radius: 6px; overflow: hidden; position: relative; background: var(--preview-well); box-shadow: 0 0 0 0.5px var(--separator); }
+.preview.msgmode { background: var(--msg-well); }
+.scene { position: absolute; inset: 0; background:
+   radial-gradient(120% 90% at 50% 118%, #4A5A6B 0%, #2B3542 55%, #1B222B 100%); }
+.scene .subject { position: absolute; left: 50%; bottom: -6%; width: 190px; height: 200px; transform: translateX(-50%);
+   background: radial-gradient(50% 34% at 50% 22%, #C79C7E 0%, #A87D62 62%, rgba(168,125,98,0) 63%),
+               radial-gradient(70% 60% at 50% 108%, #3E4E63 0%, #334152 60%, rgba(51,65,82,0) 61%); }
+.scene .lamp { position: absolute; right: 26px; top: 22px; width: 54px; height: 84px;
+   background: linear-gradient(180deg, rgba(255,214,150,0.85), rgba(255,214,150,0.06)); border-radius: 26px 26px 4px 4px; filter: blur(0.4px); }
+.scene .shelf { position: absolute; left: 18px; top: 128px; width: 96px; height: 7px; background: rgba(255,255,255,0.22); border-radius: 2px; }
+.scene .shelf::after { content: ""; position: absolute; left: 10px; top: -26px; width: 16px; height: 26px; background: rgba(255,255,255,0.16); border-radius: 2px; }
+.mirrored .scene { transform: scaleX(-1); }
+.grain { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.14)); }
+
+/* inline state message inside the well */
+.msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 56px; text-align: center; }
+.msg .ic { width: 22px; height: 22px; color: var(--label-tertiary); margin-bottom: 2px; display: block; }
+.msg .ic svg { width: 100%; height: 100%; display: block; }
+.tgl-icon svg, .mb-icon svg { width: 100%; height: 100%; display: block; }
+.msg .ttl { font-size: 13px; font-weight: 600; color: var(--label-primary); }
+.msg .bdy { font-size: 11px; color: var(--label-secondary); line-height: 1.45; }
+.msg .act { margin-top: 6px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--label-tertiary); border-top-color: transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .blink, .spinner { animation: none; } }
+
+/* AppKit-ish controls */
+.pushbtn { height: 20px; padding: 0 10px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10);
+   display: inline-flex; align-items: center; }
+.strip { display: flex; align-items: center; gap: 12px; height: 22px; width: 480px; }
+.scaler { overflow: hidden; }
+.scaler > div { transform-origin: top left; }
+.popup { height: 22px; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px;
+   padding: 0 4px 0 8px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10); }
+.popup .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popup .chev { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+.popup .chev svg { width: 9px; height: 11px; }
+.popup .camic { width: 13px; height: 13px; color: var(--label-secondary); flex: none; display: flex; }
+.popup.off { opacity: 0.38; }
+.popup.focused { box-shadow: 0 0 0 0.5px var(--control-border), 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.chk { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--label-primary); flex: none; }
+.chk .box { width: 14px; height: 14px; border-radius: 3.5px; background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border); display: flex; align-items: center; justify-content: center; }
+.chk .box.on { background: var(--accent); box-shadow: none; }
+.chk .box svg { width: 10px; height: 10px; color: #fff; }
+.chk.off { opacity: 0.38; }
+
+/* matrices + grids */
+.matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cell { background: var(--bg-popover); border-radius: 8px; box-shadow: 0 0 0 0.5px var(--separator); padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cell small { font-size: 10px; color: var(--label-secondary); text-align: center; line-height: 1.35; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.card { display: block; text-decoration: none; color: inherit; background: var(--bg-popover); border-radius: 8px; padding: 14px; box-shadow: 0 0 0 0.5px var(--separator); }
+.card h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
+.card p { font-size: 11.5px; color: var(--label-secondary); line-height: 1.5; }
+.tag { display: inline-block; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--label-secondary); border: 0.5px solid var(--separator); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.zoom { transform-origin: top center; }
+</style>
+</head>
+<body>
+<input type="checkbox" id="dm">
+<div class="page"><div class="wrap">
+<label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
+<h1>Live camera preview &mdash; mocks</h1><p class="sub">Stage 2 design for <code>projects/20260904-live-camera-preview</code>. Draft, pending PM approval. Extends the shipped popover in the <a href="../../../master/mocks/index.html">master mocks</a>; every page below covers light and dark, and each page carries the control mapping for the controls it introduces.</p><div class="stage wide"><div class="caption">The feature in one frame &mdash; 504&times;346pt panel, preview below the shipped button row</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview mirrored"><div class="scene"><div class="lamp"></div><div class="shelf"></div><div class="subject"></div></div><div class="grain"></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">Logitech BRIO</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><div class="rec-box"><h3>The one open design decision, decided</h3><p class="note">The PRD constrains behaviour, not placement. Recommendation: <strong>a 22pt control strip below the preview</strong>, with the picker's own selected-value label doing the job of the passive camera-name indicator. No chrome over the video. The short reason: six of the eight states have no image to overlay, and text over a live feed cannot be made legible without a scrim across the part of the frame the user is trying to judge. Full reasoning and the rejected overlay, drawn, on <a href="placement-decision.html">the placement decision page</a>.</p></div><h2>Pages</h2><div class="grid"><a class="card" href="preview-running.html"><h3>Preview running</h3><p>The normal state. Panel metrics, mirror on and off, the picker open, the control state matrix, and the full control mapping for every new control.</p></a><a class="card" href="preview-recording.html"><h3>Running while recording</h3><p>Start pressed. Only the button row changes; the session is untouched. Shows the camera-name indicator doing its one job.</p></a><a class="card" href="preview-states.html"><h3>Permission and hardware states</h3><p>All six failure states plus the two recoveries, the message copy table, and the state-message control mapping.</p></a><a class="card" href="panel-resize.html"><h3>Panel resize</h3><p>200pt collapsed against 504pt expanded, drawn growing leftward from a pinned trailing edge. The resolved anchoring spec, the animation spec and its one unverified assumption, and the Reduce Motion path.</p></a><a class="card" href="placement-decision.html"><h3>Placement decision</h3><p>Strip below versus overlaid, both drawn, with the trade-off table and the one-label reading of AC-PV-6.</p></a><a class="card" href="preview-size-study.html"><h3>Size study</h3><p>Earlier artifact. S, M, L and XL compared. The human chose L; recorded here as provenance, not as an open question.</p></a></div><h2>Layout, at a glance</h2><table><tr><th>Property</th><th>Video off</th><th>Video on</th></tr><tr><td>Panel</td><td>200 &times; 31pt</td><td>504 &times; 346pt</td></tr><tr><td>Padding</td><td colspan="2">12pt horizontal, 8pt vertical &mdash; unchanged from the shipped panel</td></tr><tr><td>Stack</td><td>the shipped <code>HStack(spacing: 12)</code></td><td><code>VStack(alignment: .trailing, spacing: 8)</code>: button row, preview, control strip</td></tr><tr><td>Preview</td><td>absent from the view hierarchy</td><td>480 &times; 270pt, 16:9, 6pt corner radius</td></tr><tr><td>Control strip</td><td>absent</td><td>22pt: camera picker (fills), 12pt gap, Mirror checkbox</td></tr><tr><td>Anchor</td><td colspan="2">Trailing. The panel’s right edge is pinned near the screen edge, so the extra 304pt appears on the left; the button row is <code>.frame(width: 200, alignment: .trailing)</code> so it stays visually still. <a href="panel-resize.html">Full anchoring spec</a>.</td></tr><tr><td>Preview surface</td><td colspan="2">SwiftUI has no camera preview on macOS 14 — <code>AVCaptureVideoPreviewLayer</code> inside an <code>NSViewRepresentable</code>, plus <code>NSCameraUsageDescription</code> and the camera entitlement.</td></tr><tr><td>Colour</td><td colspan="2">Semantic throughout. The preview well is the only new surface and it uses <code>controlBackgroundColor</code> when it holds a message.</td></tr></table><h2>New controls</h2><table><tr><th>Control</th><th>SwiftUI</th><th>VoiceOver label</th><th>Identifier</th></tr><tr><td>Preview surface</td><td><code>NSViewRepresentable</code> hosting <code>AVCaptureVideoPreviewLayer</code></td><td>Live camera preview, showing [device name]</td><td><code>previewSurface</code></td></tr><tr><td>Camera picker</td><td><code>Picker</code>, <code>.pickerStyle(.menu)</code></td><td>Preview camera</td><td><code>cameraPicker</code></td></tr><tr><td>Mirror toggle</td><td><code>Toggle</code>, <code>.toggleStyle(.checkbox)</code></td><td>Mirror preview</td><td><code>mirrorToggle</code></td></tr><tr><td>Inline state message</td><td><code>VStack</code>, <code>.accessibilityElement(children: .combine)</code></td><td>the message title and body, combined</td><td><code>previewStateMessage</code></td></tr><tr><td>Open Settings</td><td><code>Button</code>, <code>.buttonStyle(.bordered)</code></td><td>Open camera settings in System Settings</td><td><code>openCameraSettingsButton</code></td></tr></table><h2>Accessibility</h2><p class="note">No focus ring: the preview and its controls inherit <code>.focusEffectDisabled()</code> from the shipped row (AC-AX-4). Tab still reaches the picker and the checkbox in reading order and Space activates them; nothing is drawn. Reduce Motion removes the panel resize animation (AC-PNL-4) and replaces the waiting spinner with static text. Increase Contrast and greyscale are safe because no state is distinguished by hue &mdash; every state message carries its meaning in text, and this feature adds no colour-coded status anywhere. Dynamic Type now applies to the panel for the first time: the state messages are the only text in the product, and they wrap rather than truncate.</p><h2>Menu bar and keyboard</h2><p class="note">Unchanged, and unchanged deliberately. The app remains a <code>MenuBarExtra</code>-only agent app with no application menu bar, no <code>Settings</code> scene and no registered shortcut, so this feature adds no menu item and no key equivalent. Both new controls are reachable by Tab within the panel and by VoiceOver. Adding a Settings window for two preferences would introduce the first window this app has ever had, which is out of proportion to a picker and a checkbox that are already permanently visible whenever they apply.</p><h2>Not expressible in a mock</h2><p class="note">These PRD requirements are behavioural and cannot be verified from a static page. They are specified in the mapping tables so they are not lost: session lifecycle tied to the popover (AC-LC-1 to AC-LC-5), persistence of the device ID and the mirror flag (AC-PS-1 to AC-PS-4), the fallback rule that never overwrites the stored device ID (AC-CAM-4, AC-CAM-5), and the guarantee that no code path writes the preview stream anywhere (AC-PV-4). The engineering prerequisites P-1 to P-4 are outside design entirely.</p></div></div>
+</body>
+</html>
