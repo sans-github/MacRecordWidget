@@ -43,9 +43,9 @@ Prerequisite added at kickoff. `projects/master/` predates the shipped `20260521
 
 ### Stage 6: Master Baseline Update
 
-- [ ] 💾 **PM:** merge this feature's PRD into `projects/master/product-specs/prd.md` -- done when: master PRD includes the live camera preview
-- [ ] 💾 **DESIGNER / macOS DESIGNER:** merge this feature's mocks into `projects/master/mocks/` -- done when: master mocks include the preview panel
-- [ ] 👤💾 **HUMAN:** confirm master is current -- done when: human confirms
+- [x] 💾 **PM:** merge this feature's PRD into `projects/master/product-specs/prd.md` → [projects/master/product-specs/prd.md](../../master/product-specs/prd.md) -- done when: master PRD includes the live camera preview
+- [x] 💾 **DESIGNER / macOS DESIGNER:** merge this feature's mocks into `projects/master/mocks/` → [projects/master/mocks/index.html](../../master/mocks/index.html) -- done when: master mocks include the preview panel
+- [x] 👤💾 **HUMAN:** confirm master is current -- done when: human confirms
 
 ### Stage 7: README and CLAUDE.md
 

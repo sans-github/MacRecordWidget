@@ -147,6 +147,8 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 <tr><td>Recording dot</td><td><code>Circle()</code> in a <code>ZStack(alignment: .bottomTrailing)</code></td><td>5&times;5, <code>.offset(x: 2, y: 2)</code>, blink via <code>.easeInOut(0.8).repeatForever()</code>; static when <code>accessibilityReduceMotion</code></td><td><code>.accessibilityHidden(true)</code> — state is carried by the icon colour and by the popover buttons</td></tr>
 <tr><td>Error report</td><td><code>NSAlert</code> (<code>.critical</code>) via AppKit interop</td><td><code>runModal()</code> with a single OK button</td><td>alert text is read by VoiceOver on presentation</td></tr>
 </table>
+<h2>Related, but not shipped</h2>
+<p class="note">Everything above is the current build. A <strong>live camera preview inside this panel was designed and approved on 4 September 2026 and then never implemented</strong>: with the toggle on, the shipped app still shows only this 200pt row and opens Photo Booth in a separate window. The approved-but-unbuilt design is on the <a href="preview-overview.html">live camera preview design overview</a>, and every page in that group is banner-marked as not shipped.</p>
 </div></div>
 </body>
 </html>

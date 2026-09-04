@@ -57,6 +57,12 @@ h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px
 p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
 code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
 a { color: var(--accent); }
+.legend { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--label-secondary); margin: 0 0 12px; }
+.pill { flex: none; font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; }
+.pill.ship { background: var(--sys-green); color: #04240F; }
+.pill.unbuilt { background: #FF9E33; color: #1F1500; }
+.card .pill { display: inline-block; margin-bottom: 6px; }
+.card.unbuilt { border-left: 4px solid #FF9E33; background: color-mix(in srgb, #FF9E33 8%, var(--bg-popover)); }
 
 /* menu bar strip */
 .menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
@@ -117,7 +123,8 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 <label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
 
 <h1>MacRecordWidget — master mocks</h1>
-<p class="sub">The shipping UI as of the popover button layout release. One menu bar item, one 200pt panel, one row of four controls. Every page below covers light and dark.</p>
+<p class="sub">The product baseline. It holds two kinds of page, and they are not interchangeable: <strong>shipped</strong> pages describe the app as it behaves in the current build, <strong>approved design</strong> pages describe UI that was designed and signed off but never implemented. Each page states which it is at the top. Every page covers light and dark.</p>
+<div class="legend"><span class="pill ship">Shipped</span><span>in the build today</span><span style="margin-left:10px"></span><span class="pill unbuilt">Approved design, not shipped</span><span>no code exists</span></div>
 
 <div class="hero">
   <div class="popover">
@@ -129,15 +136,30 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
     </div>
   </div>
 </div>
+<p class="caption" style="text-align:center;margin-top:-14px;margin-bottom:22px">The shipped panel</p>
 
+<h2>Shipped: what the app does today</h2>
+<p class="note">One menu bar item, one 200pt panel, one row of four controls. This is the popover button layout release, and it is what a user gets if they build and run <code>main</code> right now.</p>
 <div class="grid">
   <a class="card" href="popover-idle.html"><h3>Idle</h3><p>Default state. Video off, Start available, Stop dimmed. Includes the hover, pressed, focus, disabled and in-flight matrix.</p></a>
-  <a class="card" href="popover-video-mode.html"><h3>Video mode armed</h3><p>Toggle on. Symbol swaps to <code>video.fill</code> so the state reads without colour. Photo Booth opens on the next Start.</p></a>
+  <a class="card" href="popover-video-mode.html"><h3>Video mode armed</h3><p>Toggle on. Symbol swaps to <code>video.fill</code> so the state reads without colour. Photo Booth opens on the next Start. The panel itself does not change size and shows no preview.</p></a>
   <a class="card" href="popover-recording.html"><h3>Recording</h3><p>Stop is the only enabled action. Menu bar icon turns green with a blinking amber dot, static under Reduce Motion.</p></a>
   <a class="card" href="alert-error.html"><h3>Error alert</h3><p>Failures surface as a critical <code>NSAlert</code>, not inside the panel. All three error cases listed.</p></a>
 </div>
 
+<h2>Approved design, not shipped: live camera preview</h2>
+<p class="note">Designed and approved on 4 September 2026 under <code>projects/20260904-live-camera-preview</code>. Engineering design, implementation and QA were never run, so <strong>none of this exists in any build</strong>. It is kept in the baseline as the approved record of intent: if the preview is picked up later, this is the design to build. Read it as a plan, never as a description of current behaviour. Every page in this group carries an amber banner saying so.</p>
+<div class="grid">
+  <a class="card unbuilt" href="preview-overview.html"><span class="pill unbuilt">Not shipped</span><h3>Design overview</h3><p>Start here. Panel metrics for both sizes, the full control mapping for the five new controls, accessibility, and why the menu bar stays empty.</p></a>
+  <a class="card unbuilt" href="preview-running.html"><span class="pill unbuilt">Not shipped</span><h3>Preview running</h3><p>The normal designed state. 504&times;346pt panel, mirror on and off, the camera picker open, and the control state matrix.</p></a>
+  <a class="card unbuilt" href="preview-recording.html"><span class="pill unbuilt">Not shipped</span><h3>Running while recording</h3><p>Start pressed with the preview up. Only the button row changes; the capture session is untouched.</p></a>
+  <a class="card unbuilt" href="preview-states.html"><span class="pill unbuilt">Not shipped</span><h3>Permission and hardware states</h3><p>All six failure states plus the two recoveries, with the message copy table.</p></a>
+  <a class="card unbuilt" href="panel-resize.html"><span class="pill unbuilt">Not shipped</span><h3>Panel resize</h3><p>200pt collapsed against 504pt expanded, growing leftward from a pinned trailing edge. Anchoring and animation spec.</p></a>
+</div>
+<p class="note">Two design-process pages were deliberately left out of the baseline, because master records the product rather than the reasoning that produced it. They stay in the feature folder: <a href="../../20260904-live-camera-preview/generated-docs/design/placement-decision.html">placement decision</a> (control strip below versus overlaid on the video) and <a href="../../20260904-live-camera-preview/generated-docs/design/preview-size-study.html">preview size study</a> (S/M/L/XL, L chosen).</p>
+
 <h2>Layout</h2>
+<p class="note">Shipped panel only. The designed preview panel has its own metrics on the <a href="preview-overview.html">design overview</a> (not shipped).</p>
 <table>
 <tr><th>Property</th><th>Value</th></tr>
 <tr><td>Panel</td><td><code>MenuBarExtra</code> with <code>.menuBarExtraStyle(.window)</code></td></tr>
@@ -150,6 +172,7 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 </table>
 
 <h2>Menu bar and keyboard</h2>
+<p class="note">Shipped behaviour. The approved preview design changes none of it.</p>
 <p class="note">The app has no application menu bar. It is a <code>MenuBarExtra</code>-only agent app: there is no <code>WindowGroup</code>, no <code>Settings</code> scene, and no <code>commands {}</code> block, so no App, File, Edit, View, Window or Help menu exists and no keyboard shortcut is registered. Quit is reachable only through the power button in the panel, not &#8984;Q.</p>
 <p class="note">Inside the panel, Tab moves focus across the four controls in reading order and Space activates the focused one; the focus ring is suppressed by <code>.focusEffectDisabled()</code>, so focus is not visible while tabbing. Both of these are deliberate consequences of the current design rather than specified behaviour, and both are open questions for the next design pass.</p>
 

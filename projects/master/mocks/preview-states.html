@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[NOT SHIPPED] MacRecordWidget — Preview states</title>
+<style>
+:root {
+  --bg-window:       #ECECEC;
+  --bg-popover:      #F6F6F6;
+  --bg-menubar:      #E4E4E4;
+  --label-primary:   rgba(0,0,0,0.85);
+  --label-secondary: rgba(0,0,0,0.50);
+  --label-tertiary:  rgba(0,0,0,0.26);
+  --separator:       rgba(0,0,0,0.12);
+  --accent:          #007AFF;
+  --record-red:      #FF3B30;
+  --sys-green:       #34C759;
+  --amber:           #FF9E33;
+  --toggle-off:      rgba(0,0,0,0.16);
+  --toggle-thumb:    #FFFFFF;
+  --hover-fill:      rgba(0,0,0,0.07);
+  --pressed-fill:    rgba(0,0,0,0.14);
+  --shadow:          rgba(0,0,0,0.18);
+  --code-bg:         rgba(0,0,0,0.06);
+  --bg-control:      #FFFFFF;
+  --control-border:  rgba(0,0,0,0.18);
+  --preview-well:    #111113;
+  --msg-well:        #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; } }
+#dm:checked ~ .page { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; }
+#dm:checked ~ .page { background: #1E1E1E; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
+#dm { display: none; }
+.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 56px; }
+.wrap { max-width: 760px; margin: 0 auto; }
+.dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
+h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+.sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
+h2 { font-size: 13px; font-weight: 600; margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3 { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
+p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 10px; }
+p.note strong { color: var(--label-primary); font-weight: 600; }
+code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+a { color: var(--accent); }
+.nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
+.caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); margin-bottom: 6px; }
+.stage.wide { padding: 24px 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator); vertical-align: top; line-height: 1.45; }
+th { background: var(--code-bg); font-weight: 600; }
+ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 8px; }
+ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
+.rec-box { border: 0.5px solid var(--separator); border-left: 3px solid var(--accent); border-radius: 6px; padding: 12px 14px; background: var(--bg-popover); margin-bottom: 14px; }
+.rec-box h3 { margin-top: 0; }
+
+/* menu bar strip */
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
+.mb-icon.rec { color: var(--sys-green); }
+.mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
+.blink { animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
+
+/* popover shell */
+.popover { background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; }
+.popover.collapsed { width: 200px; }
+.popover.expanded { width: 504px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: center; gap: 12px; height: 22px; }
+.btnrow { width: 200px; }
+.tgl-group { display: flex; align-items: center; gap: 6px; }
+.tgl-icon { width: 16px; height: 16px; color: var(--label-primary); flex: none; }
+.switch { width: 26px; height: 15px; border-radius: 8px; background: var(--toggle-off); position: relative; flex: none; }
+.switch.on { background: var(--sys-green); }
+.switch::after { content: ""; position: absolute; top: 1.5px; left: 1.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--toggle-thumb); box-shadow: 0 1px 2px rgba(0,0,0,0.28); }
+.switch.on::after { left: auto; right: 1.5px; }
+.btn { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--label-primary); background: none; border: none; padding: 0; flex: none; }
+.btn.rec { color: var(--record-red); }
+.btn svg { width: 16px; height: 16px; }
+.dim { opacity: 0.30; }
+
+/* preview well */
+.preview { width: 480px; height: 270px; border-radius: 6px; overflow: hidden; position: relative; background: var(--preview-well); box-shadow: 0 0 0 0.5px var(--separator); }
+.preview.msgmode { background: var(--msg-well); }
+.scene { position: absolute; inset: 0; background:
+   radial-gradient(120% 90% at 50% 118%, #4A5A6B 0%, #2B3542 55%, #1B222B 100%); }
+.scene .subject { position: absolute; left: 50%; bottom: -6%; width: 190px; height: 200px; transform: translateX(-50%);
+   background: radial-gradient(50% 34% at 50% 22%, #C79C7E 0%, #A87D62 62%, rgba(168,125,98,0) 63%),
+               radial-gradient(70% 60% at 50% 108%, #3E4E63 0%, #334152 60%, rgba(51,65,82,0) 61%); }
+.scene .lamp { position: absolute; right: 26px; top: 22px; width: 54px; height: 84px;
+   background: linear-gradient(180deg, rgba(255,214,150,0.85), rgba(255,214,150,0.06)); border-radius: 26px 26px 4px 4px; filter: blur(0.4px); }
+.scene .shelf { position: absolute; left: 18px; top: 128px; width: 96px; height: 7px; background: rgba(255,255,255,0.22); border-radius: 2px; }
+.scene .shelf::after { content: ""; position: absolute; left: 10px; top: -26px; width: 16px; height: 26px; background: rgba(255,255,255,0.16); border-radius: 2px; }
+.mirrored .scene { transform: scaleX(-1); }
+.grain { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.14)); }
+
+/* inline state message inside the well */
+.msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 56px; text-align: center; }
+.msg .ic { width: 22px; height: 22px; color: var(--label-tertiary); margin-bottom: 2px; display: block; }
+.msg .ic svg { width: 100%; height: 100%; display: block; }
+.tgl-icon svg, .mb-icon svg { width: 100%; height: 100%; display: block; }
+.msg .ttl { font-size: 13px; font-weight: 600; color: var(--label-primary); }
+.msg .bdy { font-size: 11px; color: var(--label-secondary); line-height: 1.45; }
+.msg .act { margin-top: 6px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--label-tertiary); border-top-color: transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .blink, .spinner { animation: none; } }
+
+/* AppKit-ish controls */
+.pushbtn { height: 20px; padding: 0 10px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10);
+   display: inline-flex; align-items: center; }
+.strip { display: flex; align-items: center; gap: 12px; height: 22px; width: 480px; }
+.scaler { overflow: hidden; }
+.scaler > div { transform-origin: top left; }
+.popup { height: 22px; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px;
+   padding: 0 4px 0 8px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10); }
+.popup .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popup .chev { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+.popup .chev svg { width: 9px; height: 11px; }
+.popup .camic { width: 13px; height: 13px; color: var(--label-secondary); flex: none; display: flex; }
+.popup.off { opacity: 0.38; }
+.popup.focused { box-shadow: 0 0 0 0.5px var(--control-border), 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.chk { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--label-primary); flex: none; }
+.chk .box { width: 14px; height: 14px; border-radius: 3.5px; background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border); display: flex; align-items: center; justify-content: center; }
+.chk .box.on { background: var(--accent); box-shadow: none; }
+.chk .box svg { width: 10px; height: 10px; color: #fff; }
+.chk.off { opacity: 0.38; }
+
+/* matrices + grids */
+.matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cell { background: var(--bg-popover); border-radius: 8px; box-shadow: 0 0 0 0.5px var(--separator); padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cell small { font-size: 10px; color: var(--label-secondary); text-align: center; line-height: 1.35; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.card { display: block; text-decoration: none; color: inherit; background: var(--bg-popover); border-radius: 8px; padding: 14px; box-shadow: 0 0 0 0.5px var(--separator); }
+.card h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
+.card p { font-size: 11.5px; color: var(--label-secondary); line-height: 1.5; }
+.tag { display: inline-block; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--label-secondary); border: 0.5px solid var(--separator); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.zoom { transform-origin: top center; }
+</style>
+
+<style>
+/* not-shipped banner (added at master baseline merge, Stage 6) */
+.notship { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px;
+  margin: 0 0 20px; padding: 10px 12px; border-radius: 8px;
+  background: color-mix(in srgb, #FF9E33 20%, var(--bg-popover));
+  box-shadow: 0 0 0 1px color-mix(in srgb, #FF9E33 60%, transparent), 0 2px 10px var(--shadow);
+  border-left: 4px solid #FF9E33; }
+.notship-badge { flex: none; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  background: #FF9E33; color: #1F1500; padding: 3px 7px; border-radius: 4px; }
+.notship-txt { font-size: 11.5px; line-height: 1.55; color: var(--label-primary); }
+.notship-txt a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .notship { position: static; } }
+</style>
+</head>
+<body>
+<input type="checkbox" id="dm">
+<div class="page"><div class="wrap">
+<label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
+<p class="nav"><a href="preview-overview.html">&larr; Preview design overview</a> &middot; <a href="index.html">Master mocks</a></p><div class="notship" role="note"><span class="notship-badge">Approved design, not shipped</span><span class="notship-txt">This page is the live camera preview <strong>as designed and approved on 4 September 2026</strong>. It was never built: implementation was deferred, so no shipping build of MacRecordWidget has a camera preview. For what the app actually does today, see the <a href="index.html">shipped mocks</a>.</span></div><h1>Preview &mdash; permission and hardware states</h1><p class="sub">Six states in which no live image is available, plus the two recovery states that follow them. In every one of them the button row is untouched: Start and Stop keep their normal enabled and disabled logic based on recording state alone (AC-ST-7), the video toggle stays usable (AC-ST-8), and nothing is presented modally (AC-ST-9).</p><div class="rec-box"><h3>The one rule these states share</h3><p class="note">The message replaces the <em>image</em>, never the <em>panel</em>. The preview well keeps its exact 480&times;270pt footprint and fills with the window background instead of video, so the panel never changes height between states and the button row never moves under the pointer. A user who opened the panel to press Stop finds Stop where they left it, whatever the camera is doing.</p></div><h2 id="nd">Permission not determined</h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><div class="spinner"></div><div class="ttl">Waiting for camera access</div><div class="bdy">macOS is asking for permission. Recording is not affected.</div></div></div><div class="strip" style="width:480px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">Starting&hellip;</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>The system permission sheet owns the interaction, so the panel offers no action of its own &mdash; a button here would compete with the sheet (AC-ST-1).</li><li>An indeterminate <code>ProgressView</code>, not a caution glyph. Nothing has gone wrong yet.</li><li>The picker and the mirror checkbox are disabled for the duration: there is no device list to choose from and no image to mirror.</li><li>Under Reduce Motion the spinner is replaced by static text; the copy alone carries the state.</li></ul><h2 id="denied">Permission denied</h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M15 10.5 21 7v10l-6-3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><div class="ttl">Camera access is off</div><div class="bdy">MacRecordWidget needs camera access to show a preview. Recording still works.</div><div class="act"><span class="pushbtn">Open Settings</span></div></div></div><div class="strip" style="width:480px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">No camera access</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>One action, and it is the only one that resolves the state: it opens Privacy &amp; Security &rarr; Camera directly, not the top of System Settings (AC-ST-2).</li><li>The second sentence is the important one. It tells the user, before they go anywhere, that the thing they opened the panel to do still works.</li><li>No red, no caution triangle. This is a setting that is off, not a failure. The icon is tertiary label colour like every other state icon on this page.</li><li>The picker is disabled because without authorisation the device list is not trustworthy; switching device would not produce an image.</li></ul><h2 id="restricted">Permission restricted<span class="tag">no action, deliberately</span></h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4.5" y="10" width="15" height="10.5" rx="2.6" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7.5a4 4 0 1 1 8 0V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><div class="ttl">Camera access is blocked by a system policy</div><div class="bdy">This is set by whoever manages this Mac. Recording still works.</div></div></div><div class="strip" style="width:480px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">No camera access</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>Deliberately no Open Settings button. Under a restriction the camera row in System Settings is disabled, so the button would open a page the user cannot act on &mdash; a dead end that reads as the app being broken (AC-ST-3).</li><li>The copy names who can change it instead of offering a control that cannot. That is the honest substitute for an action.</li><li>Same layout, same well, same disabled controls as the denied state. Only the icon, the copy and the missing button differ &mdash; which is exactly the difference in what the user can do.</li></ul><h2 id="nocam">No camera connected</h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="6.5" width="12" height="11" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 10.8 21 7.2v9.6l-6.5-3.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><div class="ttl">No camera connected</div><div class="bdy">Connect a camera and the preview starts on its own.</div></div></div><div class="strip" style="width:480px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">No camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>Self-clearing: a device-connected notification starts the session with no user action, so the copy promises exactly that (AC-ST-4).</li><li>No Retry button. There is nothing for it to retry that the system does not already tell the app.</li><li>The picker shows "No camera" and is disabled: an empty menu that opens onto nothing is worse than a disabled control that says why.</li></ul><h2 id="disconnected">Selected camera disconnected mid-session</h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="6.5" width="12" height="11" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 10.8 21 7.2v9.6l-6.5-3.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><div class="ttl">Logitech BRIO disconnected</div><div class="bdy">Switching to FaceTime HD Camera.</div></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">Logitech BRIO</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>Names the camera that was lost, so the user knows which cable to check (AC-ST-5). Present tense on the second line: the fallback is already happening.</li><li>This state is transient. It holds for about a second while the new session configures, then resolves to the recovery state below.</li><li>The picker stays enabled throughout (AC-CAM-7) &mdash; the user may want to pick a third camera rather than accept the fallback.</li><li>The persisted device ID is <strong>not</strong> rewritten by the fallback (AC-CAM-4). Plugging the BRIO back in restores it and the picker follows (AC-CAM-5).</li></ul><div class="stage wide"><div class="caption">Resolved, about a second later &mdash; fallback camera live, indicator updated</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview mirrored"><div class="scene"><div class="lamp"></div><div class="shelf"></div><div class="subject"></div></div><div class="grain"></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><p class="note">The indicator is the whole point of this pair of frames: it now says FaceTime HD Camera, while Photo Booth may still be pointed somewhere else. The label states what is on screen and nothing more &mdash; it does not claim to describe what Photo Booth will record, because the app cannot know that.</p><h2 id="busy">Camera busy<span class="tag">unverified &mdash; may be unreachable</span></h2><div class="stage wide"><div class="caption">Popover, 504&times;346pt</div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview msgmode"><div class="msg"><span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="9" cy="8" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M3 19.5c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16.5 5.2a3.4 3.4 0 0 1 0 6.6M18 14.6c2.1.6 3.6 2.4 3.6 4.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><div class="ttl">FaceTime HD Camera is in use by another app</div><div class="bdy">Choose another camera below, or quit the other app.</div></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li><strong>Unverified.</strong> macOS generally lets several processes read one camera, so this state may never be reachable in practice. The PRD (AC-ST-6) keeps it in scope pending verification during implementation, so it is drawn and specified here.</li><li>The copy points at the one control that can resolve it, and the picker is enabled so the pointing is not empty (AC-CAM-7).</li><li>It names the busy device but not the app holding it &mdash; macOS does not reliably tell the app who that is, and guessing wrong is worse than not saying.</li><li>If verification shows the state is unreachable, delete the state; do not repurpose the copy for a different failure.</li></ul><h2>Copy, in one place</h2><p class="note">Sentence case, no exclamation marks, no blame, and every message that can co-exist with recording says so (AC-ST-10).</p><table><tr><th>State</th><th>Title</th><th>Body</th><th>Action</th></tr><tr><td>Not determined</td><td>Waiting for camera access</td><td>macOS is asking for permission. Recording is not affected.</td><td>&mdash;</td></tr><tr><td>Denied</td><td>Camera access is off</td><td>MacRecordWidget needs camera access to show a preview. Recording still works.</td><td>Open Settings</td></tr><tr><td>Restricted</td><td>Camera access is blocked by a system policy</td><td>This is set by whoever manages this Mac. Recording still works.</td><td>&mdash;</td></tr><tr><td>No camera</td><td>No camera connected</td><td>Connect a camera and the preview starts on its own.</td><td>&mdash;</td></tr><tr><td>Disconnected</td><td>[Device] disconnected</td><td>Switching to [fallback device].</td><td>&mdash;</td></tr><tr><td>Disconnected, none left</td><td>[Device] disconnected</td><td>Connect a camera and the preview starts on its own.</td><td>&mdash;</td></tr><tr><td>Busy</td><td>[Device] is in use by another app</td><td>Choose another camera below, or quit the other app.</td><td>&mdash;</td></tr></table><h2>Control mapping &mdash; state messages</h2><table><tr><th>Element</th><th>SwiftUI control</th><th>Key modifiers</th><th>Accessibility</th></tr><tr><td>State container</td><td><code>VStack(spacing: 6)</code> inside a <code>RoundedRectangle</code> fill</td><td><code>.frame(width: 480, height: 270)</code>, fill <code>Color(nsColor: .controlBackgroundColor)</code>, <code>.padding(.horizontal, 56)</code> on the text</td><td><code>.accessibilityElement(children: .combine)</code>; id <code>previewStateMessage</code>; the combined title and body are one VoiceOver announcement (AC-AX-3)</td></tr><tr><td>State icon</td><td><code>Image(systemName:)</code> &mdash; <code>video.slash</code>, <code>lock</code>, <code>web.camera</code>, <code>person.2</code></td><td><code>.font(.system(size: 22))</code>, <code>.foregroundStyle(.tertiary)</code>, <code>.symbolRenderingMode(.monochrome)</code></td><td><code>.accessibilityHidden(true)</code> &mdash; the text carries the meaning</td></tr><tr><td>Waiting indicator</td><td><code>ProgressView()</code></td><td><code>.controlSize(.small)</code>, <code>.progressViewStyle(.circular)</code>; replaced by static text when <code>accessibilityReduceMotion</code></td><td>label "Waiting for camera access"</td></tr><tr><td>Title</td><td><code>Text</code></td><td><code>.font(.headline)</code>, <code>.foregroundStyle(.primary)</code></td><td>part of the combined element</td></tr><tr><td>Body</td><td><code>Text</code></td><td><code>.font(.caption)</code>, <code>.foregroundStyle(.secondary)</code>, <code>.multilineTextAlignment(.center)</code>, <code>.fixedSize(horizontal: false, vertical: true)</code></td><td>part of the combined element</td></tr><tr><td>Open Settings</td><td><code>Button</code> &rarr; <code>NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")!)</code></td><td><code>.buttonStyle(.bordered)</code>, <code>.controlSize(.small)</code>; rendered only in the denied state</td><td>label "Open camera settings in System Settings"; id <code>openCameraSettingsButton</code></td></tr><tr><td>Button row in all states</td><td>unchanged</td><td><code>.disabled</code> bound to <code>isRecording</code> and <code>isInFlight</code> only &mdash; no preview state is an input to it (AC-ST-7, AC-ST-8)</td><td>unchanged</td></tr></table></div></div>
+</body>
+</html>

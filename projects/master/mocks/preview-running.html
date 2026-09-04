@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[NOT SHIPPED] MacRecordWidget — Preview running</title>
+<style>
+:root {
+  --bg-window:       #ECECEC;
+  --bg-popover:      #F6F6F6;
+  --bg-menubar:      #E4E4E4;
+  --label-primary:   rgba(0,0,0,0.85);
+  --label-secondary: rgba(0,0,0,0.50);
+  --label-tertiary:  rgba(0,0,0,0.26);
+  --separator:       rgba(0,0,0,0.12);
+  --accent:          #007AFF;
+  --record-red:      #FF3B30;
+  --sys-green:       #34C759;
+  --amber:           #FF9E33;
+  --toggle-off:      rgba(0,0,0,0.16);
+  --toggle-thumb:    #FFFFFF;
+  --hover-fill:      rgba(0,0,0,0.07);
+  --pressed-fill:    rgba(0,0,0,0.14);
+  --shadow:          rgba(0,0,0,0.18);
+  --code-bg:         rgba(0,0,0,0.06);
+  --bg-control:      #FFFFFF;
+  --control-border:  rgba(0,0,0,0.18);
+  --preview-well:    #111113;
+  --msg-well:        #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; } }
+#dm:checked ~ .page { --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-menubar: #333335;
+  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
+  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.12);
+  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
+  --toggle-off: rgba(255,255,255,0.20); --hover-fill: rgba(255,255,255,0.10);
+  --pressed-fill: rgba(255,255,255,0.18); --shadow: rgba(0,0,0,0.55);
+  --code-bg: rgba(255,255,255,0.10);
+  --bg-control: rgba(255,255,255,0.10); --control-border: rgba(255,255,255,0.16);
+  --preview-well: #151517; --msg-well: #242426; }
+#dm:checked ~ .page { background: #1E1E1E; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
+#dm { display: none; }
+.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 56px; }
+.wrap { max-width: 760px; margin: 0 auto; }
+.dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
+h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+.sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
+h2 { font-size: 13px; font-weight: 600; margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3 { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
+p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 10px; }
+p.note strong { color: var(--label-primary); font-weight: 600; }
+code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+a { color: var(--accent); }
+.nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
+.caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); margin-bottom: 6px; }
+.stage.wide { padding: 24px 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator); vertical-align: top; line-height: 1.45; }
+th { background: var(--code-bg); font-weight: 600; }
+ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; margin-bottom: 8px; }
+ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
+.rec-box { border: 0.5px solid var(--separator); border-left: 3px solid var(--accent); border-radius: 6px; padding: 12px 14px; background: var(--bg-popover); margin-bottom: 14px; }
+.rec-box h3 { margin-top: 0; }
+
+/* menu bar strip */
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
+.mb-icon.rec { color: var(--sys-green); }
+.mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
+.blink { animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
+
+/* popover shell */
+.popover { background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; }
+.popover.collapsed { width: 200px; }
+.popover.expanded { width: 504px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: center; gap: 12px; height: 22px; }
+.btnrow { width: 200px; }
+.tgl-group { display: flex; align-items: center; gap: 6px; }
+.tgl-icon { width: 16px; height: 16px; color: var(--label-primary); flex: none; }
+.switch { width: 26px; height: 15px; border-radius: 8px; background: var(--toggle-off); position: relative; flex: none; }
+.switch.on { background: var(--sys-green); }
+.switch::after { content: ""; position: absolute; top: 1.5px; left: 1.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--toggle-thumb); box-shadow: 0 1px 2px rgba(0,0,0,0.28); }
+.switch.on::after { left: auto; right: 1.5px; }
+.btn { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; color: var(--label-primary); background: none; border: none; padding: 0; flex: none; }
+.btn.rec { color: var(--record-red); }
+.btn svg { width: 16px; height: 16px; }
+.dim { opacity: 0.30; }
+
+/* preview well */
+.preview { width: 480px; height: 270px; border-radius: 6px; overflow: hidden; position: relative; background: var(--preview-well); box-shadow: 0 0 0 0.5px var(--separator); }
+.preview.msgmode { background: var(--msg-well); }
+.scene { position: absolute; inset: 0; background:
+   radial-gradient(120% 90% at 50% 118%, #4A5A6B 0%, #2B3542 55%, #1B222B 100%); }
+.scene .subject { position: absolute; left: 50%; bottom: -6%; width: 190px; height: 200px; transform: translateX(-50%);
+   background: radial-gradient(50% 34% at 50% 22%, #C79C7E 0%, #A87D62 62%, rgba(168,125,98,0) 63%),
+               radial-gradient(70% 60% at 50% 108%, #3E4E63 0%, #334152 60%, rgba(51,65,82,0) 61%); }
+.scene .lamp { position: absolute; right: 26px; top: 22px; width: 54px; height: 84px;
+   background: linear-gradient(180deg, rgba(255,214,150,0.85), rgba(255,214,150,0.06)); border-radius: 26px 26px 4px 4px; filter: blur(0.4px); }
+.scene .shelf { position: absolute; left: 18px; top: 128px; width: 96px; height: 7px; background: rgba(255,255,255,0.22); border-radius: 2px; }
+.scene .shelf::after { content: ""; position: absolute; left: 10px; top: -26px; width: 16px; height: 26px; background: rgba(255,255,255,0.16); border-radius: 2px; }
+.mirrored .scene { transform: scaleX(-1); }
+.grain { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.14)); }
+
+/* inline state message inside the well */
+.msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 56px; text-align: center; }
+.msg .ic { width: 22px; height: 22px; color: var(--label-tertiary); margin-bottom: 2px; display: block; }
+.msg .ic svg { width: 100%; height: 100%; display: block; }
+.tgl-icon svg, .mb-icon svg { width: 100%; height: 100%; display: block; }
+.msg .ttl { font-size: 13px; font-weight: 600; color: var(--label-primary); }
+.msg .bdy { font-size: 11px; color: var(--label-secondary); line-height: 1.45; }
+.msg .act { margin-top: 6px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--label-tertiary); border-top-color: transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .blink, .spinner { animation: none; } }
+
+/* AppKit-ish controls */
+.pushbtn { height: 20px; padding: 0 10px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10);
+   display: inline-flex; align-items: center; }
+.strip { display: flex; align-items: center; gap: 12px; height: 22px; width: 480px; }
+.scaler { overflow: hidden; }
+.scaler > div { transform-origin: top left; }
+.popup { height: 22px; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px;
+   padding: 0 4px 0 8px; border-radius: 5px; font-size: 11px; color: var(--label-primary);
+   background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border), 0 0.5px 1px rgba(0,0,0,0.10); }
+.popup .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popup .chev { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+.popup .chev svg { width: 9px; height: 11px; }
+.popup .camic { width: 13px; height: 13px; color: var(--label-secondary); flex: none; display: flex; }
+.popup.off { opacity: 0.38; }
+.popup.focused { box-shadow: 0 0 0 0.5px var(--control-border), 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.chk { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--label-primary); flex: none; }
+.chk .box { width: 14px; height: 14px; border-radius: 3.5px; background: var(--bg-control); box-shadow: 0 0 0 0.5px var(--control-border); display: flex; align-items: center; justify-content: center; }
+.chk .box.on { background: var(--accent); box-shadow: none; }
+.chk .box svg { width: 10px; height: 10px; color: #fff; }
+.chk.off { opacity: 0.38; }
+
+/* matrices + grids */
+.matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cell { background: var(--bg-popover); border-radius: 8px; box-shadow: 0 0 0 0.5px var(--separator); padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cell small { font-size: 10px; color: var(--label-secondary); text-align: center; line-height: 1.35; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.card { display: block; text-decoration: none; color: inherit; background: var(--bg-popover); border-radius: 8px; padding: 14px; box-shadow: 0 0 0 0.5px var(--separator); }
+.card h3 { margin: 0 0 4px; font-size: 12.5px; font-weight: 600; }
+.card p { font-size: 11.5px; color: var(--label-secondary); line-height: 1.5; }
+.tag { display: inline-block; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--label-secondary); border: 0.5px solid var(--separator); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.zoom { transform-origin: top center; }
+</style>
+
+<style>
+/* not-shipped banner (added at master baseline merge, Stage 6) */
+.notship { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px;
+  margin: 0 0 20px; padding: 10px 12px; border-radius: 8px;
+  background: color-mix(in srgb, #FF9E33 20%, var(--bg-popover));
+  box-shadow: 0 0 0 1px color-mix(in srgb, #FF9E33 60%, transparent), 0 2px 10px var(--shadow);
+  border-left: 4px solid #FF9E33; }
+.notship-badge { flex: none; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  background: #FF9E33; color: #1F1500; padding: 3px 7px; border-radius: 4px; }
+.notship-txt { font-size: 11.5px; line-height: 1.55; color: var(--label-primary); }
+.notship-txt a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .notship { position: static; } }
+</style>
+</head>
+<body>
+<input type="checkbox" id="dm">
+<div class="page"><div class="wrap">
+<label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
+<p class="nav"><a href="preview-overview.html">&larr; Preview design overview</a> &middot; <a href="index.html">Master mocks</a></p><div class="notship" role="note"><span class="notship-badge">Approved design, not shipped</span><span class="notship-txt">This page is the live camera preview <strong>as designed and approved on 4 September 2026</strong>. It was never built: implementation was deferred, so no shipping build of MacRecordWidget has a camera preview. For what the app actually does today, see the <a href="index.html">shipped mocks</a>.</span></div><h1>Preview &mdash; running</h1><p class="sub">Video toggle on, camera access granted, a device available. This is the state the feature exists for: the user checks framing here, then presses Start. Panel 504&times;346pt, preview 480&times;270pt.</p><div class="stage wide"><div class="caption">Menu bar (unchanged) &nbsp;&middot;&nbsp; Popover, 504&times;346pt</div><div class="menubar"><span class="mb-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="6.9" stroke="currentColor" stroke-width="1.3" opacity="0.55"/><circle cx="8" cy="8" r="3.6" fill="currentColor"/></svg></span></div><div class="popover expanded"><div class="row btnrow">
+  <div class="tgl-group"><span class="tgl-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="4" width="9.5" height="8" rx="2.2" fill="currentColor"/><path d="M10.5 7.1 14.2 4.9c.3-.2.8 0 .8.4v5.4c0 .4-.5.6-.8.4L10.5 8.9z" fill="currentColor"/></svg></span><span class="switch on"></span></div>
+  <span class="btn rec"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><circle cx="8" cy="8" r="4.6" fill="var(--bg-popover)"/><circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg></span>
+  <span class="btn dim"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="currentColor"/></svg></span>
+  <span class="btn"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+</div><div class="preview mirrored"><div class="scene"><div class="lamp"></div><div class="shelf"></div><div class="subject"></div></div><div class="grain"></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><ul class="ann"><li>The four shipped controls keep their size, order and 12pt spacing inside a fixed 200pt frame, <strong>trailing-aligned</strong> in the 480pt content column — <code>.frame(width: 200, alignment: .trailing)</code>. The panel grows leftward from a pinned trailing edge, so trailing alignment is what keeps the row at the same screen position; with no alignment argument the row centres and slides 152pt left. Nothing in the row reflows or moves when the panel grows (AC-PNL-5). See <a href="panel-resize.html">panel resize</a>.</li><li>The preview well is 480&times;270pt with a 6pt corner radius, clipped, and never overlaps the row above it.</li><li>The control strip sits below the preview: camera picker on the leading edge, mirror checkbox trailing. See <a href="../../20260904-live-camera-preview/generated-docs/design/placement-decision.html">the placement decision</a> for why they are not overlaid on the image.</li><li>The picker's displayed selection <strong>is</strong> the passive camera-name indicator required by AC-PV-6 &mdash; plain label colour, no icon tint, no caution glyph (AC-PV-7).</li><li>The image is mirrored, the default. Mirroring flips the preview layer only; nothing about Photo Booth changes.</li></ul><h2>Vertical metrics</h2><table><tr><th>Band</th><th>Height</th><th>Notes</th></tr><tr><td>Top padding</td><td>8pt</td><td>Unchanged from the shipped panel</td></tr><tr><td>Button row</td><td>22pt</td><td>Fixed 200pt frame, four controls, 12pt spacing</td></tr><tr><td>Gap</td><td>8pt</td><td><code>VStack(spacing: 8)</code></td></tr><tr><td>Preview</td><td>270pt</td><td>480&times;270pt, 16:9 (AC-PV-2)</td></tr><tr><td>Gap</td><td>8pt</td><td>Same stack spacing</td></tr><tr><td>Control strip</td><td>22pt</td><td>Picker + mirror checkbox</td></tr><tr><td>Bottom padding</td><td>8pt</td><td>Unchanged</td></tr><tr><td><strong>Total</strong></td><td><strong>346pt</strong></td><td>&times; 504pt wide (480 content + 12pt padding each side) &mdash; AC-PNL-2</td></tr></table><h2>Mirror on and off</h2><div class="matrix" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))"><div class="cell"><div class="scaler" style="width:240px;height:151px"><div style="width:480px;transform:scale(0.5)"><div class="preview mirrored"><div class="scene"><div class="lamp"></div><div class="shelf"></div><div class="subject"></div></div><div class="grain"></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div></div><small>Mirror on (default). The shelf reads on the right, as it would in a mirror.</small></div><div class="cell"><div class="scaler" style="width:240px;height:151px"><div style="width:480px;transform:scale(0.5)"><div class="preview"><div class="scene"><div class="lamp"></div><div class="shelf"></div><div class="subject"></div></div><div class="grain"></div></div><div class="strip" style="width:480px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box"></span><span>Mirror</span></div></div></div></div><small>Mirror off. The shelf reads on the left, as the camera sees it.</small></div></div><p class="note">The flip is immediate and applies to the preview layer only (AC-MIR-3, AC-MIR-5). The setting persists and is restored on the next launch (AC-MIR-4); a user who has never set it gets mirroring on (AC-MIR-2).</p><h2>Camera picker, open</h2><div class="stage wide"><div class="caption">NSPopUpButton menu, pull-down over the panel</div><div style="width:480px;position:relative"><div class="strip" style="width:480px"><div class="popup focused"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD Camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div><div style="position:absolute;left:0;top:26px;width:300px;background:var(--bg-popover);border-radius:6px;box-shadow:0 8px 24px var(--shadow),0 0 0 0.5px var(--separator);padding:4px;font-size:11.5px"><div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:var(--accent);color:#fff"><span style="width:12px"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>FaceTime HD Camera</div><div style="display:flex;align-items:center;gap:6px;padding:4px 8px;color:var(--label-primary)"><span style="width:12px;opacity:0"></span>Logitech BRIO</div><div style="display:flex;align-items:center;gap:6px;padding:4px 8px;color:var(--label-primary)"><span style="width:12px;opacity:0"></span>OBS Virtual Camera</div></div></div></div><ul class="ann"><li>Every connected video device, by display name, in discovery order (AC-CAM-1). No "Default" pseudo-entry: the app resolves the default silently and shows the real device name, so the label is always literally true.</li><li>A checkmark marks the device currently being previewed &mdash; which after a fallback is not necessarily the persisted preference (AC-CAM-4).</li><li>Long names truncate with an ellipsis in the closed control and never widen the panel (AC-CAM-8). The open menu is free to be wider than the control; it is a floating menu, not panel content.</li><li>The picker is 480pt minus the mirror checkbox and one 12pt gap. At that width "Logitech BRIO 4K Ultra HD Pro Webcam" fits without truncating.</li></ul><h2>Control states</h2><div class="matrix"><div class="cell"><div class="strip" style="width:190px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div><small>Rest</small></div><div class="cell"><div style="filter:brightness(0.96)"><div class="strip" style="width:190px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div><small>Hover &mdash; the popup button darkens slightly; the checkbox draws its hover fill</small></div><div class="cell"><div style="opacity:0.75"><div class="strip" style="width:190px"><div class="popup"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div></div><small>Pressed &mdash; standard control press; the menu opens on mouse-down</small></div><div class="cell"><div class="strip" style="width:190px"><div class="popup focused"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">FaceTime HD</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div><small>Keyboard focus &mdash; drawn for completeness only; see the note below</small></div><div class="cell"><div class="strip" style="width:190px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">No camera</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div><small>Disabled &mdash; no device to choose and nothing to mirror</small></div><div class="cell"><div class="strip" style="width:190px"><div class="popup off"><span class="camic"><svg viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:13px;height:10px"><rect x=".6" y="1" width="10" height="10" rx="2.4" fill="currentColor"/><path d="M11.8 6 15.4 3.4v5.2z" fill="currentColor"/></svg></span><span class="nm">Starting&hellip;</span><span class="chev"><svg viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 4.4 4.5 1.9 7 4.4M2 6.6 4.5 9.1 7 6.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="chk off"><span class="box on"><svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1.6 5.2 4 7.6 8.4 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Mirror</span></div></div><small>Loading &mdash; the session is configuring the device; both controls are disabled for that moment</small></div></div><p class="note"><strong>Focus ring:</strong> the shipped panel sets <code>.focusEffectDisabled()</code> on the row, and AC-AX-4 requires the preview and its controls to match. So the focused cell above documents the tab stop, not a visible ring: Tab reaches the picker and the checkbox in reading order and Space activates them, but nothing is drawn. The master mocks already flag the invisible focus ring as an open question for a later pass; this feature inherits it rather than diverging from it.</p><h2>Control mapping</h2><p class="note">New controls only. The four shipped controls are unchanged and are specified in the <a href="popover-video-mode.html">master video-mode mock</a>.</p><table><tr><th>Element</th><th>SwiftUI control</th><th>Key modifiers</th><th>Accessibility</th></tr><tr><td>Preview surface</td><td><code>NSViewRepresentable</code> wrapping an <code>NSView</code> that hosts an <code>AVCaptureVideoPreviewLayer</code></td><td><code>.frame(width: 480, height: 270)</code>, <code>.clipShape(RoundedRectangle(cornerRadius: 6))</code>, layer <code>.videoGravity = .resizeAspectFill</code>; mirroring via the connection's <code>isVideoMirrored</code>, not a SwiftUI <code>.scaleEffect(x: -1)</code></td><td>label "Live camera preview, showing FaceTime HD Camera"; id <code>previewSurface</code>; <code>.accessibilityAddTraits(.isImage)</code></td></tr><tr><td>Preview container</td><td><code>VStack(spacing: 8)</code> inside the existing panel <code>VStack</code></td><td><code>.frame(width: 480)</code>, <code>.transition(.identity)</code> so the content does not cross-fade while the panel resizes</td><td>group container; reading order: button row, preview, picker, mirror</td></tr><tr><td>Camera picker</td><td><code>Picker</code> over <code>[AVCaptureDevice]</code>, selection bound to <code>uniqueID</code></td><td><code>.pickerStyle(.menu)</code>, <code>.controlSize(.small)</code>, <code>.labelsHidden()</code>, <code>.frame(maxWidth: .infinity)</code>, <code>.truncationMode(.tail)</code>, <code>.disabled(devices.isEmpty)</code></td><td>label "Preview camera"; value is the device display name; id <code>cameraPicker</code></td></tr><tr><td>Mirror toggle</td><td><code>Toggle("Mirror", isOn:)</code> bound to <code>@AppStorage("previewMirrored")</code></td><td><code>.toggleStyle(.checkbox)</code>, <code>.controlSize(.small)</code>, <code>.disabled(!isPreviewRunning)</code></td><td>label "Mirror preview"; id <code>mirrorToggle</code></td></tr><tr><td>Control strip</td><td><code>HStack(spacing: 12)</code></td><td><code>.frame(width: 480, height: 22)</code>, <code>.focusEffectDisabled()</code></td><td>&mdash;</td></tr><tr><td>Camera-name indicator</td><td>the <code>Picker</code>'s own selected-value label &mdash; no separate <code>Text</code></td><td>rendered by the picker; bound to the device actually feeding the layer, not to the persisted preference</td><td>read as the picker's value; no separate VoiceOver element</td></tr><tr><td>Panel frame</td><td>existing panel <code>VStack</code></td><td><code>.frame(width: videoEnabled ? 504 : 200)</code>, <code>.padding(.horizontal, 12)</code>, <code>.padding(.vertical, 8)</code>; see <a href="panel-resize.html">panel resize</a></td><td>&mdash;</td></tr></table><h2>Menu bar and keyboard</h2><p class="note">Unchanged. The app is still a <code>MenuBarExtra</code>-only agent app with no application menu bar, no <code>Settings</code> scene and no <code>commands {}</code> block, so this feature registers no keyboard shortcut and adds no menu item. The camera picker and the mirror checkbox are reachable by Tab inside the panel and by VoiceOver, and by nothing else. That is a deliberate continuation of the shipped design, not an oversight: adding a Settings scene for two preferences would introduce the first window this app has ever had. If a future pass adds an application menu, the mirror toggle is the one item that would earn a View-menu entry.</p></div></div>
+</body>
+</html>
