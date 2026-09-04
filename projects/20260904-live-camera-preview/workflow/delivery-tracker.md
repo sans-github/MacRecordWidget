@@ -12,16 +12,16 @@ Design-only pass. Stages 3, 4, and 5 are skipped by the human's phase config, so
 
 Prerequisite added at kickoff. `projects/master/` predates the shipped `20260521-popover-button-layout` feature, and `product-baseline-rule.md` hard-blocks PM and Designer until it is current (kickoff plan Q1).
 
-- [ ] **Master Baseline Backfill**
-  - [ ] 💾 **PM:** merge the shipped `20260521-popover-button-layout` PRD into `projects/master/product-specs/prd.md` -- done when: master PRD describes the single-row popover (video toggle, record, stop, power)
-  - [ ] 💾 **DESIGNER:** merge the shipped `20260521-popover-button-layout` mocks into `projects/master/mocks/` -- done when: a master mock reflects the current single-row button layout
-  - [ ] 👤💾 **HUMAN:** confirm the master baseline is current before Stage 1 begins -- done when: human confirms
+- [x] **Master Baseline Backfill**
+  - [x] 💾 **PM:** merge the shipped `20260521-popover-button-layout` PRD into `projects/master/product-specs/prd.md` → [projects/master/product-specs/prd.md](../../master/product-specs/prd.md) -- done when: master PRD describes the single-row popover (video toggle, record, stop, power)
+  - [x] 💾 **DESIGNER:** merge the shipped `20260521-popover-button-layout` mocks into `projects/master/mocks/` → [projects/master/mocks/index.html](../../master/mocks/index.html) -- done when: a master mock reflects the current single-row button layout
+  - [x] 👤💾 **HUMAN:** confirm the master baseline is current before Stage 1 begins -- done when: human confirms
 
 ### Stage 1: Discovery
 
-- [ ] **Requirements Finalization**
-  - [ ] 💾 **PM:** author the full PRD from the captured requirements and the seven resolved kickoff questions → `projects/20260904-live-camera-preview/product-specs/prd.md` -- done when: PRD body written, HTML preview generated, first `##` heading is `## Goals`
-  - [ ] 👤💾 **HUMAN:** review and approve PRD -- done when: human approves
+- [x] **Requirements Finalization**
+  - [x] 💾 **PM:** author the full PRD from the captured requirements and the seven resolved kickoff questions → [product-specs/prd.md](../product-specs/prd.md) -- done when: PRD body written, HTML preview generated, first `##` heading is `## Goals`
+  - [x] 👤💾 **HUMAN:** review and approve PRD -- done when: human approves
 
 ### Stage 2: Design
 

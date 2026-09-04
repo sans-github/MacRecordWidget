@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>prd</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>body{max-width:800px;margin:2rem auto;padding:0 1rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;color:#24292e}h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:1.5em}a{color:#0366d6}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px;font-size:85%}pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto}pre code{background:none;padding:0}blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dfe2e5;padding:6px 13px}tr:nth-child(2n){background:#f6f8fa}img{max-width:100%}#TOC{border:1px solid #eaecef;border-radius:6px;padding:1rem 1.5rem;margin-bottom:2rem;background:#f6f8fa}#TOC ul{margin:.25rem 0;padding-left:1.2em}#TOC>ul{padding-left:0;list-style:none}#TOC a{text-decoration:none;color:#0366d6}</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">prd</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#prd-live-camera-preview"
+id="toc-prd-live-camera-preview"><span
+class="toc-section-number">1</span> PRD: Live Camera Preview</a>
+<ul>
+<li><a href="#goals" id="toc-goals"><span
+class="toc-section-number">1.1</span> Goals</a></li>
+<li><a href="#elevator-pitch" id="toc-elevator-pitch"><span
+class="toc-section-number">1.2</span> Elevator pitch</a></li>
+<li><a href="#problem" id="toc-problem"><span
+class="toc-section-number">1.3</span> Problem</a></li>
+<li><a href="#target-audience" id="toc-target-audience"><span
+class="toc-section-number">1.4</span> Target audience</a></li>
+<li><a href="#features-this-feature-mvp"
+id="toc-features-this-feature-mvp"><span
+class="toc-section-number">1.5</span> Features (this feature,
+MVP)</a></li>
+<li><a href="#conceptual-data-model"
+id="toc-conceptual-data-model"><span
+class="toc-section-number">1.6</span> Conceptual data model</a></li>
+<li><a href="#roadmap" id="toc-roadmap"><span
+class="toc-section-number">1.7</span> Roadmap</a></li>
+<li><a href="#app-flows" id="toc-app-flows"><span
+class="toc-section-number">1.8</span> App flows</a></li>
+<li><a href="#preview-states" id="toc-preview-states"><span
+class="toc-section-number">1.9</span> Preview states</a></li>
+<li><a href="#known-limitations" id="toc-known-limitations"><span
+class="toc-section-number">1.10</span> Known limitations</a></li>
+<li><a href="#engineering-prerequisites"
+id="toc-engineering-prerequisites"><span
+class="toc-section-number">1.11</span> Engineering
+prerequisites</a></li>
+<li><a href="#acceptance-criteria" id="toc-acceptance-criteria"><span
+class="toc-section-number">1.12</span> Acceptance criteria</a></li>
+<li><a href="#risks-and-mitigations"
+id="toc-risks-and-mitigations"><span
+class="toc-section-number">1.13</span> Risks and mitigations</a></li>
+<li><a href="#decision-provenance" id="toc-decision-provenance"><span
+class="toc-section-number">1.14</span> Decision provenance</a></li>
+</ul></li>
+</ul>
+</nav>
+<blockquote>
+<p>Status: Approved — Human Approved: 2026-09-04</p>
+</blockquote>
+<h1 data-number="1" id="prd-live-camera-preview"><span
+class="header-section-number">1</span> PRD: Live Camera Preview</h1>
+<p><strong>Feature folder:</strong>
+<code>projects/20260904-live-camera-preview</code>
+<strong>Author:</strong> PM <strong>Date:</strong> 2026-09-04
+<strong>Baseline:</strong> extends
+<code>projects/master/product-specs/prd.md</code> (approved
+2026-05-21)</p>
+<blockquote>
+<p><strong>This is a design-only pass.</strong> Stages 3 (Technical
+Planning), 4 (Engineering), and 5 (QA) are skipped per the approved
+kickoff plan. No Swift code, no detailed design, no HLD, and no tests
+are produced. The deliverables are this PRD and an approved set of
+mocks. Every acceptance criterion below is written to be verified in a
+<strong>future implementation pass</strong>, not in this one.</p>
+</blockquote>
+<h2 data-number="1.1" id="goals"><span
+class="header-section-number">1.1</span> Goals</h2>
+<p><strong>Feature goal:</strong> let the user frame the shot before
+recording, inside the popover, instead of discovering a bad angle once
+Photo Booth is already rolling.</p>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Success metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frame before recording</td>
+<td>Flipping the video toggle on shows a live camera image without
+leaving the popover.</td>
+</tr>
+<tr>
+<td>Never block recording</td>
+<td>In every permission, hardware, and error state, Start and Stop stay
+usable.</td>
+</tr>
+<tr>
+<td>Stable device choice</td>
+<td>Camera selection and mirror setting survive an app relaunch.</td>
+</tr>
+<tr>
+<td>Honest about what is shown</td>
+<td>The preview always names the camera it is displaying, so a mismatch
+with Photo Booth is visible.</td>
+</tr>
+<tr>
+<td>Native macOS feel</td>
+<td>Standard controls, correct in light and dark mode, animation gated
+on Reduce Motion.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Non-goals:</strong></p>
+<ul>
+<li>No recording from the preview. The preview never writes a file;
+Photo Booth remains the sole capturer.</li>
+<li>No full-screen or detached preview window. The preview lives only in
+the popover.</li>
+<li>No control over Photo Booth's own camera selection. The app cannot
+read or set it.</li>
+<li>No audio monitoring, level meters, or microphone selection.</li>
+<li>No resolution, frame-rate, exposure, or white-balance controls.</li>
+<li>No implementation in this pass (see the design-only note
+above).</li>
+</ul>
+<hr />
+<h2 data-number="1.2" id="elevator-pitch"><span
+class="header-section-number">1.2</span> Elevator pitch</h2>
+<p>Today the video toggle only decides whether Start also launches Photo
+Booth. This feature gives it a second, immediate effect: it opens a
+480x270pt live camera preview directly below the button row, so the user
+can check framing and lighting before recording. The preview is
+display-only. Two new persisted controls come with it: a camera picker
+across connected devices and a mirror toggle (on by default). The
+preview keeps running while recording. It stops when the popover closes
+and resumes on reopen. Permission and hardware failures degrade to an
+inline message and never block Start or Stop.</p>
+<hr />
+<h2 data-number="1.3" id="problem"><span
+class="header-section-number">1.3</span> Problem</h2>
+<ul>
+<li>The user finds out the camera angle was wrong only after Photo Booth
+is already recording. The take is wasted.</li>
+<li>Photo Booth's own window is the only way to check framing, which
+defeats the point of a no-context-switch menu bar widget.</li>
+<li>The user owns more than one camera (built-in FaceTime plus an
+external Logitech BRIO). There is no way to see which one is live
+without opening another app.</li>
+<li>Mirroring expectations differ per person, and there is nothing to
+set today.</li>
+</ul>
+<p>Who feels it: the daily user, on every video session where framing
+matters.</p>
+<hr />
+<h2 data-number="1.4" id="target-audience"><span
+class="header-section-number">1.4</span> Target audience</h2>
+<p><strong>Primary:</strong> the developer and sole author, recording
+video sessions daily from the menu bar. <strong>Secondary:</strong>
+anyone who installs the build with the two Shortcuts configured and at
+least one camera attached.</p>
+<hr />
+<h2 data-number="1.5" id="features-this-feature-mvp"><span
+class="header-section-number">1.5</span> Features (this feature,
+MVP)</h2>
+<ul>
+<li>Live camera preview inside the popover, 480x270pt (16:9), positioned
+<strong>below</strong> the existing button row</li>
+<li>Preview appears when the video toggle is on and collapses when it is
+off</li>
+<li>Panel animates 200pt → 504pt wide on toggle, animation gated on
+<code>accessibilityReduceMotion</code></li>
+<li>Camera picker across all connected video devices, persisted across
+launches</li>
+<li>Mirror toggle, user-facing, default on, persisted across launches,
+applies to the preview only</li>
+<li>Passive camera-name indicator on the preview naming the device being
+shown (e.g. "Logitech BRIO")</li>
+<li>Preview stays live throughout recording</li>
+<li>Capture session stops when the popover closes and resumes on
+reopen</li>
+<li>Explicit inline states for: permission not determined, denied or
+restricted, no camera connected, selected camera disconnected
+mid-session, camera busy</li>
+<li>Record and Stop remain usable in every failure state</li>
+</ul>
+<hr />
+<h2 data-number="1.6" id="conceptual-data-model"><span
+class="header-section-number">1.6</span> Conceptual data model</h2>
+<ul>
+<li>The app holds one <strong>Preview session</strong>, in memory only.
+It is separate from the Recording session and never writes a file.</li>
+<li>A Preview session shows exactly one <strong>Camera device</strong>
+at a time, chosen from the list of connected video devices.</li>
+<li>A Camera device has a stable unique identifier, a display name, and
+a connected/disconnected status.</li>
+<li>The app holds two <strong>Preferences</strong> that outlive a
+launch: the selected camera's unique identifier, and mirroring on or
+off.</li>
+<li>A Preview session has a <strong>status</strong>: idle, running, or
+one of the failure states (permission not determined, denied,
+restricted, no camera, device disconnected, device busy).</li>
+<li>A Preview session is independent of the Recording session. Neither
+can block the other. Photo Booth's own camera choice is invisible to the
+app, so the Preview session and the recording may show different
+devices.</li>
+</ul>
+<hr />
+<h2 data-number="1.7" id="roadmap"><span
+class="header-section-number">1.7</span> Roadmap</h2>
+<h3 data-number="1.7.1" id="mvp-this-pass-design-only"><span
+class="header-section-number">1.7.1</span> MVP (this pass, design
+only)</h3>
+<table>
+<thead>
+<tr>
+<th>In</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preview below the button row, size L (480x270pt)</td>
+<td>Chosen by the human from the size study, over the Designer's M
+recommendation.</td>
+</tr>
+<tr>
+<td>Animated panel resize, gated on Reduce Motion</td>
+<td>Keeps the idle panel small while making the growth legible.</td>
+</tr>
+<tr>
+<td>Camera picker, persisted</td>
+<td>The user owns multiple cameras; picking one every launch is
+friction.</td>
+</tr>
+<tr>
+<td>Mirror toggle, persisted, default on</td>
+<td>Matches Photo Booth's default so the preview does not surprise.</td>
+</tr>
+<tr>
+<td>Passive camera-name indicator</td>
+<td>Makes a preview/Photo Booth mismatch visible without alarming the
+user.</td>
+</tr>
+<tr>
+<td>All failure states designed</td>
+<td>A broken preview must never cost the user a recording.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.7.2" id="deferred"><span
+class="header-section-number">1.7.2</span> Deferred</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why deferred</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Swift implementation of everything above</td>
+<td>Stages 3, 4, 5 are skipped in this pass. Design-only by
+decision.</td>
+</tr>
+<tr>
+<td>Driving Photo Booth's camera selection</td>
+<td>Not possible: the app can neither read nor set Photo Booth's
+device.</td>
+</tr>
+<tr>
+<td>Preview snapshot or still capture</td>
+<td>Photo Booth is the capturer; adding a second capture path duplicates
+it.</td>
+</tr>
+<tr>
+<td>Detached or full-screen preview window</td>
+<td>Contradicts the no-window, menu-bar-only product shape.</td>
+</tr>
+<tr>
+<td>Keeping the session alive while the popover is closed</td>
+<td>The human accepted the camera activity light cycling instead of
+holding the camera open.</td>
+</tr>
+<tr>
+<td>Multi-camera simultaneous preview</td>
+<td>No demand; would not fit a 504pt panel.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.8" id="app-flows"><span
+class="header-section-number">1.8</span> App flows</h2>
+<h3 data-number="1.8.1" id="site-map"><span
+class="header-section-number">1.8.1</span> Site map</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menu bar icon</td>
+<td>Unchanged. Status, green while recording. Click toggles the
+popover.</td>
+</tr>
+<tr>
+<td>Popover, button row</td>
+<td>Unchanged 4 controls: video toggle, Start, Stop, Quit.</td>
+</tr>
+<tr>
+<td>Popover, preview area</td>
+<td>New. Visible only when the video toggle is on. Holds the live image
+or an inline state message.</td>
+</tr>
+<tr>
+<td>Preview overlay controls</td>
+<td>New. Camera picker, mirror toggle, and the passive camera-name
+indicator.</td>
+</tr>
+<tr>
+<td>System Settings → Privacy &amp; Security → Camera</td>
+<td>External. Reached from the denied-permission state's open-settings
+action.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.8.2" id="user-roles-and-access"><span
+class="header-section-number">1.8.2</span> User roles and access</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App user (single role)</td>
+<td>All controls. No auth, no multi-user concept.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.8.3" id="user-journeys"><span
+class="header-section-number">1.8.3</span> User journeys</h3>
+<p><strong>1. Frame the shot, then record</strong></p>
+<ol type="1">
+<li>Click the menu bar icon and flip the video toggle on; the panel
+grows and the preview starts</li>
+<li>Adjust framing while watching the preview; switch camera or
+mirroring if needed</li>
+<li>Tap Start; the preview keeps running and Photo Booth opens</li>
+</ol>
+<p><strong>2. First-ever toggle-on (permission)</strong></p>
+<ol type="1">
+<li>Flip the video toggle on; the preview area shows a waiting state and
+macOS presents the camera prompt</li>
+<li>Allow: the preview starts. Deny: the preview area shows an inline
+message with an "Open Settings" action</li>
+<li>In either case, Start and Stop remain usable</li>
+</ol>
+<p><strong>3. Camera unplugged mid-session</strong></p>
+<ol type="1">
+<li>The preview is running on the external camera and the user unplugs
+it</li>
+<li>The preview area states that the camera disconnected and falls back
+to another connected camera, updating the name indicator</li>
+<li>If no camera remains, the preview shows the no-camera message;
+recording controls stay usable throughout</li>
+</ol>
+<hr />
+<h2 data-number="1.9" id="preview-states"><span
+class="header-section-number">1.9</span> Preview states</h2>
+<p>Every state below must be mocked in Stage 2. In <strong>all</strong>
+of them, Start, Stop, Quit, and the video toggle remain fully
+usable.</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Trigger</th>
+<th>Preview area shows</th>
+<th>Actions offered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not determined</td>
+<td>First toggle-on, permission never requested</td>
+<td>Neutral waiting state while the macOS prompt is up</td>
+<td>None (system prompt owns the interaction)</td>
+</tr>
+<tr>
+<td>Denied</td>
+<td>User denied camera access, or previously denied</td>
+<td>Inline message explaining the preview needs camera access</td>
+<td>"Open Settings" opens Privacy &amp; Security → Camera</td>
+</tr>
+<tr>
+<td>Restricted</td>
+<td>Access blocked by policy (e.g. MDM, parental controls)</td>
+<td>Inline message stating access is blocked by system policy</td>
+<td>None; no settings action, since the user cannot change it</td>
+</tr>
+<tr>
+<td>No camera connected</td>
+<td>Zero video devices discovered</td>
+<td>Inline message that no camera is connected</td>
+<td>None; state clears automatically when a camera appears</td>
+</tr>
+<tr>
+<td>Selected camera disconnected</td>
+<td>Saved or active device unplugged</td>
+<td>Inline message naming the lost camera, then automatic fallback to
+another connected device</td>
+<td>Picker remains available</td>
+</tr>
+<tr>
+<td>Camera busy</td>
+<td>Device in use and unavailable to this app</td>
+<td>Inline message that the camera is in use by another app</td>
+<td>Picker remains available so the user can switch device</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>Permission granted, device available</td>
+<td>Live image, mirrored per the setting, with the camera-name
+indicator</td>
+<td>Camera picker, mirror toggle</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fallback rule:</strong> if the persisted device ID is not
+among the connected devices at startup or at toggle-on, the app selects
+the system default video device and updates the name indicator. The
+persisted ID is <strong>not</strong> overwritten by a fallback, so
+reconnecting the preferred camera restores it.</p>
+<hr />
+<h2 data-number="1.10" id="known-limitations"><span
+class="header-section-number">1.10</span> Known limitations</h2>
+<ul>
+<li><strong>The preview and Photo Booth may show different
+cameras.</strong> The camera picker changes the preview only. The app
+cannot read or set Photo Booth's device. Mitigation: the preview carries
+a <strong>passive indicator naming the camera it is showing</strong>
+(e.g. "Logitech BRIO"), so a mismatch is visible at a glance. This is
+deliberately not a warning (no alert colour, no caution icon, no error
+copy). It is a plain label. <em>(This supersedes the earlier
+requirements capture, which stated the mismatch would carry no
+user-facing affordance at all. Changed by human decision on
+2026-09-04.)</em></li>
+<li><strong>The camera activity light cycles with the popover.</strong>
+The session stops on close and resumes on open, so the light blinks off
+and on as the user opens the panel. Accepted by the human in exchange
+for not holding the camera open in the background.</li>
+<li><strong>The mirror setting affects the preview only.</strong> What
+Photo Booth records is unaffected.</li>
+<li><strong>The panel is large while video is on.</strong> 504x346pt is
+roughly 13% of a 1440x932pt screen. Accepted by the human, who chose
+size L over the Designer's M recommendation.</li>
+</ul>
+<hr />
+<h2 data-number="1.11" id="engineering-prerequisites"><span
+class="header-section-number">1.11</span> Engineering prerequisites</h2>
+<p>Recorded here, <strong>not done in this pass</strong>. Stage 4 is
+off. A future implementation pass inherits these as hard sequencing
+constraints.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Prerequisite</th>
+<th>Why it must land first</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P-1</strong></td>
+<td>Make <code>RecordingManager</code> <code>@MainActor</code> (or
+otherwise fix its actor isolation)</td>
+<td>It already mutates <code>isRecording</code> and
+<code>isInFlight</code> off the main actor. The preview adds an
+<code>AVCaptureSession</code> plus new observable state to the same
+class. Building on a class that already races produces intermittent,
+hard-to-reproduce UI bugs. <strong>This must be fixed BEFORE the preview
+is implemented, not alongside it.</strong></td>
+</tr>
+<tr>
+<td><strong>P-2</strong></td>
+<td>Add <code>NSCameraUsageDescription</code> to
+<code>MacRecordWidget/Info.plist</code></td>
+<td>The plist contains only <code>LSUIElement</code> today. Without the
+usage description, the first
+<code>AVCaptureDevice.requestAccess(for: .video)</code> call crashes the
+app rather than producing a denial. Not optional.</td>
+</tr>
+<tr>
+<td><strong>P-3</strong></td>
+<td>Introduce a persistence layer</td>
+<td>The app persists nothing today. The camera ID and mirror flag both
+must survive relaunch.</td>
+</tr>
+<tr>
+<td><strong>P-4</strong></td>
+<td>Remove the dead <code>RecordingError.accessibilityDenied</code>
+case</td>
+<td>This feature introduces a real permission-denied path. A stale
+accessibility-denied case sitting next to a new camera-denied path
+invites confused error copy. Cheap to remove while the error surface is
+being touched.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.11.1"
+id="recorded-deviations-from-tech-configmd"><span
+class="header-section-number">1.11.1</span> Recorded deviations from
+<code>tech-config.md</code></h3>
+<table>
+<thead>
+<tr>
+<th>Deviation</th>
+<th>Decision</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Persistence uses <code>@AppStorage</code> /
+<code>UserDefaults</code>, <strong>not</strong> SwiftData as listed for
+the macOS layer</td>
+<td>Confirmed by human, 2026-09-04</td>
+<td>The feature persists two scalars: a device unique-ID string and a
+boolean. SwiftData means a model container, a schema, migration
+concerns, and startup cost for a two-key preference store. There is no
+growth path from two preferences to a relational model.</td>
+</tr>
+<tr>
+<td>Swift sources stay in <code>MacRecordWidget/</code>,
+<strong>not</strong> under <code>src/</code></td>
+<td>Confirmed by human, 2026-09-04</td>
+<td>Standard Xcode layout alongside
+<code>MacRecordWidget.xcodeproj</code>. Relocating would require
+rewriting the project's file references for no functional gain. Predates
+this feature; recorded as a deliberate exception, not drift.</td>
+</tr>
+</tbody>
+</table>
+<p>Both deviations are to be logged to <code>BACKLOG.md</code> triage
+and reflected in <code>tech-config.md</code> at a later point.</p>
+<h3 data-number="1.11.2" id="ci-and-permission-note"><span
+class="header-section-number">1.11.2</span> CI and permission note</h3>
+<p>CI builds unsigned. macOS ties the camera TCC grant to the app's
+signing identity and path, so <strong>the camera permission prompt
+reappears on every rebuild and reinstall.</strong> This is expected
+behaviour for an unsigned artifact, not a defect. Testers should not
+read a repeated prompt as a bug in the permission flow.</p>
+<h3 data-number="1.11.3" id="framework-note"><span
+class="header-section-number">1.11.3</span> Framework note</h3>
+<p><code>AVFoundation</code> (<code>AVCaptureSession</code>,
+<code>AVCaptureVideoPreviewLayer</code>,
+<code>AVCaptureDevice.DiscoverySession</code>) is required. It is a
+first-party framework in the platform SDK, not a third-party dependency,
+and is the only way to render a live camera preview on macOS. No new
+library, package, or SPM dependency is introduced.</p>
+<hr />
+<h2 data-number="1.12" id="acceptance-criteria"><span
+class="header-section-number">1.12</span> Acceptance criteria</h2>
+<p>Written in the master PRD's <code>AC-*</code> group style and
+numbered so they merge into master cleanly. Group prefixes are new and
+do not collide with the existing <code>AC-L</code>, <code>AC-C</code>,
+<code>AC-M</code>, <code>AC-P</code>, <code>AC-R</code>,
+<code>AC-SW</code> groups.</p>
+<p><strong>All criteria below are verified in a future implementation
+pass. None are verified in this design-only pass.</strong></p>
+<h3 data-number="1.12.1" id="preview-surface"><span
+class="header-section-number">1.12.1</span> Preview surface</h3>
+<ul>
+<li><strong>AC-PV-1:</strong> The preview area sits
+<strong>below</strong> the existing button row, never above it and never
+beside it.</li>
+<li><strong>AC-PV-2:</strong> The preview image is 480x270pt at a 16:9
+aspect ratio.</li>
+<li><strong>AC-PV-3:</strong> The preview area is visible only while the
+video toggle is on, and is fully removed from the layout when it is
+off.</li>
+<li><strong>AC-PV-4:</strong> The preview is display-only: no code path
+writes the preview stream to a file, a buffer on disk, or the
+pasteboard.</li>
+<li><strong>AC-PV-5:</strong> The preview keeps rendering while
+<code>isRecording</code> is true; Start and Stop do not stop, pause, or
+restart the session.</li>
+<li><strong>AC-PV-6:</strong> The preview carries a passive text
+indicator naming the camera being shown, using the device's display
+name.</li>
+<li><strong>AC-PV-7:</strong> The camera-name indicator uses neutral
+styling only: no warning colour, no caution icon, no error copy.</li>
+<li><strong>AC-PV-8:</strong> The preview area renders correctly in both
+light and dark mode.</li>
+</ul>
+<h3 data-number="1.12.2" id="panel-sizing-and-animation"><span
+class="header-section-number">1.12.2</span> Panel sizing and
+animation</h3>
+<ul>
+<li><strong>AC-PNL-1:</strong> With the video toggle off, the panel is
+200pt wide and unchanged from the shipped layout.</li>
+<li><strong>AC-PNL-2:</strong> With the video toggle on, the panel is
+504x346pt.</li>
+<li><strong>AC-PNL-3:</strong> The width change animates between 200pt
+and 504pt on toggle.</li>
+<li><strong>AC-PNL-4:</strong> With
+<code>accessibilityReduceMotion</code> enabled, the panel changes size
+with no animation.</li>
+<li><strong>AC-PNL-5:</strong> No panel size change causes the button
+row controls to reflow, reorder, or change size.</li>
+</ul>
+<h3 data-number="1.12.3" id="camera-picker"><span
+class="header-section-number">1.12.3</span> Camera picker</h3>
+<ul>
+<li><strong>AC-CAM-1:</strong> The picker lists every connected video
+device discovered on the system, by display name.</li>
+<li><strong>AC-CAM-2:</strong> Selecting a device switches the preview
+to it and updates the camera-name indicator.</li>
+<li><strong>AC-CAM-3:</strong> The selected device's unique identifier
+is persisted and restored on the next launch.</li>
+<li><strong>AC-CAM-4:</strong> If the persisted identifier matches no
+connected device, the app falls back to the system default video device
+and the persisted identifier is left unchanged.</li>
+<li><strong>AC-CAM-5:</strong> Reconnecting the persisted device after a
+fallback restores it as the previewed camera.</li>
+<li><strong>AC-CAM-6:</strong> The picker changes the preview only. No
+code path attempts to read or set Photo Booth's camera.</li>
+<li><strong>AC-CAM-7:</strong> The picker remains usable in the
+camera-busy and device-disconnected states.</li>
+<li><strong>AC-CAM-8:</strong> A long device name does not push any
+control out of the 504pt panel; it truncates.</li>
+</ul>
+<h3 data-number="1.12.4" id="mirror-toggle"><span
+class="header-section-number">1.12.4</span> Mirror toggle</h3>
+<ul>
+<li><strong>AC-MIR-1:</strong> A user-facing mirror control is visible
+whenever the preview area is visible.</li>
+<li><strong>AC-MIR-2:</strong> Mirroring defaults to on for a user who
+has never set it.</li>
+<li><strong>AC-MIR-3:</strong> Toggling mirroring flips the preview
+image horizontally, immediately.</li>
+<li><strong>AC-MIR-4:</strong> The mirror setting is persisted and
+restored on the next launch.</li>
+<li><strong>AC-MIR-5:</strong> The mirror setting affects the preview
+only and does not alter what Photo Booth records.</li>
+</ul>
+<h3 data-number="1.12.5" id="session-lifecycle"><span
+class="header-section-number">1.12.5</span> Session lifecycle</h3>
+<ul>
+<li><strong>AC-LC-1:</strong> The capture session starts when the video
+toggle is turned on while the popover is open.</li>
+<li><strong>AC-LC-2:</strong> The capture session stops when the popover
+closes.</li>
+<li><strong>AC-LC-3:</strong> The capture session resumes when the
+popover reopens with the video toggle still on.</li>
+<li><strong>AC-LC-4:</strong> No capture session is running while the
+video toggle is off.</li>
+<li><strong>AC-LC-5:</strong> Rapidly toggling video on and off leaves
+at most one capture session running and no orphaned session.</li>
+</ul>
+<h3 data-number="1.12.6" id="permission-and-failure-states"><span
+class="header-section-number">1.12.6</span> Permission and failure
+states</h3>
+<ul>
+<li><strong>AC-ST-1:</strong> On the first toggle-on with permission not
+determined, the app requests camera access and the preview area shows a
+neutral waiting state.</li>
+<li><strong>AC-ST-2:</strong> When access is denied, the preview area
+shows an inline message plus an action that opens the macOS camera
+privacy settings.</li>
+<li><strong>AC-ST-3:</strong> When access is restricted by system
+policy, the preview area shows an inline message and offers no settings
+action.</li>
+<li><strong>AC-ST-4:</strong> When no video device is connected, the
+preview area shows an inline no-camera message.</li>
+<li><strong>AC-ST-5:</strong> When the previewed camera disconnects
+mid-session, the preview area states that it disconnected and falls back
+to another connected device if one exists.</li>
+<li><strong>AC-ST-6:</strong> When the camera is in use by another app,
+the preview area states that the camera is busy. UNVERIFIED: macOS
+generally permits multiple processes to read one camera, so this state
+may be unreachable in practice. Confirmed by the human on 2026-09-04 to
+stay in the spec and be designed for, pending verification during
+implementation.</li>
+<li><strong>AC-ST-7:</strong> In <strong>every</strong> state in this
+group, the Start and Stop buttons keep their normal enabled/disabled
+behaviour based on recording state alone. A preview failure never
+disables them.</li>
+<li><strong>AC-ST-8:</strong> In <strong>every</strong> state in this
+group, the video toggle keeps its normal enabled/disabled behaviour. A
+preview failure never disables it.</li>
+<li><strong>AC-ST-9:</strong> No preview failure presents a modal alert.
+All preview state messaging is inline in the preview area.</li>
+<li><strong>AC-ST-10:</strong> All state messages follow the product's
+voice: clear, non-blaming, sentence case, no exclamation marks.</li>
+</ul>
+<h3 data-number="1.12.7" id="accessibility"><span
+class="header-section-number">1.12.7</span> Accessibility</h3>
+<ul>
+<li><strong>AC-AX-1:</strong> The camera picker and mirror toggle each
+carry an <code>accessibilityLabel</code> and a stable
+<code>accessibilityIdentifier</code>.</li>
+<li><strong>AC-AX-2:</strong> The preview area carries an accessibility
+label describing what it is and which camera it is showing.</li>
+<li><strong>AC-AX-3:</strong> Every inline state message is readable by
+VoiceOver.</li>
+<li><strong>AC-AX-4:</strong> The preview area and its controls
+introduce no focus ring, consistent with the shipped popover.</li>
+</ul>
+<h3 data-number="1.12.8" id="persistence"><span
+class="header-section-number">1.12.8</span> Persistence</h3>
+<ul>
+<li><strong>AC-PS-1:</strong> Exactly two values persist: the selected
+camera's unique identifier (string) and the mirror flag (boolean).</li>
+<li><strong>AC-PS-2:</strong> Persistence uses <code>@AppStorage</code>
+/ <code>UserDefaults</code>. No SwiftData model container is
+introduced.</li>
+<li><strong>AC-PS-3:</strong> A first launch with no stored values uses
+the system default camera and mirroring on.</li>
+<li><strong>AC-PS-4:</strong> No other UI state persists. The video
+toggle itself still resets on each launch, unchanged from today.</li>
+</ul>
+<h3 data-number="1.12.9"
+id="engineering-prerequisites-verified-at-implementation-time"><span
+class="header-section-number">1.12.9</span> Engineering prerequisites
+(verified at implementation time)</h3>
+<ul>
+<li><strong>AC-PR-1:</strong> <code>RecordingManager</code>'s actor
+isolation is fixed and lands <strong>before</strong> any preview
+code.</li>
+<li><strong>AC-PR-2:</strong> <code>MacRecordWidget/Info.plist</code>
+contains <code>NSCameraUsageDescription</code> with copy explaining why
+the app needs the camera.</li>
+<li><strong>AC-PR-3:</strong> A persistence mechanism exists before the
+camera and mirror settings are wired to it.</li>
+<li><strong>AC-PR-4:</strong>
+<code>RecordingError.accessibilityDenied</code> is removed.</li>
+</ul>
+<hr />
+<h2 data-number="1.13" id="risks-and-mitigations"><span
+class="header-section-number">1.13</span> Risks and mitigations</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The preview shows a different camera than Photo Booth records</td>
+<td>High</td>
+<td>Medium</td>
+<td>Passive camera-name indicator on the preview makes the mismatch
+visible. Documented as a known limitation. The app cannot read Photo
+Booth's setting, so this is the full extent of the mitigation.</td>
+</tr>
+<tr>
+<td>Implementing the preview on a <code>RecordingManager</code> that is
+not <code>@MainActor</code> produces intermittent UI bugs</td>
+<td>High</td>
+<td>High</td>
+<td>P-1 makes the isolation fix a hard prerequisite that must land
+before the preview, not alongside it. AC-PR-1 verifies the
+sequencing.</td>
+</tr>
+<tr>
+<td>Missing <code>NSCameraUsageDescription</code> crashes the app on
+first access request</td>
+<td>High if forgotten</td>
+<td>High</td>
+<td>P-2 and AC-PR-2. Called out twice in this PRD because the failure
+mode is a crash, not a denial.</td>
+</tr>
+<tr>
+<td>A 504x346pt panel feels oversized for a menu bar widget</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Human chose size L knowingly after the size study. The panel is
+200pt at rest and only grows while video is on.</td>
+</tr>
+<tr>
+<td>The 200pt → 504pt resize on every toggle reads as jarring</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Animated, gated on <code>accessibilityReduceMotion</code> (AC-PNL-3,
+AC-PNL-4).</td>
+</tr>
+<tr>
+<td>Camera activity light cycling with the popover confuses the
+user</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Accepted trade-off; the alternative is holding the camera open in
+the background, which is worse. Documented as a known limitation.</td>
+</tr>
+<tr>
+<td>A preview failure blocks a recording the user needed</td>
+<td>Low</td>
+<td>High</td>
+<td>AC-ST-7 and AC-ST-8 make non-blocking behaviour testable across
+every failure state. AC-ST-9 forbids modal alerts.</td>
+</tr>
+<tr>
+<td>CI's unsigned build re-prompts for camera permission on every
+rebuild</td>
+<td>High</td>
+<td>Low</td>
+<td>Documented in the CI note so a repeated prompt is not mistaken for a
+permission bug.</td>
+</tr>
+<tr>
+<td>Design-only pass leaves ACs unverified indefinitely</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>All ACs are explicitly scoped to a future implementation pass, and
+the prerequisites are recorded so that pass does not rediscover them.
+Stage 8 is design sign-off, not release.</td>
+</tr>
+<tr>
+<td>Long external camera names overflow the picker</td>
+<td>Medium</td>
+<td>Low</td>
+<td>AC-CAM-8 requires truncation within the 504pt panel.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 data-number="1.14" id="decision-provenance"><span
+class="header-section-number">1.14</span> Decision provenance</h2>
+<p>Every decision recorded in the original requirements frontmatter and
+in the approved kickoff plan, preserved here. None are reopened.</p>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Source</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preview sits below the button row, not above</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Preview keeps running during recording; Photo Booth is the sole
+capturer</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Session stops on popover close, resumes on reopen; activity light
+cycling accepted</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Mirror toggle is user-facing, default on, persisted</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Camera picker in scope, persisted, graceful fallback if
+unplugged</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Picker affects the preview only, not Photo Booth</td>
+<td>Requirements capture</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Preview size L: 480x270pt, panel 504x346pt, ~13% of a 1440x932pt
+screen</td>
+<td>Human, after the size study; Designer recommended M</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>At 480pt wide, picker and mirror toggle fit as visible controls, not
+an overflow menu</td>
+<td>Size study</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Panel animates 200pt → 504pt, gated on
+<code>accessibilityReduceMotion</code></td>
+<td>Kickoff Q2, resolved 2026-09-04</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Preview carries a passive camera-name indicator; no alarming
+warning</td>
+<td>Kickoff Q6, resolved 2026-09-04</td>
+<td><strong>Supersedes</strong> the frontmatter's "does not warn the
+user" wording</td>
+</tr>
+<tr>
+<td><code>@AppStorage</code> / <code>UserDefaults</code>, not
+SwiftData</td>
+<td>Kickoff Q5, resolved 2026-09-04</td>
+<td>Binding; deviation recorded</td>
+</tr>
+<tr>
+<td>Swift sources stay in <code>MacRecordWidget/</code>, not
+<code>src/</code></td>
+<td>Kickoff Q7, resolved 2026-09-04</td>
+<td>Binding; exception recorded</td>
+</tr>
+<tr>
+<td><code>RecordingManager</code> backlog items deferred;
+<code>@MainActor</code> fix recorded as a prerequisite</td>
+<td>Kickoff Q4, resolved 2026-09-04</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Stage 7 documents design intent only; Stage 8 is design sign-off,
+not release</td>
+<td>Kickoff Q3, resolved 2026-09-04</td>
+<td>Binding</td>
+</tr>
+<tr>
+<td>Master baseline backfilled before this PRD</td>
+<td>Kickoff Q1, resolved 2026-09-04</td>
+<td>Done; this PRD extends the current master</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Superseded:</strong> the frontmatter's key point stating
+"200pt panel width unchanged" was written before the size study. The
+panel is 504pt wide while the video toggle is on. The 200pt width
+applies only to the collapsed, toggle-off state.</p>
+</body>
+</html>
