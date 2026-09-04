@@ -4,11 +4,19 @@ A macOS menu bar app for quick audio and video recording.
 
 ## Features
 
-- Menu bar icon (green when recording, mic or camera depending on mode)
+- Menu bar icon turns green with a blinking dot while recording
 - Start/Stop audio recording via macOS Shortcuts (Voice Memos)
 - Optional video mode: opens Photo Booth alongside audio
 - Toggle between audio-only and audio+video before each session
 - Auto-generated timestamp for recording names
+
+## Not yet available
+
+**Live camera preview** is designed but **not implemented**. There is an approved spec and set of mocks for showing a live camera image inside the popover (with a camera picker and a mirror toggle) so you can frame the shot before recording. No version of the app does this today, and there is no camera access, camera picker, or mirror setting in the build. Framing still means opening Photo Booth.
+
+Spec: `projects/20260904-live-camera-preview/product-specs/prd.md`
+
+Mocks: `projects/20260904-live-camera-preview/generated-docs/design/`
 
 ## Requirements
 

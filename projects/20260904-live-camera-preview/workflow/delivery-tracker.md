@@ -50,8 +50,8 @@ Prerequisite added at kickoff. `projects/master/` predates the shipped `20260521
 ### Stage 7: README and CLAUDE.md
 
 - [-] **EM:** generate `scripts/dev.sh` -- SKIPPED (Xcode app, no BE/FE processes to run; kickoff plan Q3)
-- [ ] 💾 **EM:** update `README.md` and `CLAUDE.md` to document the design intent, clearly marked as not implemented -- done when: both files describe the feature and its not-implemented status
-- [ ] 👤💾 **HUMAN:** review and approve README and CLAUDE.md -- done when: human approves
+- [x] 💾 **EM:** update `README.md` and `CLAUDE.md` to document the design intent, clearly marked as not implemented -- done when: both files describe the feature and its not-implemented status
+- [x] 👤💾 **HUMAN:** review and approve README and CLAUDE.md -- done when: human approves
 
 ### Stage 8: Release
 
