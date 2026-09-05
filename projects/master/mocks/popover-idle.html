@@ -49,12 +49,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
 #dm { display: none; }
-.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px; }
+/* Scale tokens. The page defaults to medium so a control drawn outside a panel
+   (the state matrices) matches the default build. .panel.s / .panel.l override. */
+.page {
+  background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px;
+  --w: 480px; --gap: 14px; --px: 12px; --py: 8px; --r: 5px;
+  --g: 16px; --gf: 13px; --h: 20px; --cf: 12px; --lf: 12px; --pw: 200px;
+}
 .wrap { max-width: 660px; margin: 0 auto; }
 .dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
 h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
 .sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
 h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3.mini { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
 p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
 code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
 a { color: var(--accent); }
@@ -63,7 +70,7 @@ a { color: var(--accent); }
 .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); overflow-x: auto; }
 
 /* ---- menu bar strip ---- */
-.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); flex: none; }
 .mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
 .mb-icon.rec { color: var(--sys-green); }
 .mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
@@ -71,43 +78,57 @@ a { color: var(--accent); }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
 @media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
 
-/* ---- the panel: 504pt wide in every state, 12pt h / 8pt v padding ---- */
-.panel { width: 504px; background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
-.row { display: flex; align-items: center; gap: 14px; }
-.audio-label { font-size: 11px; color: var(--label-secondary); }
-.spacer { flex: 1 1 auto; }
+/* ---- the panel ----
+   Width is the preview width for the chosen scale, and nothing else: padding
+   lives on the row, so the panel is exactly as wide as the preview.
+   Small 320pt, medium 480pt, large half the screen (shown here as 960pt,
+   i.e. a 1920pt-wide visible frame). */
+.panel { width: var(--w); background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); display: flex; flex-direction: column; flex: none; overflow: hidden; }
+.panel.s { --w: 320px; --gap: 10px; --px: 10px; --py: 6px; --r: 4px; --g: 14px; --gf: 11px; --h: 16px; --cf: 10px; --lf: 9px; --pw: 150px; }
+.panel.l { --w: 960px; --gap: 18px; --px: 16px; --py: 11px; --r: 6px; --g: 20px; --gf: 16px; --h: 24px; --cf: 15px; --lf: 15px; --pw: 260px; }
+.row { display: flex; align-items: center; gap: var(--gap); padding: var(--py) var(--px); }
+.spacer { flex: 1 1 auto; min-width: 12px; }
 
-/* every control: .controlSize(.small) chrome with a constant 1pt separator outline */
-.ctl { height: 20px; min-width: 24px; padding: 0 4px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-.ctl .glyph { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-.ctl .glyph svg { width: 13px; height: 13px; }
+/* every control: chrome for the scale's ControlSize, with a constant 1pt
+   separatorColor outline so an off toggle and an on toggle read as one control */
+.ctl { height: var(--h); padding: 0 4px; border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ctl .glyph { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; }
+.ctl .glyph svg { width: var(--gf); height: var(--gf); }
+.ctl .lbl { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; font-size: var(--lf); line-height: 1; }
 .ctl.on { background: var(--accent); color: var(--on-tint-label); }
 .ctl.on-red { background: var(--record-red); color: var(--on-tint-label); }
+.ctl .red { color: var(--record-red); }
 .ctl.hover { background: var(--hover-fill); }
 .ctl.pressed { background: var(--pressed-fill); }
 .ctl.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
 .ctl.disabled { opacity: 0.35; }
+.scalegroup { display: flex; gap: 2px; flex: none; }
 
-/* camera picker: bordered pop-up button, max 200pt */
-.picker { height: 20px; max-width: 200px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: 11px; flex: none; overflow: hidden; }
+/* camera picker: bordered pop-up button, capped at the scale's max width */
+.picker { height: var(--h); max-width: var(--pw); border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: var(--cf); flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .picker .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker .chev { width: 14px; height: 16px; border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
+.picker .chev { width: 14px; height: var(--g); border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
 .picker.disabled { opacity: 0.35; }
 .menu { width: 200px; background: var(--bg-popover); border-radius: 6px; box-shadow: 0 8px 24px var(--shadow), 0 0 0 0.5px var(--separator); padding: 4px; font-size: 11px; }
 .menu div { padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu div.sel { background: var(--accent); color: #fff; }
 
-/* preview: 480 x 270pt */
-.preview { width: 480px; height: 270px; border-radius: 6px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+/* preview: flush to the panel's left, right and bottom edges, 16:9, only the
+   bottom corners rounded so it meets the window's own rounding */
+.preview { width: var(--w); height: calc(var(--w) * 0.5625); border-radius: 0 0 10px 10px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex: none; }
 .preview.live { background: linear-gradient(150deg, #4A5A73 0%, #2E3A4C 55%, #1D242F 100%); }
 .msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-align: center; color: var(--label-secondary); }
 .msg svg { width: 22px; height: 22px; }
 .msg p { font-size: 12px; line-height: 1.4; }
 .msg .lnk { font-size: 12px; color: var(--accent); border: 1px solid var(--separator); background: var(--bg-control); border-radius: 5px; padding: 2px 9px; margin-top: 2px; }
-.preview.small { width: 240px; height: 135px; }
-.preview.small .msg svg { width: 18px; height: 18px; }
-.preview.small .msg p { font-size: 10.5px; }
-.preview.small .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+.preview.half { width: 240px; height: 135px; }
+.preview.half .msg svg { width: 18px; height: 18px; }
+.preview.half .msg p { font-size: 10.5px; }
+.preview.half .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+
+/* a panel drawn at 50% because it is wider than this page */
+.halfbox { overflow: hidden; flex: none; }
+.halfbox > * { transform: scale(0.5); transform-origin: top left; }
 
 /* matrices and grids */
 .matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
@@ -126,8 +147,7 @@ th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator
 th { background: var(--code-bg); font-weight: 600; }
 ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; }
 ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
-ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
-</style>
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }</style>
 </head>
 <body>
 <input type="checkbox" id="dm">
@@ -135,50 +155,61 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 <label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
 <p class="nav"><a href="index.html">&larr; All mocks</a></p>
 <h1>Idle</h1>
-<p class="sub">Nothing recording, no preview. Four elements: the &ldquo;Audio&rdquo; label, the audio toggle, the camera toggle, and Quit. The panel is 504pt wide here and stays 504pt wide when the preview opens.</p>
+<p class="sub">Nothing recording, no preview. Four controls and no text: pin, audio, camera, Quit. Shown at the default medium scale, where the panel is 480pt wide.</p>
 <div class="stage">
   <div class="menubar"><span class="mb-icon"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor" opacity="0.55"/></svg></span></div>
   <div class="panel">
-      <div class="row">
-        <span class="audio-label">Audio</span>
-        <span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span>
-        <span class="spacer"></span>
-        <span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
-        
-        <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
-      </div>
+    <div class="row">
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+      <span class="spacer"></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+    </div>
   </div>
   <p class="caption">Idle &mdash; menu bar icon in the primary label colour, no dot</p>
 </div>
 
-<h2>What each element does</h2>
+<h2>What each control does</h2>
 <ul class="ann">
-  <li><strong>&ldquo;Audio&rdquo;</strong> &mdash; 11pt secondary text. It names the control next to it, because a lone record glyph does not say what is being recorded.</li>
-  <li><strong>Audio toggle</strong> &mdash; one control, not two. Click to start, click again to stop. Off it shows <code>record.circle.fill</code> on standard button chrome; on it turns red and shows <code>stop.fill</code>.</li>
+  <li><strong>Pin</strong> &mdash; <code>pin.slash</code> off, <code>pin.fill</code> on. Off, the panel closes when another app takes focus, which for an <code>LSUIElement</code> app is the moment anything else is clicked. On, it stays. Clicking the menu bar icon still closes it either way. The choice persists in <code>UserDefaults</code> under <code>panelPinned</code>.</li>
+  <li><strong>Audio toggle</strong> &mdash; one control, not two. Click to start, click again to stop. The glyph is <code>mic.fill</code> in both states; only the fill changes, to red, while recording.</li>
   <li><strong>Camera toggle</strong> &mdash; opens and closes the live preview. It does not change what is recorded; recording is audio either way.</li>
   <li><strong>Quit</strong> &mdash; stops an in-progress recording first, then terminates.</li>
 </ul>
-<p class="note">The camera picker is absent in this state. It appears only while the camera toggle is on, next to the toggle that summoned it.</p>
+<p class="note">The camera picker and the S/M/L buttons are absent in this state. Both appear only while the camera toggle is on.</p>
+<p class="note">There is no &ldquo;Audio&rdquo; label. It was removed: it named one control in a row of four and left the other three unnamed, so it was reading as a heading for the whole panel rather than as the caption it was meant to be. Every control now depends on its glyph, its tooltip and its VoiceOver label equally.</p>
 
 <h2>Interaction states &mdash; audio toggle</h2>
 <div class="matrix">
-  <div class="cell"><span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span><small>Default<br>off</small></div>
-  <div class="cell"><span class="ctl hover"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span><small>Hover</small></div>
-  <div class="cell"><span class="ctl pressed"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span><small>Pressed</small></div>
-  <div class="cell"><span class="ctl focus"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span><small>Focused<br>(ring suppressed in the build)</small></div>
-  <div class="cell"><span class="ctl disabled"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span><small>Disabled<br>in flight</small></div>
-  <div class="cell"><span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.4" y="2.4" width="11.2" height="11.2" rx="2" fill="currentColor"/></svg></span></span><small>On<br>recording</small></div>
+  <div class="cell"><span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Default<br>idle</small></div>
+  <div class="cell"><span class="ctl hover"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Hover</small></div>
+  <div class="cell"><span class="ctl pressed"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Pressed</small></div>
+  <div class="cell"><span class="ctl focus"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Focused<br>(ring suppressed in the build)</small></div>
+  <div class="cell"><span class="ctl disabled"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Disabled<br>in flight</small></div>
+  <div class="cell"><span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>On<br>recording</small></div>
 </div>
 <p class="note">In-flight is the only disabled case. <code>startRecording()</code> holds <code>isInFlight</code> while it quits Voice Memos and waits 1.5s, and the toggle is disabled for that window so a second click cannot fire a second Shortcut.</p>
 <p class="note">The focused cell above draws the ring the platform would draw. The shipped row calls <code>.focusEffectDisabled()</code>, so it draws nothing &mdash; recorded here as a known gap, not as intended behaviour.</p>
 
+<h2>Interaction states &mdash; pin</h2>
+<div class="matrix">
+  <div class="cell"><span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><small>Off<br><code>pin.slash</code></small></div>
+  <div class="cell"><span class="ctl hover"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><small>Off<br>hover</small></div>
+  <div class="cell"><span class="ctl pressed"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><small>Off<br>pressed</small></div>
+  <div class="cell"><span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" fill="currentColor"/></svg></span></span><small>On<br><code>pin.fill</code>, accent fill</small></div>
+  <div class="cell"><span class="ctl on focus"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" fill="currentColor"/></svg></span></span><small>On<br>focused</small></div>
+</div>
+<p class="note">Two signals change together, deliberately: the symbol goes from slashed to solid <em>and</em> the button fills. Pin is the one control whose effect is invisible until the user clicks somewhere else, so it carries the redundancy the audio toggle no longer does.</p>
+<p class="note">The pin is never disabled. The tooltip follows the state &mdash; &ldquo;Keep panel open&rdquo; when off, &ldquo;Let panel close on its own&rdquo; when on &mdash; while the VoiceOver label stays &ldquo;Keep panel open&rdquo; in both.</p>
+
 <h2>Interaction states &mdash; camera toggle and Quit</h2>
 <div class="matrix">
-  <div class="cell"><span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera<br>off</small></div>
+  <div class="cell"><span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera<br>off</small></div>
   <div class="cell"><span class="ctl hover"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera<br>hover</small></div>
   <div class="cell"><span class="ctl pressed"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera<br>pressed</small></div>
   <div class="cell"><span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera on<br>accent fill</small></div>
-  <div class="cell"><span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><small>Quit<br>default</small></div>
+  <div class="cell"><span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><small>Quit<br>default</small></div>
   <div class="cell"><span class="ctl hover"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><small>Quit<br>hover</small></div>
   <div class="cell"><span class="ctl pressed"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><small>Quit<br>pressed</small></div>
 </div>
@@ -186,13 +217,14 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 
 <h2>Empty and first-run</h2>
 <ul class="ann">
-  <li>There is no empty state for the row: the same four elements are present from first launch.</li>
+  <li>There is no empty state for the row: the same four controls are present from first launch.</li>
   <li>First run has no onboarding. The two Shortcuts named &ldquo;Start&rdquo; and &ldquo;Stop&rdquo; are a prerequisite the app does not check for; a missing Shortcut surfaces as the <a href="alert-error.html">error alert</a> on the first Start.</li>
+  <li>First run is unpinned and medium. Neither default is announced anywhere; the pin is discovered by clicking it, and the size buttons are not visible until the camera is turned on.</li>
   <li>Camera permission is requested the first time the camera toggle is turned on, not at launch. Until it is granted the preview shows its <a href="preview-states.html">waiting state</a>.</li>
 </ul>
 
 <h2>Dark mode</h2>
-<p class="note">Every surface here is semantic: <code>windowBackgroundColor</code> behind the panel, standard bordered-button chrome for the controls, <code>separatorColor</code> for the constant outline, <code>.secondary</code> for the label. Only the amber menu bar dot is a fixed colour, and it is not on this page. Toggle the switch at the top to check both appearances.</p>
+<p class="note">Every surface here is semantic: <code>windowBackgroundColor</code> behind the panel, standard bordered-button chrome for the controls, <code>separatorColor</code> for the constant outline, <code>controlAccentColor</code> for an on toggle. Only the amber menu bar dot is a fixed colour, and it is not on this page. Toggle the switch at the top to check both appearances.</p>
 </div></div>
 </body>
 </html>

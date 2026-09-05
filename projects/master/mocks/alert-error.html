@@ -49,12 +49,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
 #dm { display: none; }
-.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px; }
+/* Scale tokens. The page defaults to medium so a control drawn outside a panel
+   (the state matrices) matches the default build. .panel.s / .panel.l override. */
+.page {
+  background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px;
+  --w: 480px; --gap: 14px; --px: 12px; --py: 8px; --r: 5px;
+  --g: 16px; --gf: 13px; --h: 20px; --cf: 12px; --lf: 12px; --pw: 200px;
+}
 .wrap { max-width: 660px; margin: 0 auto; }
 .dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
 h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
 .sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
 h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3.mini { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
 p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
 code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
 a { color: var(--accent); }
@@ -63,7 +70,7 @@ a { color: var(--accent); }
 .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); overflow-x: auto; }
 
 /* ---- menu bar strip ---- */
-.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); flex: none; }
 .mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
 .mb-icon.rec { color: var(--sys-green); }
 .mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
@@ -71,43 +78,57 @@ a { color: var(--accent); }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
 @media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
 
-/* ---- the panel: 504pt wide in every state, 12pt h / 8pt v padding ---- */
-.panel { width: 504px; background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
-.row { display: flex; align-items: center; gap: 14px; }
-.audio-label { font-size: 11px; color: var(--label-secondary); }
-.spacer { flex: 1 1 auto; }
+/* ---- the panel ----
+   Width is the preview width for the chosen scale, and nothing else: padding
+   lives on the row, so the panel is exactly as wide as the preview.
+   Small 320pt, medium 480pt, large half the screen (shown here as 960pt,
+   i.e. a 1920pt-wide visible frame). */
+.panel { width: var(--w); background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); display: flex; flex-direction: column; flex: none; overflow: hidden; }
+.panel.s { --w: 320px; --gap: 10px; --px: 10px; --py: 6px; --r: 4px; --g: 14px; --gf: 11px; --h: 16px; --cf: 10px; --lf: 9px; --pw: 150px; }
+.panel.l { --w: 960px; --gap: 18px; --px: 16px; --py: 11px; --r: 6px; --g: 20px; --gf: 16px; --h: 24px; --cf: 15px; --lf: 15px; --pw: 260px; }
+.row { display: flex; align-items: center; gap: var(--gap); padding: var(--py) var(--px); }
+.spacer { flex: 1 1 auto; min-width: 12px; }
 
-/* every control: .controlSize(.small) chrome with a constant 1pt separator outline */
-.ctl { height: 20px; min-width: 24px; padding: 0 4px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-.ctl .glyph { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-.ctl .glyph svg { width: 13px; height: 13px; }
+/* every control: chrome for the scale's ControlSize, with a constant 1pt
+   separatorColor outline so an off toggle and an on toggle read as one control */
+.ctl { height: var(--h); padding: 0 4px; border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ctl .glyph { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; }
+.ctl .glyph svg { width: var(--gf); height: var(--gf); }
+.ctl .lbl { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; font-size: var(--lf); line-height: 1; }
 .ctl.on { background: var(--accent); color: var(--on-tint-label); }
 .ctl.on-red { background: var(--record-red); color: var(--on-tint-label); }
+.ctl .red { color: var(--record-red); }
 .ctl.hover { background: var(--hover-fill); }
 .ctl.pressed { background: var(--pressed-fill); }
 .ctl.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
 .ctl.disabled { opacity: 0.35; }
+.scalegroup { display: flex; gap: 2px; flex: none; }
 
-/* camera picker: bordered pop-up button, max 200pt */
-.picker { height: 20px; max-width: 200px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: 11px; flex: none; overflow: hidden; }
+/* camera picker: bordered pop-up button, capped at the scale's max width */
+.picker { height: var(--h); max-width: var(--pw); border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: var(--cf); flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .picker .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker .chev { width: 14px; height: 16px; border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
+.picker .chev { width: 14px; height: var(--g); border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
 .picker.disabled { opacity: 0.35; }
 .menu { width: 200px; background: var(--bg-popover); border-radius: 6px; box-shadow: 0 8px 24px var(--shadow), 0 0 0 0.5px var(--separator); padding: 4px; font-size: 11px; }
 .menu div { padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu div.sel { background: var(--accent); color: #fff; }
 
-/* preview: 480 x 270pt */
-.preview { width: 480px; height: 270px; border-radius: 6px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+/* preview: flush to the panel's left, right and bottom edges, 16:9, only the
+   bottom corners rounded so it meets the window's own rounding */
+.preview { width: var(--w); height: calc(var(--w) * 0.5625); border-radius: 0 0 10px 10px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex: none; }
 .preview.live { background: linear-gradient(150deg, #4A5A73 0%, #2E3A4C 55%, #1D242F 100%); }
 .msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-align: center; color: var(--label-secondary); }
 .msg svg { width: 22px; height: 22px; }
 .msg p { font-size: 12px; line-height: 1.4; }
 .msg .lnk { font-size: 12px; color: var(--accent); border: 1px solid var(--separator); background: var(--bg-control); border-radius: 5px; padding: 2px 9px; margin-top: 2px; }
-.preview.small { width: 240px; height: 135px; }
-.preview.small .msg svg { width: 18px; height: 18px; }
-.preview.small .msg p { font-size: 10.5px; }
-.preview.small .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+.preview.half { width: 240px; height: 135px; }
+.preview.half .msg svg { width: 18px; height: 18px; }
+.preview.half .msg p { font-size: 10.5px; }
+.preview.half .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+
+/* a panel drawn at 50% because it is wider than this page */
+.halfbox { overflow: hidden; flex: none; }
+.halfbox > * { transform: scale(0.5); transform-origin: top left; }
 
 /* matrices and grids */
 .matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
@@ -126,8 +147,7 @@ th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator
 th { background: var(--code-bg); font-weight: 600; }
 ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; }
 ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
-ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
-</style>
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }</style>
 </head>
 <body>
 <input type="checkbox" id="dm">

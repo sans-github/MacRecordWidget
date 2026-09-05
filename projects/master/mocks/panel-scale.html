@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Camera preview open — MacRecordWidget</title>
+<title>Panel scale — MacRecordWidget</title>
 <style>
 :root {
   --bg-window:       #ECECEC;
@@ -154,8 +154,41 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 <div class="page"><div class="wrap">
 <label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
 <p class="nav"><a href="index.html">&larr; All mocks</a></p>
-<h1>Camera preview open</h1>
-<p class="sub">The camera toggle is on. Three things happen: the preview appears below the row, the camera picker appears beside the toggle that summoned it, and the S/M/L size buttons appear next to the picker. The panel grows downward; its trailing edge does not move.</p>
+<h1>Panel scale &mdash; S / M / L</h1>
+<p class="sub">Three sizes, chosen with three toggle buttons in the row. The scale is not a preview setting: a <code>PanelScale</code> enum drives the preview size, the glyph size, the fonts, the <code>ControlSize</code>, the row spacing, the padding, the corner radius and the picker width together, so the whole panel grows as one thing. Medium is the default and the choice persists under <code>panelScale</code>.</p>
+
+<h2>The control</h2>
+<div class="stage">
+  <span class="scalegroup"><span class="ctl"><span class="lbl">S</span></span><span class="ctl on"><span class="lbl">M</span></span><span class="ctl"><span class="lbl">L</span></span></span>
+  <p class="caption">Three toggles, 2pt apart &mdash; the selected one fills with the accent colour</p>
+</div>
+<p class="note">Three <code>Toggle</code>s in an <code>HStack(spacing: 2)</code>, each with the same button style, outline and <code>ControlSize</code> as every other control in the row. The selected one is on; the other two are off. Each binding ignores being switched off, because a panel always has a size &mdash; clicking the already-selected letter does nothing.</p>
+<p class="note"><strong>Why not a segmented control.</strong> Mutually exclusive selection from a small fixed set is what <code>Picker</code> with <code>.pickerStyle(.segmented)</code> is for, and that is the platform-native answer. It was tried and removed: the segmented style is an <code>NSSegmentedControl</code>, which ignores SwiftUI&rsquo;s <code>.font()</code>, so its labels stayed at 13pt while everything around them grew to 15pt at large and shrank to 9pt at small. A size control that cannot itself be sized is worse than the wrong container, so the toggles won. The cost is recorded below.</p>
+<div class="matrix">
+  <div class="cell"><span class="ctl"><span class="lbl">S</span></span><small>Unselected</small></div>
+  <div class="cell"><span class="ctl hover"><span class="lbl">S</span></span><small>Hover</small></div>
+  <div class="cell"><span class="ctl pressed"><span class="lbl">S</span></span><small>Pressed</small></div>
+  <div class="cell"><span class="ctl on"><span class="lbl">M</span></span><small>Selected</small></div>
+  <div class="cell"><span class="ctl on focus"><span class="lbl">M</span></span><small>Selected<br>focused</small></div>
+  <div class="cell"><span class="ctl disabled"><span class="lbl">L</span></span><small>Never occurs<br>none of the three is ever disabled</small></div>
+</div>
+
+<h2>The three sizes</h2>
+<div class="stage">
+  <div class="panel s">
+    <div class="row">
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+      <span class="spacer"></span>
+      <span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+      <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
+      <span class="scalegroup"><span class="ctl on"><span class="lbl">S</span></span><span class="ctl"><span class="lbl">M</span></span><span class="ctl"><span class="lbl">L</span></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+    </div>
+    <div class="preview live"></div>
+  </div>
+  <p class="caption">Small &mdash; 320 &times; 180pt preview, <code>.mini</code> controls</p>
+</div>
 <div class="stage">
   <div class="panel">
     <div class="row">
@@ -169,54 +202,71 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
     </div>
     <div class="preview live"></div>
   </div>
-  <p class="caption">Preview running at medium &mdash; 480 &times; 270pt, flush to three edges</p>
+  <p class="caption">Medium, the default &mdash; 480 &times; 270pt preview, <code>.small</code> controls</p>
 </div>
-
-<h2>The preview runs to the edges</h2>
-<p class="note">There is no inset, no border and no padding around the image. Padding lives on the button row alone, so the preview spans the panel&rsquo;s full width and meets its left, right and bottom edges. Only the bottom two corners are rounded, at 10pt, to match the window&rsquo;s own rounding; the top two are square because they meet the row.</p>
-<p class="note">The consequence worth naming: <strong>the panel width is the preview width</strong>. There is no arithmetic between the two. At medium the panel is 480pt because the preview is 480pt.</p>
-<ul class="ann">
-  <li><strong>Display-only.</strong> It shows a live image and never writes a file. Nothing in the app captures video; recording is audio, through the &ldquo;Start&rdquo; Shortcut into Voice Memos.</li>
-  <li>The session starts when the toggle turns on and stops when the popover closes, so the camera activity light cycles with the panel. That is by design, not a leak.</li>
-  <li>Mirroring is on and there is no control for it. A left-right flipped self-view is what a user expects from a mirror; an unmirrored one reads as broken.</li>
-  <li>Turning the toggle off tears down the session and collapses the panel by exactly the preview height.</li>
-</ul>
-
-<h2>Camera picker</h2>
-<p class="note">A pop-up button capped at <code>scale.pickerMaxWidth</code> &mdash; 150pt at small, 200pt at medium, 260pt at large &mdash; so a long device name cannot push Quit out of the row. Its selected value doubles as the camera-name indicator: it names the device actually feeding the layer, which after a fallback is not necessarily the stored preference.</p>
 <div class="stage">
-  <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px">
-    <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
-    <div class="menu"><div class="sel">FaceTime HD Camera</div><div>Studio Display Camera</div><div>OBS Virtual Camera</div></div>
+  <div class="halfbox" style="width:480px;height:293px">
+    <div class="panel l">
+      <div class="row">
+        <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>
+        <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+        <span class="spacer"></span>
+        <span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+        <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
+        <span class="scalegroup"><span class="ctl"><span class="lbl">S</span></span><span class="ctl"><span class="lbl">M</span></span><span class="ctl on"><span class="lbl">L</span></span></span>
+        <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+      </div>
+      <div class="preview live"></div>
+    </div>
   </div>
-  <p class="caption">Picker, open</p>
+  <p class="caption">Large, drawn at 50% &mdash; 960 &times; 540pt on a 1920pt visible frame, <code>.regular</code> controls</p>
 </div>
-<div class="matrix">
-  <div class="cell"><span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span><small>Default</small></div>
-  <div class="cell"><span class="picker" style="max-width:150px"><span class="name">Logitech BRIO 4K Stream Edition</span><span class="chev">&#9662;</span></span><small>Long name<br>truncates with an ellipsis</small></div>
-  <div class="cell"><span class="picker disabled"><span class="name">No camera</span><span class="chev">&#9662;</span></span><small>Disabled<br>no camera available</small></div>
-</div>
-<p class="note">Selection persists in <code>UserDefaults</code>. If the selected camera disconnects, the preview falls back to another one <em>without</em> discarding the stored preference, so reconnecting the preferred device restores it. The picker follows the fallback, so it never names a device that is not live.</p>
-<p class="note">The picker is the only control in the row that can shrink below its natural width. It is <code>maxWidth</code>-capped, not fixed, so when the row is tight it gives up space before anything else does. At the small scale it gives up a lot &mdash; see <a href="panel-scale.html">panel scale</a>.</p>
+<p class="note">Large tracks the display rather than a number: it is half the width of <code>NSScreen.main.visibleFrame</code>, floored, and clamped to at least the medium width so the three sizes never fall out of order on a narrow display. Because the panel is flush to the right edge, large occupies exactly the right half of the screen and sits beside a window tiled to the left half without lapping over it.</p>
 
-<h2>Panel metrics at medium</h2>
+<h2>Tokens</h2>
+<p class="note">Every value below comes from <code>PanelScale</code>. Nothing in the panel is a hardcoded size any more.</p>
 <div class="tablewrap"><table>
-<tr><th>Property</th><th>Collapsed</th><th>Preview open</th></tr>
-<tr><td>Width</td><td colspan="2">480pt &mdash; identical. The camera toggle only ever changes the height.</td></tr>
-<tr><td>Height</td><td>row + 16pt vertical padding</td><td>the same, plus 270pt. No gap: the enclosing <code>VStack</code> has <code>spacing: 0</code>.</td></tr>
-<tr><td>Trailing edge</td><td colspan="2">flush with the right of the screen&rsquo;s <code>visibleFrame</code>, unmoved by the resize</td></tr>
-<tr><td>Transition</td><td colspan="2">Not animated. The preview fades in with <code>.transition(.opacity)</code>; the window frame itself changes in one flush.</td></tr>
+<tr><th>Token</th><th>Small</th><th>Medium</th><th>Large</th><th>Drives</th></tr>
+<tr><td><code>previewWidth</code></td><td>320pt</td><td>480pt</td><td>half the visible frame, min 480pt</td><td>the preview <em>and</em> the panel &mdash; they are the same width</td></tr>
+<tr><td><code>previewHeight</code></td><td>180pt</td><td>270pt</td><td>derived</td><td>16:9 from the width, rounded</td></tr>
+<tr><td><code>controlSize</code></td><td><code>.mini</code></td><td><code>.small</code></td><td><code>.regular</code></td><td>the chrome of every control in the row</td></tr>
+<tr><td><code>glyphSize</code></td><td>14pt</td><td>16pt</td><td>20pt</td><td>the frame each glyph and each letter sits in</td></tr>
+<tr><td><code>glyphFont</code></td><td>11pt</td><td>13pt</td><td>16pt</td><td>the SF Symbols themselves</td></tr>
+<tr><td><code>controlFont</code></td><td>10pt</td><td>12pt</td><td>15pt</td><td>text inside controls &mdash; currently only the camera name</td></tr>
+<tr><td><code>scaleLabelFont</code></td><td>9pt</td><td>12pt</td><td>15pt</td><td>the S/M/L letters &mdash; a point under <code>controlFont</code> at small, level with it above</td></tr>
+<tr><td><code>rowSpacing</code></td><td>10pt</td><td>14pt</td><td>18pt</td><td>gaps between controls</td></tr>
+<tr><td><code>horizontalPadding</code></td><td>10pt</td><td>12pt</td><td>16pt</td><td>row inset, left and right</td></tr>
+<tr><td><code>verticalPadding</code></td><td>6pt</td><td>8pt</td><td>11pt</td><td>row inset, top and bottom</td></tr>
+<tr><td><code>cornerRadius</code></td><td>4pt</td><td>5pt</td><td>6pt</td><td>the constant outline on every control</td></tr>
+<tr><td><code>pickerMaxWidth</code></td><td>150pt</td><td>200pt</td><td>260pt</td><td>the cap on the camera picker</td></tr>
 </table></div>
-<p class="note">Row heights are derived from each scale&rsquo;s <code>ControlSize</code> rather than measured on hardware. The widths, the preview aspect and the un-animated resize are all fixed in code.</p>
-<p class="note">Why the width is frozen <em>across this transition</em>: a width change forces AppKit to reposition the panel as well as resize it, and the status-item-anchored position is painted before the correction lands. Holding the width constant when the preview opens means only the height moves. Changing the scale does change the width, and that path is handled by suppressing drawing until the corrected frame is in place.</p>
+<p class="note">Two separate text tokens rather than one: a letter fills its box more solidly than a glyph does, so at small the S/M/L letters need to be a point under the camera name to carry the same visual weight as the icons beside them. At medium and large the two agree.</p>
+<p class="note">The spacing values sit off the 4pt grid at several steps (10, 14, 18; 6, 11). They were tuned against the rendered control heights rather than derived from the grid, which is a defensible reason but leaves the panel outside the standard rhythm. Recorded, not resolved.</p>
 
-<h2>Long content and edge cases</h2>
-<ul class="ann">
-  <li>A camera whose aspect ratio is not 16:9 fills the frame and is cropped (<code>videoGravity = .resizeAspectFill</code>); it is never letterboxed and never stretched.</li>
-  <li>More cameras than fit on screen is a system menu concern &mdash; the pop-up scrolls; the row does not grow.</li>
-  <li>Every non-running condition replaces the image with a message in the same frame, so the panel height never depends on the camera state. See <a href="preview-states.html">permission and hardware states</a>.</li>
-  <li>Turning the camera off while a size other than medium is selected keeps that size. The collapsed panel stays at the chosen width even though the control that set it is no longer on screen.</li>
-</ul>
+<h2>Where the control can be reached</h2>
+<p class="note">The S/M/L buttons are mounted <strong>only while the camera toggle is on</strong>. The reasoning in the build is that the size being changed is mostly the size of the preview, so with the preview closed there is nothing to act on.</p>
+<p class="note">That is not quite what the scale does. It also sets the collapsed panel&rsquo;s width, its control sizes, its spacing and its padding, and those persist. A user who selects small, turns the camera off and quits gets a small collapsed panel on the next launch with no visible way to change it back short of turning the camera on again. The setting outlives the control that sets it.</p>
+<div class="tablewrap"><table>
+<tr><th>State</th><th>Size buttons</th><th>Scale still applies to</th></tr>
+<tr><td>Camera on</td><td>visible, in the row</td><td>everything &mdash; row and preview</td></tr>
+<tr><td>Camera off</td><td>absent</td><td>panel width, control sizes, spacing, padding, corner radius</td></tr>
+<tr><td>Next launch</td><td>follows the camera state</td><td>the persisted <code>panelScale</code>, whatever it was</td></tr>
+</table></div>
+
+<h2>Row fit</h2>
+<p class="note">Small is the tight case. A 320pt panel has to hold seven controls, six gaps of 10pt, 20pt of padding and a 12pt minimum spacer. The four icon buttons and the three letter buttons account for most of it, and the picker is the only element that can yield &mdash; it is <code>maxWidth</code>-capped rather than fixed, so it absorbs whatever is left.</p>
+<p class="note">On the page above the small picker is drawn at the space that remains, which is well under its 150pt cap and enough for roughly a word of the device name. Whether a real 320pt row lands there or clips has not been checked on hardware; the numbers say it will be close. Flagged for verification rather than asserted.</p>
+
+<h2>Accessibility</h2>
+<div class="tablewrap"><table>
+<tr><th>Concern</th><th>Status</th></tr>
+<tr><td>VoiceOver labels</td><td>Present and spelled out: &ldquo;Small panel size&rdquo;, &ldquo;Medium panel size&rdquo;, &ldquo;Large panel size&rdquo;. A bare letter would say nothing.</td></tr>
+<tr><td>Tooltips</td><td>&ldquo;Small panel&rdquo; / &ldquo;Medium panel&rdquo; / &ldquo;Large panel&rdquo;.</td></tr>
+<tr><td>Grouping</td><td>The container carries <code>panelScalePicker</code>, but VoiceOver reads three independent on/off buttons rather than one control with three options &mdash; the trait a segmented <code>Picker</code> would have given for free. This is the cost of the swap described above.</td></tr>
+<tr><td>Identifiers</td><td>Only the container has one. The three toggles have no <code>accessibilityIdentifier</code>, so a UI test has to reach them by label or by index.</td></tr>
+<tr><td>Selection cue</td><td>Accent fill, the same cue every other on toggle in the row uses. Not hue-dependent: the fill is a luminance change.</td></tr>
+<tr><td>Keyboard</td><td>Three separate Tab stops rather than one, with arrow keys doing nothing. A segmented control would be one stop with left/right arrows.</td></tr>
+</table></div>
 </div></div>
 </body>
 </html>

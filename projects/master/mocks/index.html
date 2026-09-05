@@ -49,12 +49,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
 #dm { display: none; }
-.page { background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px; }
+/* Scale tokens. The page defaults to medium so a control drawn outside a panel
+   (the state matrices) matches the default build. .panel.s / .panel.l override. */
+.page {
+  background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px;
+  --w: 480px; --gap: 14px; --px: 12px; --py: 8px; --r: 5px;
+  --g: 16px; --gf: 13px; --h: 20px; --cf: 12px; --lf: 12px; --pw: 200px;
+}
 .wrap { max-width: 660px; margin: 0 auto; }
 .dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
 h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
 .sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
 h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
+h3.mini { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
 p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
 code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
 a { color: var(--accent); }
@@ -63,7 +70,7 @@ a { color: var(--accent); }
 .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); overflow-x: auto; }
 
 /* ---- menu bar strip ---- */
-.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); }
+.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); flex: none; }
 .mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
 .mb-icon.rec { color: var(--sys-green); }
 .mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
@@ -71,43 +78,57 @@ a { color: var(--accent); }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
 @media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
 
-/* ---- the panel: 504pt wide in every state, 12pt h / 8pt v padding ---- */
-.panel { width: 504px; background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
-.row { display: flex; align-items: center; gap: 14px; }
-.audio-label { font-size: 11px; color: var(--label-secondary); }
-.spacer { flex: 1 1 auto; }
+/* ---- the panel ----
+   Width is the preview width for the chosen scale, and nothing else: padding
+   lives on the row, so the panel is exactly as wide as the preview.
+   Small 320pt, medium 480pt, large half the screen (shown here as 960pt,
+   i.e. a 1920pt-wide visible frame). */
+.panel { width: var(--w); background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); display: flex; flex-direction: column; flex: none; overflow: hidden; }
+.panel.s { --w: 320px; --gap: 10px; --px: 10px; --py: 6px; --r: 4px; --g: 14px; --gf: 11px; --h: 16px; --cf: 10px; --lf: 9px; --pw: 150px; }
+.panel.l { --w: 960px; --gap: 18px; --px: 16px; --py: 11px; --r: 6px; --g: 20px; --gf: 16px; --h: 24px; --cf: 15px; --lf: 15px; --pw: 260px; }
+.row { display: flex; align-items: center; gap: var(--gap); padding: var(--py) var(--px); }
+.spacer { flex: 1 1 auto; min-width: 12px; }
 
-/* every control: .controlSize(.small) chrome with a constant 1pt separator outline */
-.ctl { height: 20px; min-width: 24px; padding: 0 4px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-.ctl .glyph { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-.ctl .glyph svg { width: 13px; height: 13px; }
+/* every control: chrome for the scale's ControlSize, with a constant 1pt
+   separatorColor outline so an off toggle and an on toggle read as one control */
+.ctl { height: var(--h); padding: 0 4px; border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ctl .glyph { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; }
+.ctl .glyph svg { width: var(--gf); height: var(--gf); }
+.ctl .lbl { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; font-size: var(--lf); line-height: 1; }
 .ctl.on { background: var(--accent); color: var(--on-tint-label); }
 .ctl.on-red { background: var(--record-red); color: var(--on-tint-label); }
+.ctl .red { color: var(--record-red); }
 .ctl.hover { background: var(--hover-fill); }
 .ctl.pressed { background: var(--pressed-fill); }
 .ctl.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
 .ctl.disabled { opacity: 0.35; }
+.scalegroup { display: flex; gap: 2px; flex: none; }
 
-/* camera picker: bordered pop-up button, max 200pt */
-.picker { height: 20px; max-width: 200px; border-radius: 5px; border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: 11px; flex: none; overflow: hidden; }
+/* camera picker: bordered pop-up button, capped at the scale's max width */
+.picker { height: var(--h); max-width: var(--pw); border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: var(--cf); flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .picker .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker .chev { width: 14px; height: 16px; border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
+.picker .chev { width: 14px; height: var(--g); border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
 .picker.disabled { opacity: 0.35; }
 .menu { width: 200px; background: var(--bg-popover); border-radius: 6px; box-shadow: 0 8px 24px var(--shadow), 0 0 0 0.5px var(--separator); padding: 4px; font-size: 11px; }
 .menu div { padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu div.sel { background: var(--accent); color: #fff; }
 
-/* preview: 480 x 270pt */
-.preview { width: 480px; height: 270px; border-radius: 6px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+/* preview: flush to the panel's left, right and bottom edges, 16:9, only the
+   bottom corners rounded so it meets the window's own rounding */
+.preview { width: var(--w); height: calc(var(--w) * 0.5625); border-radius: 0 0 10px 10px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex: none; }
 .preview.live { background: linear-gradient(150deg, #4A5A73 0%, #2E3A4C 55%, #1D242F 100%); }
 .msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-align: center; color: var(--label-secondary); }
 .msg svg { width: 22px; height: 22px; }
 .msg p { font-size: 12px; line-height: 1.4; }
 .msg .lnk { font-size: 12px; color: var(--accent); border: 1px solid var(--separator); background: var(--bg-control); border-radius: 5px; padding: 2px 9px; margin-top: 2px; }
-.preview.small { width: 240px; height: 135px; }
-.preview.small .msg svg { width: 18px; height: 18px; }
-.preview.small .msg p { font-size: 10.5px; }
-.preview.small .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+.preview.half { width: 240px; height: 135px; }
+.preview.half .msg svg { width: 18px; height: 18px; }
+.preview.half .msg p { font-size: 10.5px; }
+.preview.half .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
+
+/* a panel drawn at 50% because it is wider than this page */
+.halfbox { overflow: hidden; flex: none; }
+.halfbox > * { transform: scale(0.5); transform-origin: top left; }
 
 /* matrices and grids */
 .matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
@@ -126,89 +147,94 @@ th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator
 th { background: var(--code-bg); font-weight: 600; }
 ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; }
 ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
-ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }
-</style>
+ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }</style>
 </head>
 <body>
 <input type="checkbox" id="dm">
 <div class="page"><div class="wrap">
 <label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
 <h1>MacRecordWidget — master mocks</h1>
-<p class="sub">The product baseline: what the app does in the current build, nothing else. Every page here describes shipped behaviour as of 4 September 2026.</p>
+<p class="sub">The product baseline: what the app does in the current build, nothing else. Every page here describes shipped behaviour as of 5 September 2026.</p>
 <div class="stage">
   <div class="panel">
-      <div class="row">
-        <span class="audio-label">Audio</span>
-        <span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor"/></svg></span></span>
-        <span class="spacer"></span>
-        <span class="ctl "><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
-        
-        <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
-      </div>
+    <div class="row">
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+      <span class="spacer"></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+    </div>
   </div>
-  <p class="caption">The panel, idle &mdash; 504pt wide</p>
+  <p class="caption">The panel, idle, at the default medium scale &mdash; 480pt wide</p>
 </div>
 
 <h2>What the app records</h2>
-<p class="note"><strong>Audio only.</strong> Start fires a user-created Shortcut named &ldquo;Start&rdquo; which records into Voice Memos; Stop fires &ldquo;Stop&rdquo;. Nothing in the app captures video. The camera preview is display-only: it shows a live image in the panel and never writes a file.</p>
+<p class="note"><strong>Audio only.</strong> The audio toggle fires a user-created Shortcut named &ldquo;Start&rdquo; which records into Voice Memos; turning it off fires &ldquo;Stop&rdquo;. Nothing in the app captures video. The camera preview is display-only: it shows a live image in the panel and never writes a file.</p>
 <p class="note">Photo Booth is not launched, and the code that used to launch it is deleted. If a page anywhere still says video is captured, that page is wrong.</p>
 
 <h2>The pages</h2>
 <div class="grid2">
-  <a class="card" href="popover-idle.html"><h3>Idle</h3><p>The default panel: Audio label, one audio toggle, camera toggle, Quit. Includes the hover, pressed, focused, disabled and in-flight matrix for every control.</p></a>
-  <a class="card" href="popover-recording.html"><h3>Recording</h3><p>The same toggle, on and tinted red, glyph swapped to <code>stop.fill</code>. Menu bar icon turns green with a blinking amber dot, static under Reduce Motion. Also covers recording with the preview open.</p></a>
-  <a class="card" href="preview-running.html"><h3>Camera preview open</h3><p>Camera toggle on: the 480&times;270pt preview appears below the row and the camera picker appears inside it. Panel metrics and the picker in its open state.</p></a>
+  <a class="card" href="popover-idle.html"><h3>Idle</h3><p>The default panel: pin, audio, camera and Quit, and no text at all. Includes the hover, pressed, focused, disabled and in-flight matrix for every control, plus the pin toggle&rsquo;s two states.</p></a>
+  <a class="card" href="popover-recording.html"><h3>Recording</h3><p>The same audio toggle on a red fill. Same glyph in both states &mdash; only the fill flips. Menu bar icon turns green with a blinking amber dot, static under Reduce Motion.</p></a>
+  <a class="card" href="preview-running.html"><h3>Camera preview open</h3><p>Camera toggle on: the preview appears flush to the panel&rsquo;s edges, and the camera picker and the S/M/L buttons appear in the row.</p></a>
+  <a class="card" href="panel-scale.html"><h3>Panel scale &mdash; S / M / L</h3><p>Three sizes, three toggle buttons. Every dimension in the panel derives from the chosen scale. The full token table, and where the control can and cannot be reached.</p></a>
   <a class="card" href="preview-states.html"><h3>Permission and hardware states</h3><p>Every non-running preview state with its exact copy, plus what recovers each one.</p></a>
   <a class="card" href="alert-error.html"><h3>Error alert</h3><p>Failures surface as a critical <code>NSAlert</code>, never inside the panel.</p></a>
 </div>
 <p class="note">Design-process pages are not part of the baseline; they stay in the feature folder: <a href="../../20260904-live-camera-preview/generated-docs/design/placement-decision.html">placement decision</a> and <a href="../../20260904-live-camera-preview/generated-docs/design/preview-size-study.html">preview size study</a>. Both predate the UI revisions on this page, so read them as history.</p>
 
 <h2>The button row</h2>
-<p class="note">One row, left to right. Order is fixed; the camera picker is the only element that comes and goes.</p>
+<p class="note">One row, left to right. Order is fixed. <strong>The row contains no text of its own</strong> &mdash; the &ldquo;Audio&rdquo; label was removed. The only characters anywhere in it are the camera name inside the picker and the S, M and L letters, and both of those appear only while the camera is on.</p>
 <div class="tablewrap"><table>
 <tr><th>#</th><th>Element</th><th>Present when</th></tr>
-<tr><td>1</td><td>&ldquo;Audio&rdquo; label</td><td>always &mdash; names what the toggle beside it controls</td></tr>
+<tr><td>1</td><td>Pin toggle</td><td>always &mdash; keeps the panel open when another app takes focus</td></tr>
 <tr><td>2</td><td>Audio toggle</td><td>always &mdash; one control, on starts, off stops</td></tr>
-<tr><td>3</td><td>Spacer</td><td>always &mdash; splits recording from camera</td></tr>
+<tr><td>3</td><td>Spacer</td><td>always &mdash; splits recording from camera, minimum 12pt</td></tr>
 <tr><td>4</td><td>Camera toggle</td><td>always &mdash; shows and hides the preview</td></tr>
 <tr><td>5</td><td>Camera picker</td><td>only while the camera toggle is on</td></tr>
-<tr><td>6</td><td>Quit</td><td>always</td></tr>
+<tr><td>6</td><td>S / M / L buttons</td><td>only while the camera toggle is on</td></tr>
+<tr><td>7</td><td>Quit</td><td>always</td></tr>
 </table></div>
-<p class="note">There is no separate Stop button and no mirror control. Recording is one toggle in two states; mirroring is on and is not user-adjustable.</p>
+<p class="note">There is no Stop button, no mirror control and no text label. Recording is one toggle in two states; mirroring is on and is not user-adjustable.</p>
 
 <h2>Panel behaviour</h2>
 <div class="tablewrap"><table>
 <tr><th>Property</th><th>Value</th></tr>
 <tr><td>Scene</td><td><code>MenuBarExtra</code> with <code>.menuBarExtraStyle(.window)</code></td></tr>
-<tr><td>Width</td><td><strong>504pt in every state.</strong> 480pt of content plus 12pt padding each side. The width never changes &mdash; a width change forces AppKit to reposition as well as resize, and the anchored position is painted before the correction lands.</td></tr>
-<tr><td>Height</td><td>The only dimension that moves. Opening the preview adds exactly 278pt (8pt row-to-preview spacing plus the 270pt preview). Derived from the layout constants, not measured.</td></tr>
-<tr><td>Position</td><td>Trailing edge pinned 8pt inside the screen&rsquo;s <code>visibleFrame</code>. The panel does not pin its own trailing edge &mdash; AppKit anchors it to the status item, and <code>PanelSizer</code> imposes the alignment.</td></tr>
-<tr><td>Resize</td><td>Not animated, in either direction. Animating <code>setFrame</code> animates the reverted origin too, which slides the panel across the screen before the correction lands.</td></tr>
+<tr><td>Width</td><td><strong>Set by the scale, not fixed.</strong> 320pt at small, 480pt at medium, and at large exactly half the screen&rsquo;s <code>visibleFrame</code> (floored, never below 480pt). The panel width <em>is</em> the preview width: padding lives on the row, so nothing is added around it.</td></tr>
+<tr><td>Height</td><td>Row height plus its vertical padding, plus the full preview height when the camera is on. There is no gap between the two &mdash; the enclosing <code>VStack</code> has <code>spacing: 0</code>.</td></tr>
+<tr><td>Position</td><td>Trailing edge flush with the right of the screen&rsquo;s <code>visibleFrame</code> (<code>screenMargin = 0</code>). The panel does not pin its own trailing edge &mdash; AppKit anchors it to the status item, and <code>PanelSizer</code> imposes the alignment.</td></tr>
+<tr><td>Resize</td><td>Not animated, in any direction. Animating <code>setFrame</code> animates the reverted origin too, which slides the panel across the screen before the correction lands.</td></tr>
+<tr><td>Changing scale</td><td>Changes the width as well as the height. Because the panel is right-anchored, only its left edge moves; <code>PanelSizer</code> suppresses drawing until the corrected frame is in place.</td></tr>
 <tr><td>Dragging</td><td>Disabled (<code>isMovable = false</code>, <code>isMovableByWindowBackground = false</code>).</td></tr>
-<tr><td>Dismissal</td><td>Only by clicking the menu bar icon. The panel deliberately stays open through Start and Stop.</td></tr>
-<tr><td>Padding</td><td>12pt horizontal, 8pt vertical; 8pt between row and preview; 14pt between controls in the row.</td></tr>
+<tr><td>Dismissal</td><td>Clicking the menu bar icon always closes it. Losing focus to another app also closes it <em>unless the pin toggle is on</em>. The panel deliberately stays open through Start and Stop either way.</td></tr>
+<tr><td>Padding</td><td>On the row only: 10/12/16pt horizontal and 6/8/11pt vertical at S/M/L. The preview has none, and runs flush to the left, right and bottom edges.</td></tr>
+<tr><td>Persistence</td><td><code>panelPinned</code> and <code>panelScale</code> in <code>UserDefaults</code>. Both survive a relaunch.</td></tr>
 </table></div>
 
 <h2>Control mapping</h2>
+<p class="note">Nothing in the row is a fixed <code>.controlSize(.small)</code> any more. Every control takes <code>scale.controlSize</code> &mdash; <code>.mini</code>, <code>.small</code> or <code>.regular</code> &mdash; and a glyph sized by <code>scale.glyphFont</code> inside a <code>scale.glyphSize</code> frame. See <a href="panel-scale.html">panel scale</a> for the values.</p>
 <div class="tablewrap"><table>
 <tr><th>Element</th><th>SwiftUI control</th><th>Key modifiers</th><th>Accessibility</th></tr>
-<tr><td>&ldquo;Audio&rdquo; label</td><td><code>Text</code></td><td><code>.font(.system(size: 11))</code>, <code>.foregroundStyle(.secondary)</code></td><td><code>.accessibilityHidden(true)</code> &mdash; the toggle carries the label</td></tr>
-<tr><td>Audio toggle</td><td><code>Toggle</code> with an <code>Image(systemName:)</code> label &mdash; <code>record.circle.fill</code> off, <code>stop.fill</code> on</td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(.small)</code>, <code>.tint(.red)</code>, <code>.disabled(isInFlight)</code>, 1pt <code>separatorColor</code> outline</td><td>label &ldquo;Start recording&rdquo; / &ldquo;Stop recording&rdquo;; id <code>recordToggle</code></td></tr>
-<tr><td>Camera toggle</td><td><code>Toggle</code> with an <code>Image(systemName: "video.fill")</code> label</td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(.small)</code>, 1pt <code>separatorColor</code> outline</td><td>label &ldquo;Show camera preview&rdquo;; id <code>videoModeToggle</code></td></tr>
-<tr><td>Camera picker</td><td><code>Picker</code> (pop-up button)</td><td><code>.labelsHidden()</code>, <code>.controlSize(.small)</code>, <code>.frame(maxWidth: 200)</code>, <code>.disabled</code> when no camera is available</td><td>label &ldquo;Preview camera&rdquo;; id <code>cameraPicker</code></td></tr>
-<tr><td>Quit</td><td><code>Button</code> &mdash; <code>power</code></td><td><code>.buttonStyle(.bordered)</code>, <code>.controlSize(.small)</code>, 1pt outline, <code>.help("Quit MacRecordWidget")</code></td><td>label &ldquo;Quit MacRecordWidget&rdquo;; id <code>quitButton</code></td></tr>
-<tr><td>Row container</td><td><code>HStack(spacing: 14)</code></td><td><code>.focusEffectDisabled()</code>, <code>.frame(maxWidth: .infinity, alignment: .leading)</code></td><td>reading order matches the row</td></tr>
-<tr><td>Preview surface</td><td><code>AVCaptureVideoPreviewLayer</code> in an <code>NSViewRepresentable</code> (<code>CameraPreviewLayerView</code>)</td><td>480&times;270pt, <code>videoGravity = .resizeAspectFill</code>, clipped to a 6pt <code>RoundedRectangle</code>. macOS 14 has no SwiftUI-native camera preview, so AppKit interop is required.</td><td>label &ldquo;Camera preview&rdquo;; id <code>cameraPreview</code>; <code>.accessibilityElement(children: .contain)</code></td></tr>
-<tr><td>Preview message states</td><td><code>VStack</code> of <code>Image(systemName:)</code> + <code>Text</code>, over <code>underPageBackgroundColor</code></td><td>22pt symbol, 12pt copy, both <code>.secondary</code></td><td>copy is read as-is by VoiceOver</td></tr>
+<tr><td>Pin toggle</td><td><code>Toggle</code> bound to <code>@AppStorage("panelPinned")</code>, with an <code>Image(systemName:)</code> label &mdash; <code>pin.slash</code> off, <code>pin.fill</code> on</td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(scale.controlSize)</code>, 1pt <code>separatorColor</code> outline</td><td>label &ldquo;Keep panel open&rdquo; (constant); id <code>pinToggle</code></td></tr>
+<tr><td>Audio toggle</td><td><code>Toggle</code> with an <code>Image(systemName: "mic.fill")</code> label &mdash; <strong>the same glyph in both states</strong></td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(scale.controlSize)</code>, <code>.tint(.red)</code>, <code>.disabled(isInFlight)</code>, 1pt outline</td><td>label &ldquo;Start recording&rdquo; / &ldquo;Stop recording&rdquo;; id <code>recordToggle</code></td></tr>
+<tr><td>Camera toggle</td><td><code>Toggle</code> with an <code>Image(systemName: "video.fill")</code> label</td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(scale.controlSize)</code>, 1pt outline</td><td>label follows state: &ldquo;Show camera preview&rdquo; / &ldquo;Hide camera preview&rdquo;; id <code>videoModeToggle</code></td></tr>
+<tr><td>Camera picker</td><td><code>Picker</code> (pop-up button) inside <code>CameraControls</code></td><td><code>.labelsHidden()</code>, <code>.font(scale.controlFont)</code>, <code>.controlSize(scale.controlSize)</code>, <code>.frame(maxWidth: scale.pickerMaxWidth)</code>, <code>.disabled</code> when no camera is available</td><td>label &ldquo;Preview camera&rdquo;; id <code>cameraPicker</code></td></tr>
+<tr><td>S / M / L</td><td>Three <code>Toggle</code>s with <code>Text</code> labels in an <code>HStack(spacing: 2)</code> &mdash; <strong>not</strong> a segmented <code>Picker</code></td><td><code>.toggleStyle(.button)</code>, <code>.controlSize(scale.controlSize)</code>, <code>.font(scale.scaleLabelFont)</code>, 1pt outline; each bound to a derived <code>Binding&lt;Bool&gt;</code> that ignores being switched off</td><td>labels &ldquo;Small/Medium/Large panel size&rdquo;; container id <code>panelScalePicker</code>; the individual toggles carry no identifier of their own</td></tr>
+<tr><td>Quit</td><td><code>Button</code> &mdash; <code>power</code></td><td><code>.buttonStyle(.bordered)</code>, <code>.controlSize(scale.controlSize)</code>, 1pt outline, <code>.help("Quit")</code></td><td>label &ldquo;Quit MacRecordWidget&rdquo;; id <code>quitButton</code></td></tr>
+<tr><td>Row container</td><td><code>HStack(spacing: scale.rowSpacing)</code></td><td><code>.focusEffectDisabled()</code>, <code>.frame(maxWidth: .infinity, alignment: .leading)</code>, padding applied here rather than on the panel</td><td>reading order matches the row</td></tr>
+<tr><td>Preview surface</td><td><code>AVCaptureVideoPreviewLayer</code> in an <code>NSViewRepresentable</code> (<code>CameraPreviewLayerView</code>)</td><td><code>scale.previewWidth</code> &times; <code>scale.previewHeight</code> (16:9), <code>videoGravity = .resizeAspectFill</code>, clipped with <code>.rect(bottomLeadingRadius: 10, bottomTrailingRadius: 10)</code>. macOS 14 has no SwiftUI-native camera preview, so AppKit interop is required.</td><td>label &ldquo;Camera preview&rdquo;; id <code>cameraPreview</code>; <code>.accessibilityElement(children: .contain)</code></td></tr>
+<tr><td>Preview message states</td><td><code>VStack</code> of <code>Image(systemName:)</code> + <code>Text</code>, over <code>underPageBackgroundColor</code></td><td>22pt symbol, 12pt copy, both <code>.secondary</code>, 16pt horizontal padding</td><td>copy is read as-is by VoiceOver</td></tr>
 <tr><td>Open Settings</td><td><code>Button</code></td><td>shown only in the <code>denied</code> state</td><td>id <code>openCameraSettingsButton</code></td></tr>
-<tr><td>Panel sizing</td><td><code>PanelSizer</code> &mdash; <code>NSViewRepresentable</code> over the panel&rsquo;s <code>NSWindow</code></td><td><code>disableScreenUpdatesUntilFlush()</code>, then <code>setFrame</code> + <code>setFrameOrigin</code>, then one flush</td><td>&mdash;</td></tr>
+<tr><td>Panel sizing and pinning</td><td><code>PanelSizer</code> &mdash; <code>NSViewRepresentable</code> over the panel&rsquo;s <code>NSWindow</code></td><td><code>disableScreenUpdatesUntilFlush()</code>, then <code>setFrame</code> + <code>setFrameOrigin</code>, then one flush; <code>keepVisibleIfPinned</code> re-shows the window on <code>didResignKeyNotification</code></td><td>&mdash;</td></tr>
 <tr><td>Menu bar item</td><td><code>MenuBarExtra</code> label &mdash; <code>record.circle</code></td><td><code>.symbolRenderingMode(.hierarchical)</code>, <code>.foregroundStyle(isRecording ? .green : .primary)</code></td><td>system-provided status item</td></tr>
 <tr><td>Recording dot</td><td><code>Circle()</code> in a <code>ZStack(alignment: .bottomTrailing)</code></td><td>5&times;5pt, <code>.offset(x: 2, y: 2)</code>, blink <code>.easeInOut(0.8).repeatForever()</code>, static under Reduce Motion</td><td><code>.accessibilityHidden(true)</code></td></tr>
 <tr><td>Error report</td><td><code>NSAlert</code> (<code>.critical</code>) via AppKit interop</td><td><code>runModal()</code>, single OK button</td><td>read by VoiceOver on presentation</td></tr>
 </table></div>
 
 <h2>Control chrome</h2>
-<p class="note">Every control in the row is <code>.controlSize(.small)</code> with a 13pt glyph centred in a 16pt frame, and carries a constant 1pt <code>separatorColor</code> outline. The outline is the reason for the rule: without it a button toggle only draws an edge when it is on, so an off toggle and an on toggle read as two different objects instead of one control in two states.</p>
+<p class="note">Every control in the row carries a constant 1pt <code>separatorColor</code> outline at <code>scale.cornerRadius</code>. The outline is the reason for the rule: without it a button toggle only draws an edge when it is on, so an off toggle and an on toggle read as two different objects instead of one control in two states.</p>
+<p class="note">An <em>on</em> toggle fills with the accent colour, the same way in every case: the pin, the camera toggle and the selected size button are all accent-filled when active. The audio toggle is the single exception &mdash; it is tinted red, so recording is the only red thing on screen.</p>
 
 <h2>Menu bar and keyboard</h2>
 <p class="note">The app has no application menu bar. It is a <code>MenuBarExtra</code>-only agent app: no <code>WindowGroup</code>, no <code>Settings</code> scene, no <code>commands {}</code> block, so no App, File, Edit, View, Window or Help menu exists and no keyboard shortcut is registered. Quit is reachable only through the power button in the panel, not &#8984;Q.</p>
@@ -217,16 +243,19 @@ ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--
 <h2>Accessibility</h2>
 <div class="tablewrap"><table>
 <tr><th>Element</th><th>VoiceOver label</th><th>Identifier</th></tr>
+<tr><td>Pin toggle</td><td>Keep panel open &mdash; constant, so the label does not track the state the way the tooltip does</td><td><code>pinToggle</code></td></tr>
 <tr><td>Audio toggle</td><td>Start recording / Stop recording (follows state)</td><td><code>recordToggle</code></td></tr>
-<tr><td>Camera toggle</td><td>Show camera preview</td><td><code>videoModeToggle</code></td></tr>
+<tr><td>Camera toggle</td><td>Show camera preview / Hide camera preview (follows state)</td><td><code>videoModeToggle</code></td></tr>
 <tr><td>Camera picker</td><td>Preview camera</td><td><code>cameraPicker</code></td></tr>
-<tr><td>Quit</td><td>Quit MacRecordWidget (also the tooltip)</td><td><code>quitButton</code></td></tr>
+<tr><td>S / M / L</td><td>Small panel size / Medium panel size / Large panel size</td><td>container only: <code>panelScalePicker</code></td></tr>
+<tr><td>Quit</td><td>Quit MacRecordWidget (tooltip is the shorter &ldquo;Quit&rdquo;)</td><td><code>quitButton</code></td></tr>
 <tr><td>Preview area</td><td>Camera preview</td><td><code>cameraPreview</code></td></tr>
 <tr><td>Open Settings</td><td>Open Settings</td><td><code>openCameraSettingsButton</code></td></tr>
-<tr><td>&ldquo;Audio&rdquo; label</td><td>hidden &mdash; would double the toggle&rsquo;s own label</td><td>&mdash;</td></tr>
 <tr><td>Recording dot</td><td>hidden &mdash; state is carried by the toggle and the icon colour</td><td>&mdash;</td></tr>
 </table></div>
-<p class="note">Reduce Motion removes the menu bar dot blink. Recording state never depends on hue alone: the glyph swaps from <code>record.circle.fill</code> to <code>stop.fill</code>, which survives greyscale and Increase Contrast. Dynamic Type applies only to the 11pt &ldquo;Audio&rdquo; label and the preview message copy; the row contains no other text.</p>
+<p class="note">Reduce Motion removes the menu bar dot blink.</p>
+<p class="note"><strong>Recording state and colour.</strong> The audio toggle no longer changes shape between its two states: it is <code>mic.fill</code> whether idle or recording, and only the fill flips. That fill is a large luminance change rather than a hue change &mdash; a filled button against an unfilled one &mdash; so it survives greyscale and Increase Contrast, and it is the same distinction the camera toggle and the pin already rely on. The tooltip and the VoiceOver label both change with the state, and the menu bar icon separately turns green and gains a blinking amber dot. Recording state is therefore never carried by hue alone. It <em>is</em> now carried by fill alone within the panel, which is a narrower margin than the previous glyph swap gave; that trade is recorded on the <a href="popover-recording.html">recording page</a>.</p>
+<p class="note">Dynamic Type applies only to the camera name, the S/M/L letters and the preview message copy. The row contains no other text.</p>
 </div></div>
 </body>
 </html>
