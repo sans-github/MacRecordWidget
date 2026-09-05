@@ -21,6 +21,9 @@ struct PanelSizer: NSViewRepresentable {
     let size: CGSize
     let animated: Bool
 
+    /// Gap between the panel's trailing edge and the right of the screen.
+    private static let screenMargin: CGFloat = 8
+
     func makeNSView(context: Context) -> NSView { NSView(frame: .zero) }
 
     func updateNSView(_ nsView: NSView, context: Context) {
@@ -36,11 +39,17 @@ struct PanelSizer: NSViewRepresentable {
                 window.isMovableByWindowBackground = true
             }
             let current = window.frame
-            guard abs(current.width - size.width) > 0.5 || abs(current.height - size.height) > 0.5 else { return }
+            let sizeChanged = abs(current.width - size.width) > 0.5 || abs(current.height - size.height) > 0.5
+            guard sizeChanged else { return }
 
-            // Pin top-right: x grows leftward from maxX, y downward from maxY.
+            // Align the trailing edge to the right of the screen, so the panel
+            // grows leftward from a fixed edge instead of from wherever AppKit
+            // happened to anchor it under the status item. Falls back to the
+            // current maxX if no screen can be resolved.
+            let screen = window.screen ?? NSScreen.main
+            let rightEdge = screen.map { $0.visibleFrame.maxX - Self.screenMargin } ?? current.maxX
             let target = NSRect(
-                x: current.maxX - size.width,
+                x: rightEdge - size.width,
                 y: current.maxY - size.height,
                 width: size.width,
                 height: size.height
