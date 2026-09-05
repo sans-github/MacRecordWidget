@@ -123,12 +123,22 @@ on.
 - Camera contention with Photo Booth is **moot**: Photo Booth is no longer
   launched, so nothing competes for the device.
 
-### Swift 5.9 concurrency
+### Swift 5.9 (CI builds with Xcode 15.2)
 
-CI builds with Xcode 15.2, which does **not** infer `@MainActor` on `App` or on
-view bodies. `MacRecordWidgetApp`, `MenuBarIcon`, `CameraPreviewPanel` and
-`CameraPreviewLayerView` carry explicit `@MainActor` annotations for that
-reason. Removing them builds locally on newer toolchains and fails in CI.
+The local toolchain on a current Mac is newer than CI's and accepts things CI
+rejects. This has cost a red build twice, so check against 5.9 rules rather than
+against what compiles locally.
+
+- **`@MainActor` is not inferred** on `App` or on view bodies.
+  `MacRecordWidgetApp`, `MenuBarIcon`, `CameraPreviewPanel` and
+  `CameraPreviewLayerView` carry explicit annotations for that reason.
+- **Switch expressions do not mix with switch statements.** Adding a case that
+  needs more than one statement turns the whole `switch` into a statement, and
+  the remaining one-line cases stop being implicit returns. Either every case
+  is a bare expression, or every case says `return`. See
+  `PanelScale.previewWidth`.
+
+A local `swiftc -typecheck` will not catch either of these. Only CI will.
 
 ### Source layout exception
 

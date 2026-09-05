@@ -207,10 +207,14 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// it, so the padding and the screen margin come off the top. Sizing the
     /// preview to half the screen instead makes the panel wider than half by
     /// exactly that much, and it laps over a window tiled to the left half.
+    /// Every branch returns explicitly. One case here needs more than a single
+    /// expression, which makes this a switch statement rather than a switch
+    /// expression, and then the one-line cases are no longer implicit returns.
+    /// Swift 5.9 (Xcode 15.2, which CI uses) rejects the mix.
     var previewWidth: CGFloat {
         switch self {
-        case .small: 320
-        case .medium: 480
+        case .small: return 320
+        case .medium: return 480
         case .large:
             let screenWidth = NSScreen.main?.visibleFrame.width ?? 960
             let halfPanel = screenWidth / 2 - PanelSizer.screenMargin - horizontalPadding * 2
