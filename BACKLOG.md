@@ -27,6 +27,8 @@ _Last triaged: --_
 |  | Swift | bug | Recording name uses `DateFormatter.localizedString`, so it is locale-dependent and retains commas/spaces; `.urlQueryAllowed` is also the wrong character set for a query value | Agent | 2026-09-04 |
 |  | Swift | debt | The panel pin (`PanelSizer.keepVisibleIfPinned`) fights `MenuBarExtra`'s private close-on-resign-key by re-ordering the window front, both synchronously and on the next runloop pass, because the ordering against AppKit's own handler is not guaranteed. No public API for this; could break on a future macOS | Agent | 2026-09-05 |
 |  | Swift | ux | A cancelled `Task.sleep` in the Voice Memos wait surfaces as a generic "Recording Error" alert instead of being ignored | Agent | 2026-09-04 |
+|  | Swift | bug | Pinned panel visibly blinks the first time another app is clicked after launch: AppKit's order-out is painted before `keepVisibleIfPinned` re-shows the window. Confirmed by the user on hardware | User | 2026-09-05 |
+|  | Design | ux | Leaving the scale on L and closing the camera preview strands an oversized button row with no visible control to shrink it, because the S/M/L toggles are only mounted while the preview is open | Agent | 2026-09-05 |
 
 **Active:**
 | ID | Summary | Blocks | Ready? | Since |

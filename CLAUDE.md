@@ -10,7 +10,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Five Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`record.circle.fill` in red while idle / `stop.fill` on a red fill while recording), a spacer, a camera toggle button (`video.fill`), then the camera picker and the S/M/L size picker (both only while the camera is on), and a bordered power button. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`record.circle.fill` in red while idle / `stop.fill` on a red fill while recording), a spacer, a camera toggle button (`video.fill`), then the camera picker and three S/M/L size toggles (all only while the camera is on), and a bordered power button. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. **Recording is audio only.** Photo Booth is never launched.
 
 Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required. Minimum macOS deployment target is 14.0.
@@ -25,8 +25,10 @@ Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessi
 
 ## Live camera preview
 
-Shipped 2026-09-04. The camera toggle opens a live 480x270pt preview below the
-button row. It is display-only: it never writes a file, and nothing else
+Shipped 2026-09-04. The camera toggle opens a live 16:9 preview below the button
+row, sized by `PanelScale` (480x270pt at the default medium scale) and running
+flush to the panel's left, right and bottom edges. It is display-only: it never
+writes a file, and nothing else
 captures video either. The preview exists so the user can see themselves, not
 to record.
 
@@ -59,22 +61,34 @@ into `projects/master/`.
 
 `PanelScale` (in `PanelSizer.swift`) owns every dimension that follows from the
 S/M/L choice: preview size, glyph size and font, `ControlSize`, row spacing,
-padding, corner radius and picker width. It is one enum on purpose, because the
-row and the preview have to scale together and spreading the numbers across the
-views is how they drift apart. The choice persists in `UserDefaults` under
-`panelScale`.
+padding, corner radius, picker width, and two text fonts. It is one enum on
+purpose, because the row and the preview have to scale together and spreading
+the numbers across the views is how they drift apart. The choice persists in
+`UserDefaults` under `panelScale`.
 
-At `large` it is the **panel** that measures half the screen, not the preview
-inside it, so `previewWidth` subtracts the screen margin and both horizontal
-paddings first. Sizing the preview to half the screen instead makes the panel
-wider than half by exactly that much, which laps over a window tiled to the left
-half of the display. `large` is clamped to at least the medium width, so a
-narrow display cannot put the three sizes out of order.
+The preview runs the full width of the panel, so `previewWidth` *is* the panel
+width, and `large` is half the screen exactly. It is clamped to at least the
+medium width, so a narrow display cannot put the three sizes out of order.
 
-The picker is only mounted while the preview is open. A consequence worth
-knowing: leaving the scale on `large` and closing the preview leaves an
-oversized button row with no visible way to shrink it until the camera goes back
-on.
+**Three fonts, not one, and they are not interchangeable:**
+
+- `glyphFont` sizes the SF Symbols in the icon buttons.
+- `controlFont` sizes text inside AppKit-backed controls, currently the camera
+  name. `ControlSize` does **not** carry text size with it: `.regular` still
+  draws 13pt, which reads as too small beside 20pt glyphs.
+- `scaleLabelFont` sizes the S/M/L letters, and is a point smaller than
+  `controlFont` at the small scale. A letter fills its box more solidly than a
+  glyph does, so equal point sizes do not give equal visual weight. Matching
+  them made S look wrong while the numbers looked consistent.
+
+The size buttons are **`Toggle`s, not a segmented `Picker`**.
+`.pickerStyle(.segmented)` is an `NSSegmentedControl` underneath and ignores
+SwiftUI's `.font()`, so its labels stayed at 13pt while everything around them
+scaled. Do not "simplify" them back into a `Picker` without solving that.
+
+They are only mounted while the preview is open. A consequence worth knowing:
+leaving the scale on `large` and closing the preview leaves an oversized button
+row with no visible control to shrink it until the camera goes back on.
 
 ### Panel sizing gotchas
 
