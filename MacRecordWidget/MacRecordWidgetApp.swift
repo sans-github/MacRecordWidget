@@ -41,6 +41,12 @@ struct MacRecordWidgetApp: App {
                 // exclusive with one of them disabled, so a single toggle
                 // carries the same state with half the controls.
                 Toggle(isOn: recordingBinding) {
+                    // A microphone, not a record dot: a red disc is the generic
+                    // record mark and reads as video as readily as audio. The
+                    // mic names the medium, and pairs with `video.fill` on the
+                    // camera toggle beside it. It also survives the 11pt small
+                    // scale, which the thinner audio symbols do not.
+                    //
                     // Red while idle, so the control that starts a recording is
                     // the one thing in the row that draws the eye. While
                     // recording the button fills red and the glyph is left to
@@ -49,7 +55,7 @@ struct MacRecordWidgetApp: App {
                         if recordingManager.isRecording {
                             Image(systemName: "stop.fill")
                         } else {
-                            Image(systemName: "record.circle.fill")
+                            Image(systemName: "mic.fill")
                                 .foregroundStyle(.red)
                         }
                     }

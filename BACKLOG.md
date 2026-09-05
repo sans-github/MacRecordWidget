@@ -29,6 +29,7 @@ _Last triaged: --_
 |  | Swift | ux | A cancelled `Task.sleep` in the Voice Memos wait surfaces as a generic "Recording Error" alert instead of being ignored | Agent | 2026-09-04 |
 |  | Swift | bug | Pinned panel visibly blinks the first time another app is clicked after launch: AppKit's order-out is painted before `keepVisibleIfPinned` re-shows the window. Confirmed by the user on hardware | User | 2026-09-05 |
 |  | Design | ux | Leaving the scale on L and closing the camera preview strands an oversized button row with no visible control to shrink it, because the S/M/L toggles are only mounted while the preview is open | Agent | 2026-09-05 |
+|  | Spec | gap | `projects/master/` has drifted from the shipped UI across a day of changes: PRD and mocks still describe the "Audio" label, `record.circle.fill`, a fixed `.controlSize(.small)`, a 504pt fixed-width panel and an inset preview. None of the pin toggle, S/M/L scaling or `mic.fill` is covered. Needs a Stage 6 pass by PM and Designer, not an ad-hoc edit | Agent | 2026-09-05 |
 
 **Active:**
 | ID | Summary | Blocks | Ready? | Since |
