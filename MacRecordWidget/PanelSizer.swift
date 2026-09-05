@@ -1,6 +1,32 @@
 import AppKit
 import SwiftUI
 
+/// Temporary diagnostics for the panel-positioning problem. Writes to
+/// /tmp/macrecordwidget-panel.log so the actual window identity and frames can
+/// be inspected instead of guessed at.
+enum PanelLog {
+    static let path = "/tmp/macrecordwidget-panel.log"
+
+    static func write(_ message: String) {
+        let line = "[\(Date())] \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let handle = FileHandle(forWritingAtPath: path) {
+            handle.seekToEndOfFile()
+            handle.write(data)
+            try? handle.close()
+        } else {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    static func dumpWindows(_ tag: String) {
+        let windows = NSApp.windows.map { w in
+            "\(type(of: w)) frame=\(w.frame) visible=\(w.isVisible) level=\(w.level.rawValue)"
+        }
+        write("\(tag) NSApp.windows(\(windows.count)): \(windows.joined(separator: " | "))")
+    }
+}
+
 /// Reports the measured size of the popover content.
 struct PanelSizeKey: PreferenceKey {
     static var defaultValue: CGSize = .zero
@@ -20,7 +46,13 @@ final class PanelAnchorView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if let window { onAttach?(window) }
+        if let window {
+            PanelLog.write("viewDidMoveToWindow: \(type(of: window)) frame=\(window.frame) screen=\(String(describing: window.screen?.visibleFrame))")
+            PanelLog.dumpWindows("attach")
+            onAttach?(window)
+        } else {
+            PanelLog.write("viewDidMoveToWindow: window is nil")
+        }
     }
 }
 
@@ -76,6 +108,7 @@ struct PanelSizer: NSViewRepresentable {
                 width: size.width,
                 height: size.height
             )
+            PanelLog.write("align current=\(current) target=\(target) rightEdge=\(rightEdge) screenVisible=\(String(describing: screen?.visibleFrame))")
             guard abs(current.origin.x - target.origin.x) > 0.5
                     || abs(current.origin.y - target.origin.y) > 0.5
                     || abs(current.width - target.width) > 0.5
@@ -83,7 +116,10 @@ struct PanelSizer: NSViewRepresentable {
             else { return }
 
             isApplying = true
-            defer { isApplying = false }
+            defer {
+                isApplying = false
+                PanelLog.write("applied -> frame=\(window.frame)")
+            }
 
             guard animated else {
                 window.setFrame(target, display: true)
