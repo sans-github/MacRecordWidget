@@ -10,34 +10,42 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Five Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single-row `HStack` with: a switch-style video toggle (camera icon label, `video`/`video.fill` reflects state), a `record.circle.fill` start button (red, plain style), a `stop.fill` stop button (plain style), and a `power` quit button. Panel stays open after Start/Stop; closes only when the user clicks the menu bar icon. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion). It never changes to a mic or camera glyph.
-- `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait using `Task { }` and structured concurrency, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>` (the timestamp is generated in `startRecording()` and passed to the Shortcut as input text). If `videoEnabled`, also opens Photo Booth (does not go full-screen). `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully. An `isInFlight` guard prevents a second invocation while the first is still running.
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: an "Audio" label, ONE audio toggle button (`record.circle.fill` idle / `stop.fill` recording, tinted red), a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), and a bordered power button. Every control is `.controlSize(.small)` with a 13pt glyph in a 16pt frame and a constant 1pt outline, so an off toggle and an on toggle read as one control in two states. Panel stays open after start/stop; it closes only when the user clicks the menu bar icon. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. **Recording is audio only.** Photo Booth is never launched.
 
-Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required (osascript full-screen call was removed). Minimum macOS deployment target is 14.0.
+Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required. Minimum macOS deployment target is 14.0.
+
+**The app has no video capture.** The camera toggle drives an on-screen preview and nothing else; recording produces an audio memo in Voice Memos. Photo Booth used to be launched for video and that was removed deliberately, because one toggle was silently doing two jobs.
 
 ## Gotchas
 
 - Voice Memos must be quit before firing the Start shortcut or macOS raises `VMAudioServiceErrorDomain` error 5. The quit + wait runs inside a `Task { }` using `async`/`await` so the UI doesn't block.
 - Do not call `popover.close()` or `panel?.orderOut(nil)` after Start/Stop. The panel intentionally stays open during recording so the user can press Stop without re-opening the popover. The panel closes only via the menu bar icon click (native MenuBarExtra behavior).
-- Photo Booth launches in video mode but does not go full-screen by design. The osascript full-screen call was removed to avoid the Accessibility permission prompt.
+- `NSWorkspace.open` returns `true` whenever something claims the `shortcuts://` scheme, which the Shortcuts app always does. It says nothing about whether the "Start" Shortcut exists or ran, so the app cannot detect a missing or broken Shortcut. Do not read that return value as proof a recording started.
 
 ## Live camera preview
 
-Shipped 2026-09-04. Turning the video toggle on opens a live 480x270pt camera
-preview below the button row. The preview is display-only: it never writes a
-file, and Photo Booth remains the sole capturer.
+Shipped 2026-09-04. The camera toggle opens a live 480x270pt preview below the
+button row. It is display-only: it never writes a file, and nothing else
+captures video either. The preview exists so the user can see themselves, not
+to record.
 
 Three files implement it:
 
 - `CameraManager.swift` - `@MainActor @Observable` owner of the `AVCaptureSession`.
   Distinguishes every permission state; `restricted` deliberately offers no
   "Open Settings" action because that pane cannot resolve an MDM restriction.
-  Camera choice and mirror flag persist in `UserDefaults`. A disconnect falls
-  back to another camera *without* clearing the stored preference, so
-  reconnecting the preferred device restores it.
+  Camera choice persists in `UserDefaults`. A disconnect falls back to another
+  camera *without* clearing the stored preference, so reconnecting the preferred
+  device restores it. Mirroring is hardcoded on: the user-facing toggle was
+  removed, and the stored preference is deliberately not read, because a
+  previously saved `false` would otherwise strand the preview unmirrored with no
+  way to change it back.
 - `CameraPreviewView.swift` - `AVCaptureVideoPreviewLayer` inside an
   `NSViewRepresentable`, because macOS 14 has no SwiftUI-native camera preview.
-  The picker's selected value doubles as the camera-name indicator.
+  `CameraControls` holds the picker, which lives in the button row rather than
+  under the preview; its selected value doubles as the camera-name indicator,
+  naming the device actually feeding the layer rather than the stored preference.
 - `PanelSizer.swift` - drives the panel's `NSWindow` frame. See the gotcha below.
 
 The session starts when the toggle turns on and stops when the popover closes,
@@ -74,10 +82,10 @@ into `projects/master/`.
 - The panel does **not** pin its own trailing edge, contrary to what the design
   assumed. It anchors to the status item; right-alignment is something
   `PanelSizer` imposes, 8pt from the screen's visible frame.
-- The width change **does** animate, via `NSAnimationContext` on the window.
-- **Still untested:** whether this app and Photo Booth can hold the same camera
-  at once. The preview is left running during recording on the assumption that
-  they can. If they cannot, that decision needs revisiting.
+- The resize is **not** animated. Animating it animates the reverted origin too,
+  which slides the panel across the screen before the correction lands.
+- Camera contention with Photo Booth is **moot**: Photo Booth is no longer
+  launched, so nothing competes for the device.
 
 ### Swift 5.9 concurrency
 
@@ -96,10 +104,3 @@ restructuring `MacRecordWidget.xcodeproj`. Do not "fix" it by moving files.
 Adding a source file requires four `project.pbxproj` edits by hand
 (`PBXBuildFile`, `PBXFileReference`, the group's `children`, and the sources
 build phase). The project uses classic file references, not synchronized groups.
-
-### Known dead code
-
-`RecordingError.accessibilityDenied` and its branch in `presentAlert(for:)` are
-unreachable. They date from the removed osascript full-screen call; the app no
-longer requests Accessibility permission. Left in place deliberately, but do not
-treat the alert text as describing current behaviour.

@@ -40,6 +40,9 @@ Prerequisite added at kickoff. `projects/master/` predates the shipped `20260521
   - [x] 💾 Live camera preview implemented: `CameraManager.swift`, `CameraPreviewView.swift`, `PanelSizer.swift`, `NSCameraUsageDescription` -- done when: CI green and installed
   - [x] 💾 Panel sizing corrected: shrink-back, padding order, trailing alignment, right-alignment to the screen edge -- done when: verified on hardware by the human
   - [x] 👤 **HUMAN:** confirmed the preview works on device -- done when: human confirms ("Ok that worked")
+  - [x] 💾 Post-ship UI revisions, driven directly by the human: fixed 504pt panel width to kill the reposition flicker; camera picker moved into the button row; mirror toggle removed and mirroring hardcoded on; record and stop collapsed into one tinted toggle; uniform glyph sizing and a constant outline on every control
+  - [x] 💾 **Photo Booth launch removed.** The camera toggle had been doing two jobs (show preview, capture video), which surprised the human. Recording is now audio only. NOTE: the app consequently has NO video capture at all -- a real product gap, logged to `BACKLOG.md`
+  - [x] 💾 Docs resynced to the shipped UI: `CLAUDE.md`, `README.md`, `projects/master/`
 
 ### Stage 5: Quality Assurance
 
