@@ -14,42 +14,57 @@ struct MacRecordWidgetApp: App {
     var body: some Scene {
         MenuBarExtra {
             VStack(alignment: .trailing, spacing: 8) {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
+                // An icon toggle button rather than a switch: a switch is a wide
+                // capsule sitting next to round glyphs, so no amount of sizing
+                // makes it read as part of the same family.
                 Toggle(isOn: $recordingManager.videoEnabled) {
-                    Image(systemName: recordingManager.videoEnabled ? "video.fill" : "video")
-                        .font(.system(size: 13))
+                    Image(systemName: "video.fill")
+                        .font(Self.glyphFont)
+                        .frame(width: Self.glyphSize, height: Self.glyphSize)
                 }
-                .toggleStyle(.switch)
+                .toggleStyle(.button)
                 .controlSize(.small)
                 .help("Show camera preview")
                 .accessibilityLabel("Show camera preview")
                 .accessibilityIdentifier("videoModeToggle")
 
-                Button {
-                    Task { await startOnly() }
-                } label: {
-                    Image(systemName: "record.circle.fill")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.red)
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                .disabled(recordingManager.isRecording || recordingManager.isInFlight)
-                .accessibilityLabel("Start recording")
-                .accessibilityIdentifier("startButton")
+                // Audio group: label plus its two transport controls.
+                HStack(spacing: 8) {
+                    Text("Audio")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
 
-                Button {
-                    Task { await stopOnly() }
-                } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 13))
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
-                .accessibilityLabel("Stop recording")
-                .accessibilityIdentifier("stopButton")
+                    Button {
+                        Task { await startOnly() }
+                    } label: {
+                        Image(systemName: "record.circle.fill")
+                            .font(Self.glyphFont)
+                            .foregroundStyle(.red)
+                            .frame(width: Self.glyphSize, height: Self.glyphSize)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .disabled(recordingManager.isRecording || recordingManager.isInFlight)
+                    .help("Start audio recording")
+                    .accessibilityLabel("Start recording")
+                    .accessibilityIdentifier("startButton")
 
+                    Button {
+                        Task { await stopOnly() }
+                    } label: {
+                        Image(systemName: "square")
+                            .font(Self.glyphFont)
+                            .frame(width: Self.glyphSize, height: Self.glyphSize)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
+                    .help("Stop audio recording")
+                    .accessibilityLabel("Stop recording")
+                    .accessibilityIdentifier("stopButton")
+                }
 
                 Spacer(minLength: 12)
 
@@ -66,7 +81,8 @@ struct MacRecordWidgetApp: App {
                     }
                 } label: {
                     Image(systemName: "power")
-                        .font(.system(size: 13))
+                        .font(Self.glyphFont)
+                        .frame(width: Self.glyphSize, height: Self.glyphSize)
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
@@ -108,6 +124,11 @@ struct MacRecordWidgetApp: App {
         }
         .menuBarExtraStyle(.window)
     }
+
+    /// One glyph size and weight for every control in the row, so they read as
+    /// a single family rather than assorted symbols.
+    private static let glyphSize: CGFloat = 16
+    private static let glyphFont = Font.system(size: 13, weight: .regular)
 
     /// Fixed at the preview width in both states. A panel that changes width
     /// has to be repositioned as well as resized, and AppKit shows the move
