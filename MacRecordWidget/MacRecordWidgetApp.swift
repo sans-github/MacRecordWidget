@@ -31,6 +31,7 @@ struct MacRecordWidgetApp: App {
                 .toggleStyle(.button)
                 .controlSize(.small)
                 .tint(.red)
+                .overlay(Self.controlOutline)
                 .disabled(recordingManager.isInFlight)
                 .help(recordingManager.isRecording ? "Stop audio recording" : "Start audio recording")
                 .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
@@ -48,6 +49,7 @@ struct MacRecordWidgetApp: App {
                 }
                 .toggleStyle(.button)
                 .controlSize(.small)
+                .overlay(Self.controlOutline)
                 .help("Show camera preview")
                 .accessibilityLabel("Show camera preview")
                 .accessibilityIdentifier("videoModeToggle")
@@ -70,6 +72,7 @@ struct MacRecordWidgetApp: App {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .overlay(Self.controlOutline)
                 .help("Quit MacRecordWidget")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
@@ -112,6 +115,15 @@ struct MacRecordWidgetApp: App {
     /// One glyph size and weight for every control in the row, so they read as
     /// a single family rather than assorted symbols.
     private static let glyphSize: CGFloat = 16
+
+    /// A constant boundary on every control. Without it a toggle only shows an
+    /// edge when it is on, so an off toggle and an on toggle read as two
+    /// different kinds of object rather than one control in two states.
+    private static var controlOutline: some View {
+        RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+            .allowsHitTesting(false)
+    }
     private static let glyphFont = Font.system(size: 13, weight: .regular)
 
     /// Fixed at the preview width in both states. A panel that changes width
