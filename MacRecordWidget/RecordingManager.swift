@@ -16,6 +16,10 @@ enum RecordingError: Error, LocalizedError {
     }
 }
 
+// `@MainActor` is required, not cosmetic: `startRecording()` and `stopRecording()`
+// mutate observable state after `await` points. Without actor isolation those
+// mutations land off the main thread while SwiftUI observes them on it.
+@MainActor
 @Observable
 final class RecordingManager {
     var isRecording = false
