@@ -1,31 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// Temporary diagnostics for the panel-positioning problem. Writes to
-/// /tmp/macrecordwidget-panel.log so the actual window identity and frames can
-/// be inspected instead of guessed at.
-enum PanelLog {
-    static let path = "/tmp/macrecordwidget-panel.log"
-
-    static func write(_ message: String) {
-        let line = "[\(Date())] \(message)\n"
-        guard let data = line.data(using: .utf8) else { return }
-        if let handle = FileHandle(forWritingAtPath: path) {
-            handle.seekToEndOfFile()
-            handle.write(data)
-            try? handle.close()
-        } else {
-            try? data.write(to: URL(fileURLWithPath: path))
-        }
-    }
-
-    static func dumpWindows(_ tag: String) {
-        let windows = NSApp.windows.map { w in
-            "\(type(of: w)) frame=\(w.frame) visible=\(w.isVisible) level=\(w.level.rawValue)"
-        }
-        write("\(tag) NSApp.windows(\(windows.count)): \(windows.joined(separator: " | "))")
-    }
-}
 
 /// Reports the measured size of the popover content.
 struct PanelSizeKey: PreferenceKey {
@@ -47,11 +22,8 @@ final class PanelAnchorView: NSView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if let window {
-            PanelLog.write("viewDidMoveToWindow: \(type(of: window)) frame=\(window.frame) screen=\(String(describing: window.screen?.visibleFrame))")
-            PanelLog.dumpWindows("attach")
             onAttach?(window)
         } else {
-            PanelLog.write("viewDidMoveToWindow: window is nil")
         }
     }
 }
@@ -59,11 +31,20 @@ final class PanelAnchorView: NSView {
 /// Pins the `MenuBarExtra(.window)` panel to the right of the screen and keeps
 /// it sized to its content.
 ///
-/// AppKit fights this in three ways: it grows the panel to fit content but
-/// never shrinks it back, it re-anchors the panel under the status item on each
-/// open, and it does that positioning after SwiftUI's view update. So rather
-/// than trying to win a race, this observes the window's own move and resize
-/// notifications and corrects the frame whenever AppKit changes it.
+/// Two AppKit behaviours have to be worked around.
+///
+/// First, the panel grows to fit its content but never shrinks back, which
+/// strands a full-size empty window when the preview closes.
+///
+/// Second, and less obvious: `MenuBarExtraWindow` keeps itself anchored to the
+/// status item by reverting the origin *inside* `setFrame`. The size is
+/// honoured and the move is silently discarded, so reading the frame back
+/// immediately shows the old x. Measured on a real panel: asking for x=1072
+/// landed at x=848, and asking for x=768 landed at x=376.
+///
+/// The revert is scoped to that call, so the origin is reasserted with
+/// `setFrameOrigin` on the next runloop pass, where it holds. Do not fold that
+/// deferred call back into the `setFrame` above; it will stop working.
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
     let animated: Bool
@@ -108,7 +89,6 @@ struct PanelSizer: NSViewRepresentable {
                 width: size.width,
                 height: size.height
             )
-            PanelLog.write("align current=\(current) target=\(target) rightEdge=\(rightEdge) screenVisible=\(String(describing: screen?.visibleFrame))")
             guard abs(current.origin.x - target.origin.x) > 0.5
                     || abs(current.origin.y - target.origin.y) > 0.5
                     || abs(current.width - target.width) > 0.5
@@ -118,7 +98,6 @@ struct PanelSizer: NSViewRepresentable {
             isApplying = true
             defer {
                 isApplying = false
-                PanelLog.write("applied -> frame=\(window.frame)")
             }
 
             // MenuBarExtraWindow reverts the origin inside setFrame to keep
@@ -138,10 +117,8 @@ struct PanelSizer: NSViewRepresentable {
             DispatchQueue.main.async { [weak window] in
                 guard let window else { return }
                 window.setFrameOrigin(origin)
-                PanelLog.write("deferred setFrameOrigin(\(origin)) -> \(window.frame)")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak window] in
                     guard let window else { return }
-                    PanelLog.write("settled -> \(window.frame)")
                 }
             }
         }
