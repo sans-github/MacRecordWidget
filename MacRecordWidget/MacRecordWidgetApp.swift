@@ -14,7 +14,7 @@ struct MacRecordWidgetApp: App {
     var body: some Scene {
         MenuBarExtra {
             VStack(alignment: .trailing, spacing: 8) {
-            HStack(spacing: 14) {
+            HStack(spacing: 20) {
                 // An icon toggle button rather than a switch: a switch is a wide
                 // capsule sitting next to round glyphs, so no amount of sizing
                 // makes it read as part of the same family.
@@ -29,13 +29,9 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel("Show camera preview")
                 .accessibilityIdentifier("videoModeToggle")
 
-                // Audio group: label plus its two transport controls.
-                HStack(spacing: 8) {
-                    Text("Audio")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
-
+                // Audio group: a bordered box holding the transport controls,
+                // with the label riding the leading edge like a fieldset legend.
+                HStack(spacing: 10) {
                     Button {
                         Task { await startOnly() }
                     } label: {
@@ -64,6 +60,32 @@ struct MacRecordWidgetApp: App {
                     .help("Stop audio recording")
                     .accessibilityLabel("Stop recording")
                     .accessibilityIdentifier("stopButton")
+                }
+                // Leading inset leaves room for the label to sit on the border.
+                .padding(.leading, 46)
+                .padding(.trailing, 10)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                )
+                .overlay(alignment: .leading) {
+                    Text("Audio")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                // Opaque so it masks the border it sits on.
+                                .fill(Color(nsColor: .windowBackgroundColor))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        )
+                        .offset(x: -10)
+                        .accessibilityHidden(true)
                 }
 
                 Spacer(minLength: 12)
