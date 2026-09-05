@@ -27,12 +27,37 @@ camera access the first time.
 
 ## Installation
 
-1. Download `MacRecordWidget.zip` from the latest successful run on the
-   [Actions tab](../../actions), into a `tmp/` folder
-2. Unzip it and move `MacRecordWidget.app` to `/Applications`
-3. Delete the `tmp/` folder
-4. Right-click the app and choose **Open** on first launch. The build is
-   unsigned, so double-clicking it will be blocked by Gatekeeper.
+Run once, to create a local signing certificate:
+
+```bash
+scripts/create-signing-cert.sh
+```
+
+Then, for this and every later build:
+
+```bash
+scripts/install-latest.sh
+```
+
+That downloads the latest successful CI build, signs it, installs it to
+`/Applications` and launches it.
+
+### Why the certificate
+
+CI builds are ad-hoc signed, with no Team ID and no certificate. macOS has
+nothing stable to attach a permission grant to, so it pins your camera approval
+to that one binary's hash. Every new build has a different hash, the grant stops
+matching, and you get asked for camera access again.
+
+Signing each build with the same local certificate gives the app a stable code
+identity, so one grant covers later builds.
+
+### Manual install
+
+If you would rather not use the scripts: download `MacRecordWidget.zip` from the
+[Actions tab](../../actions), unzip it, move `MacRecordWidget.app` to
+`/Applications`, and right-click > **Open** on first launch. You will be
+re-asked for camera access after every build.
 
 ## Usage
 
