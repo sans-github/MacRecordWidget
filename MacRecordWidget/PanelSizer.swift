@@ -199,6 +199,15 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Spelled out for tooltips and VoiceOver, where a bare letter says nothing.
+    var helpLabel: String {
+        switch self {
+        case .small: "Small"
+        case .medium: "Medium"
+        case .large: "Large"
+        }
+    }
+
     /// Large tracks the display rather than a hardcoded number, so it is half
     /// the screen on any Mac. Clamped to at least the medium width, because on
     /// a small display half the screen can be narrower than medium, which would

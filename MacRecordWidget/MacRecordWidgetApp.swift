@@ -88,20 +88,25 @@ struct MacRecordWidgetApp: App {
                     // Sits with the camera picker, and only while the preview is
                     // open: the size it changes is mostly the size of the
                     // preview, so it has nothing to act on otherwise.
-                    Picker("Panel size", selection: scaleBinding) {
+                    // Three toggle buttons rather than a segmented Picker.
+                    // `.pickerStyle(.segmented)` is an NSSegmentedControl,
+                    // which ignores SwiftUI's `.font()`, so its labels stayed
+                    //13pt while everything around them grew. These use the same
+                    // pattern as the rest of the row, so they scale with it.
+                    HStack(spacing: 2) {
                         ForEach(PanelScale.allCases) { option in
-                            Text(option.label)
-                                .font(scale.controlFont)
-                                .tag(option)
+                            Toggle(isOn: scaleBinding(for: option)) {
+                                Text(option.label)
+                                    .font(scale.controlFont)
+                                    .frame(width: scale.glyphSize, height: scale.glyphSize)
+                            }
+                            .toggleStyle(.button)
+                            .controlSize(scale.controlSize)
+                            .overlay(controlOutline)
+                            .help("\(option.helpLabel) panel")
+                            .accessibilityLabel("\(option.helpLabel) panel size")
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .font(scale.controlFont)
-                    .controlSize(scale.controlSize)
-                    .fixedSize()
-                    .help("Panel size")
-                    .accessibilityLabel("Panel size")
                     .accessibilityIdentifier("panelScalePicker")
                 }
 
@@ -166,8 +171,13 @@ struct MacRecordWidgetApp: App {
     /// row and the preview grow together rather than drifting apart.
     private var scale: PanelScale { PanelScale(rawValue: scaleRaw) ?? .medium }
 
-    private var scaleBinding: Binding<PanelScale> {
-        Binding(get: { scale }, set: { scaleRaw = $0.rawValue })
+    /// One binding per size button. Turning a button on selects that size;
+    /// turning the selected one off is ignored, since a panel always has a size.
+    private func scaleBinding(for option: PanelScale) -> Binding<Bool> {
+        Binding(
+            get: { scale == option },
+            set: { isOn in if isOn { scaleRaw = option.rawValue } }
+        )
     }
 
     /// A constant boundary on every control. Without it a toggle only shows an
