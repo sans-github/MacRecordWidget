@@ -47,20 +47,12 @@ struct MacRecordWidgetApp: App {
                     // camera toggle beside it. It also survives the 11pt small
                     // scale, which the thinner audio symbols do not.
                     //
-                    // Red while idle, so the control that starts a recording is
-                    // the one thing in the row that draws the eye. While
-                    // recording the button fills red and the glyph is left to
-                    // the button style, which renders it legibly on that fill.
-                    Group {
-                        if recordingManager.isRecording {
-                            Image(systemName: "stop.fill")
-                        } else {
-                            Image(systemName: "mic.fill")
-                                .foregroundStyle(.red)
-                        }
-                    }
-                    .font(scale.glyphFont)
-                    .frame(width: scale.glyphSize, height: scale.glyphSize)
+                    // One glyph in both states, like the camera toggle: only
+                    // the fill flips. Swapping the glyph to `stop.fill` made
+                    // this control behave unlike every other toggle in the row.
+                    Image(systemName: "mic.fill")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
                 .toggleStyle(.button)
                 .controlSize(scale.controlSize)
