@@ -4,9 +4,12 @@ import AppKit
 @main
 struct MacRecordWidgetApp: App {
     @State private var recordingManager = RecordingManager()
+    @State private var camera = CameraManager()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some Scene {
         MenuBarExtra {
+            VStack(alignment: .trailing, spacing: 8) {
             HStack(spacing: 12) {
                 Toggle(isOn: $recordingManager.videoEnabled) {
                     Image(systemName: recordingManager.videoEnabled ? "video.fill" : "video")
@@ -61,13 +64,37 @@ struct MacRecordWidgetApp: App {
                 .accessibilityIdentifier("quitButton")
             }
             .focusEffectDisabled()
+            // Trailing-aligned so the row stays put as the panel grows leftward.
+            // Without an explicit alignment the row centers and slides 152pt.
+            .frame(width: CameraManager.rowWidth, alignment: .trailing)
+
+            if recordingManager.videoEnabled {
+                CameraPreviewPanel(camera: camera)
+                    .transition(.opacity)
+            }
+            }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .frame(width: 200)
+            .frame(width: panelWidth, alignment: .trailing)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: recordingManager.videoEnabled)
+            .task(id: recordingManager.videoEnabled) {
+                if recordingManager.videoEnabled {
+                    await camera.start()
+                } else {
+                    camera.stop()
+                }
+            }
+            .onDisappear { camera.stop() }
         } label: {
             MenuBarIcon(isRecording: recordingManager.isRecording)
         }
         .menuBarExtraStyle(.window)
+    }
+
+    /// 200pt collapsed, 504pt with the preview open (480 preview + 12pt padding
+    /// each side). The panel's trailing edge is the anchor.
+    private var panelWidth: CGFloat {
+        recordingManager.videoEnabled ? 504 : 200
     }
 
     @MainActor

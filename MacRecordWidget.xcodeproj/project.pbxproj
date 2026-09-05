@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		A1000001238F1E8900000001 /* MacRecordWidgetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002238F1E8900000001 /* MacRecordWidgetApp.swift */; };
 		A1000003238F1E8900000001 /* RecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004238F1E8900000001 /* RecordingManager.swift */; };
+		A1000007238F1E8900000001 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008238F1E8900000001 /* CameraManager.swift */; };
+		A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A238F1E8900000001 /* CameraPreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -16,6 +18,8 @@
 		A1000004238F1E8900000001 /* RecordingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingManager.swift; sourceTree = "<group>"; };
 		A1000005238F1E8900000001 /* MacRecordWidget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacRecordWidget.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000006238F1E8900000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000008238F1E8900000001 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		A100000A238F1E8900000001 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +46,8 @@
 			children = (
 				A1000002238F1E8900000001 /* MacRecordWidgetApp.swift */,
 				A1000004238F1E8900000001 /* RecordingManager.swift */,
+				A1000008238F1E8900000001 /* CameraManager.swift */,
+				A100000A238F1E8900000001 /* CameraPreviewView.swift */,
 				A1000006238F1E8900000001 /* Info.plist */,
 			);
 			path = MacRecordWidget;
@@ -109,6 +115,8 @@
 			files = (
 				A1000001238F1E8900000001 /* MacRecordWidgetApp.swift in Sources */,
 				A1000003238F1E8900000001 /* RecordingManager.swift in Sources */,
+				A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */,
+				A1000007238F1E8900000001 /* CameraManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,6 +248,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MacRecordWidget/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MacRecordWidget shows a live camera preview in its menu bar panel so you can frame yourself before recording. The preview is display-only and is never saved.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -265,6 +274,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MacRecordWidget/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MacRecordWidget shows a live camera preview in its menu bar panel so you can frame yourself before recording. The preview is display-only and is never saved.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

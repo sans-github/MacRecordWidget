@@ -4,6 +4,8 @@
 <dict>
     <key>LSUIElement</key>
     <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>MacRecordWidget shows a live camera preview in its menu bar panel so you can frame yourself before recording. The preview is display-only and is never saved.</string>
 
 </dict>
 </plist>
