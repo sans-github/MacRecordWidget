@@ -14,6 +14,7 @@ yourself while recording, and it never writes a video file.
 - Menu bar icon turns green with a blinking dot while recording
 - Live camera preview inside the panel, with a picker for which camera to show
 - A pin toggle that keeps the panel open when you click into another app
+- Three panel sizes (S/M/L) that scale the whole UI, not just the preview
 
 ## Requirements
 
@@ -39,10 +40,11 @@ Click the menu bar icon to open the panel. The controls run left to right:
 
 | Control | What it does |
 |---|---|
+| **Pin toggle** (pin icon) | Off, the panel closes when you click another app. On, it stays open. The setting persists across launches. |
 | **Audio toggle** (red record circle / stop square) | Starts and stops the audio recording. One button in two states, not two buttons. |
+| **Size picker** (S / M / L) | Scales the entire panel: controls, spacing and preview. Large is half your screen's width. The choice persists across launches. |
 | **Camera toggle** (video icon) | Shows or hides the live preview below the row. It has no effect on what is recorded. |
 | **Camera picker** | Chooses which camera feeds the preview. Only appears while the preview is on. |
-| **Pin toggle** (pin icon) | Off, the panel closes when you click another app. On, it stays open. The setting persists across launches. |
 | **Power button** | Stops any recording in progress, then quits. |
 
 The panel stays open after you start or stop a recording, so you can press stop

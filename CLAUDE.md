@@ -10,7 +10,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Five Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: an "Audio" label, ONE audio toggle button (`record.circle.fill` idle / `stop.fill` recording, tinted red), a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), a pin toggle, and a bordered power button. Every control is `.controlSize(.small)` with a 13pt glyph in a 16pt frame and a constant 1pt outline, so an off toggle and an on toggle read as one control in two states. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`record.circle.fill` in red while idle / `stop.fill` on a red fill while recording), a spacer, the S/M/L size picker, a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), and a bordered power button. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. **Recording is audio only.** Photo Booth is never launched.
 
 Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required. Minimum macOS deployment target is 14.0.
@@ -46,13 +46,25 @@ Three files implement it:
   `CameraControls` holds the picker, which lives in the button row rather than
   under the preview; its selected value doubles as the camera-name indicator,
   naming the device actually feeding the layer rather than the stored preference.
-- `PanelSizer.swift` - drives the panel's `NSWindow` frame. See the gotcha below.
+- `PanelSizer.swift` - drives the panel's `NSWindow` frame, and defines
+  `PanelScale`. See the gotcha below.
 
 The session starts when the toggle turns on and stops when the popover closes,
 so the camera activity light cycles with the panel by design.
 
 Design artifacts: `projects/20260904-live-camera-preview/` (PRD and mocks), merged
 into `projects/master/`.
+
+### Panel scale
+
+`PanelScale` (in `PanelSizer.swift`) owns every dimension that follows from the
+S/M/L choice: preview size, glyph size and font, `ControlSize`, row spacing,
+padding, corner radius and picker width. It is one enum on purpose, because the
+row and the preview have to scale together and spreading the numbers across the
+views is how they drift apart. `large` is half the screen's visible width rather
+than a hardcoded number, clamped to at least the medium width so a small display
+cannot put the three sizes out of order. The choice persists in `UserDefaults`
+under `panelScale`.
 
 ### Panel sizing gotchas
 
@@ -66,9 +78,14 @@ into `projects/master/`.
   lands. `PanelSizer` applies size and corrected origin with
   `disableScreenUpdatesUntilFlush()` and flushes once, so the anchored
   intermediate position is never painted.
-- **The panel is a fixed 504pt wide in both states.** A width change forces AppKit
-  to reposition as well as resize, and the anchored position is shown before the
-  correction. Holding the width constant means only the height moves.
+- **The panel width is constant across camera on/off, but not across scales.**
+  Toggling the camera only ever changes the height. Changing S/M/L does change
+  the width, and that is fine: the panel is right-anchored, so only the left
+  edge moves, and the screen-update suppression above covers a width change the
+  same way it covers a height change. An earlier version of this file claimed
+  the width could never change; that rule predated the suppression fix
+  (`c718a9d` froze the width, `13ac77e` fixed the flicker afterwards) and was
+  never revisited.
 - **AppKit grows the panel to fit content but never shrinks it back.** Without an
   explicit frame the panel strands at full size with the collapsed row floating
   in the middle of it.

@@ -178,3 +178,102 @@ struct PanelSizer: NSViewRepresentable {
         }
     }
 }
+
+// MARK: - Panel scale
+
+/// The three panel sizes, and every dimension that follows from the choice.
+///
+/// One enum owns all of it deliberately: the row and the preview have to scale
+/// together, and spreading the numbers across the views is how they drift apart.
+enum PanelScale: String, CaseIterable, Identifiable {
+    case small, medium, large
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .small: "S"
+        case .medium: "M"
+        case .large: "L"
+        }
+    }
+
+    /// Large tracks the display rather than a hardcoded number, so it is half
+    /// the screen on any Mac. Clamped to at least the medium width, because on
+    /// a small display half the screen can be narrower than medium, which would
+    /// put the sizes out of order.
+    var previewWidth: CGFloat {
+        switch self {
+        case .small: 320
+        case .medium: 480
+        case .large: max(480, ((NSScreen.main?.visibleFrame.width ?? 960) / 2).rounded())
+        }
+    }
+
+    /// 16:9, so the preview matches the aspect of the cameras feeding it.
+    var previewHeight: CGFloat { (previewWidth * 9 / 16).rounded() }
+
+    var glyphSize: CGFloat {
+        switch self {
+        case .small: 14
+        case .medium: 16
+        case .large: 20
+        }
+    }
+
+    var glyphFont: Font {
+        switch self {
+        case .small: .system(size: 11, weight: .regular)
+        case .medium: .system(size: 13, weight: .regular)
+        case .large: .system(size: 16, weight: .regular)
+        }
+    }
+
+    var controlSize: ControlSize {
+        switch self {
+        case .small: .mini
+        case .medium: .small
+        case .large: .regular
+        }
+    }
+
+    var rowSpacing: CGFloat {
+        switch self {
+        case .small: 10
+        case .medium: 14
+        case .large: 18
+        }
+    }
+
+    var horizontalPadding: CGFloat {
+        switch self {
+        case .small: 10
+        case .medium: 12
+        case .large: 16
+        }
+    }
+
+    var verticalPadding: CGFloat {
+        switch self {
+        case .small: 6
+        case .medium: 8
+        case .large: 11
+        }
+    }
+
+    var cornerRadius: CGFloat {
+        switch self {
+        case .small: 4
+        case .medium: 5
+        case .large: 6
+        }
+    }
+
+    var pickerMaxWidth: CGFloat {
+        switch self {
+        case .small: 150
+        case .medium: 200
+        case .large: 260
+        }
+    }
+}

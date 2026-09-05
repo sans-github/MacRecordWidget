@@ -15,31 +15,68 @@ struct MacRecordWidgetApp: App {
     /// mode: someone who wants the panel to stay put wants that every launch.
     @AppStorage("panelPinned") private var isPinned = false
 
+    /// Panel size, persisted. Stored as the raw string because `@AppStorage`
+    /// cannot hold an enum directly.
+    @AppStorage("panelScale") private var scaleRaw = PanelScale.medium.rawValue
+
     var body: some Scene {
         MenuBarExtra {
             VStack(alignment: .trailing, spacing: 8) {
-            HStack(spacing: 14) {
+            HStack(spacing: scale.rowSpacing) {
+                Toggle(isOn: $isPinned) {
+                    Image(systemName: isPinned ? "pin.fill" : "pin.slash")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
+                }
+                .toggleStyle(.button)
+                .controlSize(scale.controlSize)
+                .overlay(controlOutline)
+                .help(isPinned ? "Let panel close on its own" : "Keep panel open")
+                .accessibilityLabel("Keep panel open")
+                .accessibilityIdentifier("pinToggle")
+
                 // One control, not two: record and stop were always mutually
                 // exclusive with one of them disabled, so a single toggle
                 // carries the same state with half the controls.
-                Text("Audio")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-
                 Toggle(isOn: recordingBinding) {
-                    Image(systemName: recordingManager.isRecording ? "stop.fill" : "record.circle.fill")
-                        .font(Self.glyphFont)
-                        .frame(width: Self.glyphSize, height: Self.glyphSize)
+                    // Red while idle, so the control that starts a recording is
+                    // the one thing in the row that draws the eye. While
+                    // recording the button fills red and the glyph is left to
+                    // the button style, which renders it legibly on that fill.
+                    Group {
+                        if recordingManager.isRecording {
+                            Image(systemName: "stop.fill")
+                        } else {
+                            Image(systemName: "record.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                    .font(scale.glyphFont)
+                    .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
                 .toggleStyle(.button)
-                .controlSize(.small)
+                .controlSize(scale.controlSize)
                 .tint(.red)
-                .overlay(Self.controlOutline)
+                .overlay(controlOutline)
                 .disabled(recordingManager.isInFlight)
-                .help(recordingManager.isRecording ? "Stop audio recording" : "Start audio recording")
+                .help(recordingManager.isRecording ? "Stop and save to Voice Memos" : "Record audio to Voice Memos")
                 .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
                 .accessibilityIdentifier("recordToggle")
+
+                Spacer(minLength: 12)
+
+                Picker("Panel size", selection: scaleBinding) {
+                    ForEach(PanelScale.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(scale.controlSize)
+                .fixedSize()
+                .help("Panel size")
+                .accessibilityLabel("Panel size")
+                .accessibilityIdentifier("panelScalePicker")
 
                 Spacer(minLength: 12)
 
@@ -48,31 +85,19 @@ struct MacRecordWidgetApp: App {
                 // makes it read as part of the same family.
                 Toggle(isOn: $recordingManager.videoEnabled) {
                     Image(systemName: "video.fill")
-                        .font(Self.glyphFont)
-                        .frame(width: Self.glyphSize, height: Self.glyphSize)
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
                 .toggleStyle(.button)
-                .controlSize(.small)
-                .overlay(Self.controlOutline)
-                .help("Show camera preview")
-                .accessibilityLabel("Show camera preview")
+                .controlSize(scale.controlSize)
+                .overlay(controlOutline)
+                .help(recordingManager.videoEnabled ? "Hide camera preview" : "Show camera preview")
+                .accessibilityLabel(recordingManager.videoEnabled ? "Hide camera preview" : "Show camera preview")
                 .accessibilityIdentifier("videoModeToggle")
 
                 if recordingManager.videoEnabled {
-                    CameraControls(camera: camera)
+                    CameraControls(camera: camera, scale: scale)
                 }
-
-                Toggle(isOn: $isPinned) {
-                    Image(systemName: isPinned ? "pin.fill" : "pin.slash")
-                        .font(Self.glyphFont)
-                        .frame(width: Self.glyphSize, height: Self.glyphSize)
-                }
-                .toggleStyle(.button)
-                .controlSize(.small)
-                .overlay(Self.controlOutline)
-                .help(isPinned ? "Panel stays open when you click another app" : "Panel closes when you click another app")
-                .accessibilityLabel("Keep panel open")
-                .accessibilityIdentifier("pinToggle")
 
                 Button {
                     Task {
@@ -83,13 +108,13 @@ struct MacRecordWidgetApp: App {
                     }
                 } label: {
                     Image(systemName: "power")
-                        .font(Self.glyphFont)
-                        .frame(width: Self.glyphSize, height: Self.glyphSize)
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
-                .overlay(Self.controlOutline)
-                .help("Quit MacRecordWidget")
+                .controlSize(scale.controlSize)
+                .overlay(controlOutline)
+                .help("Quit")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
             }
@@ -100,13 +125,13 @@ struct MacRecordWidgetApp: App {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             if recordingManager.videoEnabled {
-                CameraPreviewPanel(camera: camera)
+                CameraPreviewPanel(camera: camera, scale: scale)
                     .transition(.opacity)
             }
             }
             .frame(width: contentWidth, alignment: .trailing)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, scale.horizontalPadding)
+            .padding(.vertical, scale.verticalPadding)
             .fixedSize()
             .background(
                 GeometryReader { proxy in
@@ -129,26 +154,29 @@ struct MacRecordWidgetApp: App {
         .menuBarExtraStyle(.window)
     }
 
-    /// One glyph size and weight for every control in the row, so they read as
-    /// a single family rather than assorted symbols.
-    private static let glyphSize: CGFloat = 16
+    /// The chosen size. Every dimension in the panel derives from it, so the
+    /// row and the preview grow together rather than drifting apart.
+    private var scale: PanelScale { PanelScale(rawValue: scaleRaw) ?? .medium }
+
+    private var scaleBinding: Binding<PanelScale> {
+        Binding(get: { scale }, set: { scaleRaw = $0.rawValue })
+    }
 
     /// A constant boundary on every control. Without it a toggle only shows an
     /// edge when it is on, so an off toggle and an on toggle read as two
     /// different kinds of object rather than one control in two states.
-    private static var controlOutline: some View {
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
+    private var controlOutline: some View {
+        RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
             .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
             .allowsHitTesting(false)
     }
-    private static let glyphFont = Font.system(size: 13, weight: .regular)
 
-    /// Fixed at the preview width in both states. A panel that changes width
-    /// has to be repositioned as well as resized, and AppKit shows the move
-    /// before the correction lands, which reads as the panel jumping from the
-    /// centre to the right. Holding the width constant means only the height
-    /// ever changes, so the trailing edge never moves.
-    private var contentWidth: CGFloat { CameraPreviewPanel.previewWidth }
+    /// The preview width for the chosen scale, in both states, so toggling the
+    /// camera only ever changes the panel's height. The width does change when
+    /// the scale changes, which is fine: the panel is right-anchored, so only
+    /// the left edge moves, and `PanelSizer` suppresses painting until the
+    /// corrected frame is in place.
+    private var contentWidth: CGFloat { scale.previewWidth }
 
     /// Drives the single audio control: on starts, off stops.
     private var recordingBinding: Binding<Bool> {

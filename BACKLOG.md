@@ -15,7 +15,6 @@ _Last triaged: --_
 | ID | Area | Type | Summary | Source | Date |
 |----|------|------|---------|--------|------|
 |  | Swift | gap | The app has no video capture at all. Photo Booth was removed so the camera toggle would stop doing two jobs, and nothing replaced it. If video recording is wanted, it needs building on the existing capture session | Agent | 2026-09-04 |
-|  | Design | ux | The "Audio" label now sits beside a single toggle rather than a group of two, and implies a "Video" counterpart that does not exist | Agent | 2026-09-04 |
 |  | Swift | gap | Live camera preview shipped with zero test coverage: no unit tests for `CameraManager` permission, fallback or persistence logic, and no QA pass against the PRD acceptance criteria. Stage 5 was skipped | Agent | 2026-09-04 |
 |  | Swift | debt | `PanelSizer` depends on undocumented `MenuBarExtraWindow` behaviour (origin reverted inside `setFrame`, reasserted via a deferred `setFrameOrigin`). Works on macOS 14 but is not contract-backed and could break on a future macOS | Agent | 2026-09-04 |
 |  | Spec | gap | Feature shipped without Stage 3: there is no technical design document for the camera preview. Architecture lives only in code comments and CLAUDE.md | Agent | 2026-09-04 |
@@ -45,3 +44,4 @@ _Last triaged: --_
 |  | Mocks assume the button row stays visually in place when the panel widens. It does not: the row is an `HStack` | Fixed in `24c2e80`/`bc` panel work: row is trailing-aligned and the panel frame is driven explicitly | 2026-09-04 |
 |  | The live preview needs `AVCaptureSession` + `AVCaptureVideoPreviewLayer` in an `NSViewRepresentable` (no Swift | Implemented 2026-09-04: `CameraPreviewView.swift` wraps `AVCaptureVideoPreviewLayer`; `NSCameraUsageDescription` added | 2026-09-04 |
 |  | `RecordingManager` is not `@MainActor`; `startRecording`/`stopRecording` are nonisolated async and mutate `isR | Fixed in `dec5c79`: class is now `@MainActor` | 2026-09-04 |
+|  | The "Audio" label sat beside a single toggle and implied a "Video" counterpart that does not exist | Label removed 2026-09-05; the red record glyph carries the meaning on its own | 2026-09-05 |

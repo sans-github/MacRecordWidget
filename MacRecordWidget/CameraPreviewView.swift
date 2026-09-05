@@ -28,24 +28,22 @@ struct CameraPreviewLayerView: NSViewRepresentable {
 @MainActor
 struct CameraPreviewPanel: View {
     @Bindable var camera: CameraManager
-
-    static let previewWidth: CGFloat = 480
-    static let previewHeight: CGFloat = 270
+    let scale: PanelScale
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
             ZStack {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: scale.cornerRadius + 1)
                     .fill(Color(nsColor: .underPageBackgroundColor))
                 if camera.state == .running {
                     CameraPreviewLayerView(session: camera.session)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: scale.cornerRadius + 1))
                 } else {
                     messageView
                         .padding(.horizontal, 16)
                 }
             }
-            .frame(width: Self.previewWidth, height: Self.previewHeight)
+            .frame(width: scale.previewWidth, height: scale.previewHeight)
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Camera preview")
             .accessibilityIdentifier("cameraPreview")
@@ -108,6 +106,7 @@ struct CameraPreviewPanel: View {
 @MainActor
 struct CameraControls: View {
     @Bindable var camera: CameraManager
+    let scale: PanelScale
 
     var body: some View {
         HStack(spacing: 8) {
@@ -123,8 +122,8 @@ struct CameraControls: View {
                 }
             }
             .labelsHidden()
-            .controlSize(.small)
-            .frame(maxWidth: 200)
+            .controlSize(scale.controlSize)
+            .frame(maxWidth: scale.pickerMaxWidth)
             .disabled(camera.availableCameras.isEmpty)
             .accessibilityLabel("Preview camera")
             .accessibilityIdentifier("cameraPicker")
