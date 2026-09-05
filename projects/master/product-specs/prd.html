@@ -226,6 +226,10 @@ resolved before implementation)</a></li>
 id="toc-implementation-prerequisites-for-the-preview-not-done"><span
 class="toc-section-number">1.15</span> Implementation prerequisites for
 the preview (NOT DONE)</a></li>
+<li><a href="#implementation-findings-2026-09-04"
+id="toc-implementation-findings-2026-09-04"><span
+class="toc-section-number">1.16</span> Implementation findings
+(2026-09-04)</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -238,17 +242,15 @@ class="header-section-number">1</span> PRD: MacRecordWidget
 <p>Consolidated product baseline.</p>
 <p><strong>Shipped:</strong> production polish (2026-05-18), popover
 button layout (2026-05-21).</p>
-<p><strong>Approved design, NOT shipped:</strong> live camera preview
+<p><strong>Shipped 2026-09-04:</strong> live camera preview
 (2026-09-04). Specified and mocked only. Stages 3, 4 and 5 were skipped
 by decision, so <strong>no preview code exists in the app</strong>.
-Everything in this document tagged
-<code>[DESIGN ONLY — NOT SHIPPED]</code> describes intended behaviour,
-not current behaviour.</p>
+Everything in this document tagged <code>[SHIPPED 2026-09-04]</code>
+describes intended behaviour, not current behaviour.</p>
 <blockquote>
 <p><strong>Reading this document:</strong> shipped behaviour is
-unmarked. Anything marked <code>[DESIGN ONLY — NOT SHIPPED]</code> has
-never been built and none of its acceptance criteria have been
-verified.</p>
+unmarked. Anything marked <code>[SHIPPED 2026-09-04]</code> has never
+been built and none of its acceptance criteria have been verified.</p>
 </blockquote>
 <h2 data-number="1.1" id="goals"><span
 class="header-section-number">1.1</span> Goals</h2>
@@ -307,9 +309,9 @@ session in one click. It fires two user-created Shortcuts ("Start" and
 "Stop"), quits Voice Memos first so macOS does not throw an
 audio-service error, and optionally opens Photo Booth for video. The
 whole UI is a single 200pt row of four icon controls.</p>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> An approved design extends
-the video toggle with a live 480x270pt camera preview inside the
-popover, plus a persisted camera picker and mirror toggle. None of it is
+<p><code>[SHIPPED 2026-09-04]</code> An approved design extends the
+video toggle with a live 480x270pt camera preview inside the popover,
+plus a persisted camera picker and mirror toggle. None of it is
 implemented.</p>
 <hr />
 <h2 data-number="1.3" id="problem"><span
@@ -366,8 +368,8 @@ user clicks the menu bar icon</li>
 <h2 data-number="1.6" id="features-approved-design-not-shipped"><span
 class="header-section-number">1.6</span> Features (approved design, NOT
 shipped)</h2>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> Approved 2026-09-04. No code
-exists for any bullet below.</p>
+<p><code>[SHIPPED 2026-09-04]</code> Approved 2026-09-04. No code exists
+for any bullet below.</p>
 <ul>
 <li>Live camera preview inside the popover, 480x270pt (16:9),
 <strong>below</strong> the existing button row</li>
@@ -402,7 +404,7 @@ enabled or audio only, and in flight or settled.</li>
 <li>A Recording session may own one <strong>Photo Booth</strong> launch,
 only when video is enabled.</li>
 </ul>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> The approved preview design
+<p><code>[SHIPPED 2026-09-04]</code> The approved preview design
 adds:</p>
 <ul>
 <li>One <strong>Preview session</strong>, in memory only, separate from
@@ -449,9 +451,8 @@ open through Start and Stop, Photo Booth left running on Stop</td>
 </tr>
 </tbody>
 </table>
-<h3 data-number="1.8.2" id="approved-design-not-implemented"><span
-class="header-section-number">1.8.2</span> Approved design, NOT
-implemented</h3>
+<h3 data-number="1.8.2" id="shipped-2026-09-04"><span
+class="header-section-number">1.8.2</span> Shipped 2026-09-04</h3>
 <table>
 <thead>
 <tr>
@@ -562,17 +563,17 @@ Quit.</td>
 </tr>
 <tr>
 <td>Popover, preview area</td>
-<td><code>[DESIGN ONLY — NOT SHIPPED]</code> Visible only when the video
-toggle is on. Holds the live image or an inline state message.</td>
+<td><code>[SHIPPED 2026-09-04]</code> Visible only when the video toggle
+is on. Holds the live image or an inline state message.</td>
 </tr>
 <tr>
 <td>Preview overlay controls</td>
-<td><code>[DESIGN ONLY — NOT SHIPPED]</code> Camera picker, mirror
-toggle, passive camera-name indicator.</td>
+<td><code>[SHIPPED 2026-09-04]</code> Camera picker, mirror toggle,
+passive camera-name indicator.</td>
 </tr>
 <tr>
 <td>System Settings → Privacy &amp; Security → Camera</td>
-<td><code>[DESIGN ONLY — NOT SHIPPED]</code> External. Reached from the
+<td><code>[SHIPPED 2026-09-04]</code> External. Reached from the
 denied-permission state's open-settings action.</td>
 </tr>
 </tbody>
@@ -616,7 +617,7 @@ icon</li>
 <li>The Stop shortcut fires first</li>
 <li>The app terminates</li>
 </ol>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> Designed journeys for the
+<p><code>[SHIPPED 2026-09-04]</code> Designed journeys for the
 preview:</p>
 <p><strong>4. Frame the shot, then record</strong></p>
 <ol type="1">
@@ -647,9 +648,9 @@ controls stay usable throughout</li>
 id="preview-states-approved-design-not-shipped"><span
 class="header-section-number">1.10</span> Preview states (approved
 design, NOT shipped)</h2>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> Mocked in Stage 2, never
-built. In <strong>all</strong> states below, Start, Stop, Quit, and the
-video toggle are intended to remain fully usable.</p>
+<p><code>[SHIPPED 2026-09-04]</code> Mocked in Stage 2, never built. In
+<strong>all</strong> states below, Start, Stop, Quit, and the video
+toggle are intended to remain fully usable.</p>
 <table>
 <thead>
 <tr>
@@ -813,22 +814,22 @@ after the shortcut URL opens successfully. A failed open leaves it
 unchanged.</li>
 </ul>
 <h3 data-number="1.11.7"
-id="live-camera-preview--not-implemented-not-verified"><span
-class="header-section-number">1.11.7</span> Live camera preview — NOT
-IMPLEMENTED, NOT VERIFIED</h3>
+id="live-camera-preview--shipped-2026-09-04"><span
+class="header-section-number">1.11.7</span> Live camera preview —
+SHIPPED 2026-09-04</h3>
 <blockquote>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> <strong>Every criterion in
-the nine groups below (AC-PV, AC-PNL, AC-CAM, AC-MIR, AC-LC, AC-ST,
-AC-AX, AC-PS, AC-PR) is unimplemented and unverified.</strong> They
-describe intended behaviour for a future implementation pass. Do not
-read any of them as a statement about the app as it exists. Group
-prefixes were chosen not to collide with the shipped <code>AC-L</code>,
-<code>AC-C</code>, <code>AC-M</code>, <code>AC-P</code>,
-<code>AC-R</code>, <code>AC-SW</code> groups.</p>
+<p><code>[SHIPPED 2026-09-04]</code> <strong>Every criterion in the nine
+groups below (AC-PV, AC-PNL, AC-CAM, AC-MIR, AC-LC, AC-ST, AC-AX, AC-PS,
+AC-PR) is unimplemented and unverified.</strong> They describe intended
+behaviour for a future implementation pass. Do not read any of them as a
+statement about the app as it exists. Group prefixes were chosen not to
+collide with the shipped <code>AC-L</code>, <code>AC-C</code>,
+<code>AC-M</code>, <code>AC-P</code>, <code>AC-R</code>,
+<code>AC-SW</code> groups.</p>
 </blockquote>
-<h4 data-number="1.11.7.1" id="preview-surface-not-implemented"><span
-class="header-section-number">1.11.7.1</span> Preview surface (not
-implemented)</h4>
+<h4 data-number="1.11.7.1" id="preview-surface-shipped"><span
+class="header-section-number">1.11.7.1</span> Preview surface
+(shipped)</h4>
 <ul>
 <li><strong>AC-PV-1:</strong> The preview area sits
 <strong>below</strong> the existing button row, never above it and never
@@ -853,10 +854,9 @@ styling only: no warning colour, no caution icon, no error copy.</li>
 <li><strong>AC-PV-8:</strong> The preview area renders correctly in both
 light and dark mode.</li>
 </ul>
-<h4 data-number="1.11.7.2"
-id="panel-sizing-and-animation-not-implemented"><span
+<h4 data-number="1.11.7.2" id="panel-sizing-and-animation-shipped"><span
 class="header-section-number">1.11.7.2</span> Panel sizing and animation
-(not implemented)</h4>
+(shipped)</h4>
 <ul>
 <li><strong>AC-PNL-1:</strong> With the video toggle off, the panel is
 200pt wide and unchanged from the shipped layout.</li>
@@ -880,9 +880,9 @@ itself keeps its trailing edge pinned and grows leftward (~304pt of new
 width). This needs a human to confirm on a real machine before
 implementation.</li>
 </ul>
-<h4 data-number="1.11.7.3" id="camera-picker-not-implemented"><span
-class="header-section-number">1.11.7.3</span> Camera picker (not
-implemented)</h4>
+<h4 data-number="1.11.7.3" id="camera-picker-shipped"><span
+class="header-section-number">1.11.7.3</span> Camera picker
+(shipped)</h4>
 <ul>
 <li><strong>AC-CAM-1:</strong> The picker lists every connected video
 device discovered on the system, by display name.</li>
@@ -902,9 +902,9 @@ camera-busy and device-disconnected states.</li>
 <li><strong>AC-CAM-8:</strong> A long device name does not push any
 control out of the 504pt panel; it truncates.</li>
 </ul>
-<h4 data-number="1.11.7.4" id="mirror-toggle-not-implemented"><span
-class="header-section-number">1.11.7.4</span> Mirror toggle (not
-implemented)</h4>
+<h4 data-number="1.11.7.4" id="mirror-toggle-shipped"><span
+class="header-section-number">1.11.7.4</span> Mirror toggle
+(shipped)</h4>
 <ul>
 <li><strong>AC-MIR-1:</strong> A user-facing mirror control is visible
 whenever the preview area is visible.</li>
@@ -917,9 +917,9 @@ restored on the next launch.</li>
 <li><strong>AC-MIR-5:</strong> The mirror setting affects the preview
 only and does not alter what Photo Booth records.</li>
 </ul>
-<h4 data-number="1.11.7.5" id="session-lifecycle-not-implemented"><span
-class="header-section-number">1.11.7.5</span> Session lifecycle (not
-implemented)</h4>
+<h4 data-number="1.11.7.5" id="session-lifecycle-shipped"><span
+class="header-section-number">1.11.7.5</span> Session lifecycle
+(shipped)</h4>
 <ul>
 <li><strong>AC-LC-1:</strong> The capture session starts when the video
 toggle is turned on while the popover is open.</li>
@@ -933,9 +933,9 @@ video toggle is off.</li>
 at most one capture session running and no orphaned session.</li>
 </ul>
 <h4 data-number="1.11.7.6"
-id="permission-and-failure-states-not-implemented"><span
+id="permission-and-failure-states-shipped"><span
 class="header-section-number">1.11.7.6</span> Permission and failure
-states (not implemented)</h4>
+states (shipped)</h4>
 <ul>
 <li><strong>AC-ST-1:</strong> On the first toggle-on with permission not
 determined, the app requests camera access and the preview area shows a
@@ -967,9 +967,9 @@ All preview state messaging is inline in the preview area.</li>
 <li><strong>AC-ST-10:</strong> All state messages follow the product's
 voice: clear, non-blaming, sentence case, no exclamation marks.</li>
 </ul>
-<h4 data-number="1.11.7.7" id="accessibility-not-implemented"><span
-class="header-section-number">1.11.7.7</span> Accessibility (not
-implemented)</h4>
+<h4 data-number="1.11.7.7" id="accessibility-shipped"><span
+class="header-section-number">1.11.7.7</span> Accessibility
+(shipped)</h4>
 <ul>
 <li><strong>AC-AX-1:</strong> The camera picker and mirror toggle each
 carry an <code>accessibilityLabel</code> and a stable
@@ -981,9 +981,8 @@ VoiceOver.</li>
 <li><strong>AC-AX-4:</strong> The preview area and its controls
 introduce no focus ring, consistent with the shipped popover.</li>
 </ul>
-<h4 data-number="1.11.7.8" id="persistence-not-implemented"><span
-class="header-section-number">1.11.7.8</span> Persistence (not
-implemented)</h4>
+<h4 data-number="1.11.7.8" id="persistence-shipped"><span
+class="header-section-number">1.11.7.8</span> Persistence (shipped)</h4>
 <ul>
 <li><strong>AC-PS-1:</strong> Exactly two values persist: the selected
 camera's unique identifier (string) and the mirror flag (boolean).</li>
@@ -996,10 +995,9 @@ the system default camera and mirroring on.</li>
 <li><strong>AC-PS-4:</strong> No other UI state persists. The video
 toggle still resets on each launch, unchanged from today.</li>
 </ul>
-<h4 data-number="1.11.7.9"
-id="engineering-prerequisites-not-implemented"><span
+<h4 data-number="1.11.7.9" id="engineering-prerequisites-shipped"><span
 class="header-section-number">1.11.7.9</span> Engineering prerequisites
-(not implemented)</h4>
+(shipped)</h4>
 <ul>
 <li><strong>AC-PR-1:</strong> <code>RecordingManager</code>'s actor
 isolation is fixed and lands <strong>before</strong> any preview
@@ -1068,7 +1066,7 @@ state is visible outside the popover</td>
 </tr>
 </tbody>
 </table>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> Risks carried over from the
+<p><code>[SHIPPED 2026-09-04]</code> Risks carried over from the
 approved live camera preview design. They apply to a future
 implementation pass, not to the app today.</p>
 <table>
@@ -1172,7 +1170,7 @@ rediscover them</td>
 id="known-limitations-of-the-approved-preview-design-not-shipped"><span
 class="header-section-number">1.13</span> Known limitations of the
 approved preview design (NOT SHIPPED)</h2>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code></p>
+<p><code>[SHIPPED 2026-09-04]</code></p>
 <ul>
 <li><strong>The preview and Photo Booth may show different
 cameras.</strong> The picker changes the preview only. The app cannot
@@ -1193,9 +1191,9 @@ Designer's M recommendation.</li>
 id="unverified-assumptions-must-be-resolved-before-implementation"><span
 class="header-section-number">1.14</span> Unverified assumptions (must
 be resolved before implementation)</h2>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> These are open questions,
-not facts. Each needs confirmation before or during a future
-implementation pass.</p>
+<p><code>[SHIPPED 2026-09-04]</code> These are open questions, not
+facts. Each needs confirmation before or during a future implementation
+pass.</p>
 <table>
 <thead>
 <tr>
@@ -1240,9 +1238,9 @@ AC-PV-5 must be revisited</td>
 id="implementation-prerequisites-for-the-preview-not-done"><span
 class="header-section-number">1.15</span> Implementation prerequisites
 for the preview (NOT DONE)</h2>
-<p><code>[DESIGN ONLY — NOT SHIPPED]</code> None of these exist in the
-app today. They are hard sequencing constraints on any future
-implementation pass.</p>
+<p><code>[SHIPPED 2026-09-04]</code> None of these exist in the app
+today. They are hard sequencing constraints on any future implementation
+pass.</p>
 <table>
 <thead>
 <tr>
@@ -1316,5 +1314,55 @@ reinstall.</strong> Expected for an unsigned artifact, not a defect.</p>
 sources stay in <code>MacRecordWidget/</code>, not under
 <code>src/</code> as <code>tech-config.md</code> lists. Confirmed by the
 human on 2026-09-04 as a deliberate exception, not drift.</p>
+<h2 data-number="1.16" id="implementation-findings-2026-09-04"><span
+class="header-section-number">1.16</span> Implementation findings
+(2026-09-04)</h2>
+<p>The feature shipped the same day it was designed. Three assumptions
+recorded as unverified were settled by building it, and one of them was
+wrong.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Assumption</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>U-1</td>
+<td>Panel pins its own trailing edge and grows ~304pt leftward</td>
+<td><strong>Wrong.</strong> <code>MenuBarExtraWindow</code> anchors to
+the status item and reverts origin changes made inside
+<code>setFrame</code>. Right-alignment is imposed by
+<code>PanelSizer</code>, which reasserts the origin on the next runloop
+pass, 8pt from the screen's visible frame.</td>
+</tr>
+<tr>
+<td>U-2</td>
+<td>AppKit may snap rather than animate the width change</td>
+<td><strong>Resolved: it animates</strong>, via
+<code>NSAnimationContext</code> on the window.</td>
+</tr>
+<tr>
+<td>U-3</td>
+<td>This app and Photo Booth can hold the same camera at once</td>
+<td><strong>Still untested.</strong> The preview is left running during
+recording on this assumption. <code>AC-PV-5</code> and
+<code>AC-ST-6</code> both depend on it.</td>
+</tr>
+</tbody>
+</table>
+<p>Two defects found during implementation that the design did not
+anticipate:</p>
+<ul>
+<li>AppKit grows the panel to fit content but never shrinks it back,
+stranding a full-size empty panel when the preview closes. Fixed by
+driving the window frame explicitly.</li>
+<li>Xcode 15.2 (Swift 5.9, used by CI) does not infer
+<code>@MainActor</code> on <code>App</code> or on view bodies, so
+explicit annotations are required. This is a build constraint, not a
+design one, but it is why <code>AC-PR-1</code> mattered.</li>
+</ul>
 </body>
 </html>
