@@ -15,47 +15,26 @@ struct MacRecordWidgetApp: App {
         MenuBarExtra {
             VStack(alignment: .trailing, spacing: 8) {
             HStack(spacing: 14) {
-                // Audio group: label plus its two transport controls.
-                HStack(spacing: 8) {
-                    Text("Audio")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
+                // One control, not two: record and stop were always mutually
+                // exclusive with one of them disabled, so a single toggle
+                // carries the same state with half the controls.
+                Text("Audio")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
 
-                    Button {
-                        Task { await startOnly() }
-                    } label: {
-                        Image(systemName: "record.circle.fill")
-                            .font(Self.glyphFont)
-                            .foregroundStyle(.red)
-                            .frame(width: Self.glyphSize, height: Self.glyphSize)
-                    }
-                    .buttonStyle(.plain)
-                    .contentShape(Rectangle())
-                    .disabled(recordingManager.isRecording || recordingManager.isInFlight)
-                    .help("Start audio recording")
-                    .accessibilityLabel("Start recording")
-                    .accessibilityIdentifier("startButton")
-
-                    Button {
-                        Task { await stopOnly() }
-                    } label: {
-                        // Drawn rather than the `square` SF Symbol: that symbol
-                        // is a hairline outline, which reads as weightless next
-                        // to the solid record disc. An explicit stroke width
-                        // lets it match.
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .stroke(lineWidth: 2.5)
-                            .frame(width: 12, height: 12)
-                            .frame(width: Self.glyphSize, height: Self.glyphSize)
-                    }
-                    .buttonStyle(.plain)
-                    .contentShape(Rectangle())
-                    .disabled(!recordingManager.isRecording || recordingManager.isInFlight)
-                    .help("Stop audio recording")
-                    .accessibilityLabel("Stop recording")
-                    .accessibilityIdentifier("stopButton")
+                Toggle(isOn: recordingBinding) {
+                    Image(systemName: recordingManager.isRecording ? "stop.fill" : "record.circle.fill")
+                        .font(Self.glyphFont)
+                        .frame(width: Self.glyphSize, height: Self.glyphSize)
                 }
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .tint(.red)
+                .disabled(recordingManager.isInFlight)
+                .help(recordingManager.isRecording ? "Stop audio recording" : "Start audio recording")
+                .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
+                .accessibilityIdentifier("recordToggle")
 
                 Spacer(minLength: 12)
 
@@ -89,8 +68,8 @@ struct MacRecordWidgetApp: App {
                         .font(Self.glyphFont)
                         .frame(width: Self.glyphSize, height: Self.glyphSize)
                 }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .help("Quit MacRecordWidget")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
@@ -141,6 +120,16 @@ struct MacRecordWidgetApp: App {
     /// centre to the right. Holding the width constant means only the height
     /// ever changes, so the trailing edge never moves.
     private var contentWidth: CGFloat { CameraPreviewPanel.previewWidth }
+
+    /// Drives the single audio control: on starts, off stops.
+    private var recordingBinding: Binding<Bool> {
+        Binding(
+            get: { recordingManager.isRecording },
+            set: { shouldRecord in
+                Task { shouldRecord ? await startOnly() : await stopOnly() }
+            }
+        )
+    }
 
     @MainActor
     private func startOnly() async {
