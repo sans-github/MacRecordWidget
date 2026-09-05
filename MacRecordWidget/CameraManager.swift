@@ -34,12 +34,11 @@ final class CameraManager {
     /// the persisted preference: after a fallback these differ on purpose.
     private(set) var activeCamera: AVCaptureDevice?
 
-    var isMirrored: Bool {
-        didSet {
-            defaults.set(isMirrored, forKey: Keys.mirrored)
-            applyMirroring()
-        }
-    }
+    /// Mirroring is always on, matching Photo Booth. The user-facing toggle was
+    /// removed, so the stored preference is deliberately not read: a previously
+    /// saved `false` would otherwise strand the preview unmirrored with no way
+    /// to change it back.
+    let isMirrored = true
 
     let session = AVCaptureSession()
 
@@ -50,13 +49,10 @@ final class CameraManager {
 
     private enum Keys {
         static let deviceID = "preview.cameraDeviceID"
-        static let mirrored = "preview.isMirrored"
     }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        // Mirroring defaults to on, matching Photo Booth.
-        self.isMirrored = defaults.object(forKey: Keys.mirrored) as? Bool ?? true
         registerDeviceObservers()
     }
 

@@ -50,6 +50,13 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel("Stop recording")
                 .accessibilityIdentifier("stopButton")
 
+
+                Spacer(minLength: 12)
+
+                if recordingManager.videoEnabled {
+                    CameraControls(camera: camera)
+                }
+
                 Button {
                     Task {
                         if recordingManager.isRecording {
@@ -66,12 +73,6 @@ struct MacRecordWidgetApp: App {
                 .help("Quit MacRecordWidget")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
-
-                Spacer(minLength: 12)
-
-                if recordingManager.videoEnabled {
-                    CameraControls(camera: camera)
-                }
             }
             .focusEffectDisabled()
             // Trailing-aligned so the row stays put as the panel grows leftward.

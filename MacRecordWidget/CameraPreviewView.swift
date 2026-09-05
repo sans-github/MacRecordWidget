@@ -128,14 +128,6 @@ struct CameraControls: View {
             .accessibilityLabel("Preview camera")
             .accessibilityIdentifier("cameraPicker")
 
-            // Label removed by request; the accessibility label carries it.
-            Toggle("", isOn: $camera.isMirrored)
-                .toggleStyle(.checkbox)
-                .controlSize(.small)
-                .labelsHidden()
-                .help("Mirror the preview")
-                .accessibilityLabel("Mirror preview")
-                .accessibilityIdentifier("mirrorToggle")
         }
     }
 
