@@ -202,11 +202,19 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// the screen on any Mac. Clamped to at least the medium width, because on
     /// a small display half the screen can be narrower than medium, which would
     /// put the sizes out of order.
+    ///
+    /// It is the *panel* that measures half the screen, not the preview inside
+    /// it, so the padding and the screen margin come off the top. Sizing the
+    /// preview to half the screen instead makes the panel wider than half by
+    /// exactly that much, and it laps over a window tiled to the left half.
     var previewWidth: CGFloat {
         switch self {
         case .small: 320
         case .medium: 480
-        case .large: max(480, ((NSScreen.main?.visibleFrame.width ?? 960) / 2).rounded())
+        case .large:
+            let screenWidth = NSScreen.main?.visibleFrame.width ?? 960
+            let halfPanel = screenWidth / 2 - PanelSizer.screenMargin - horizontalPadding * 2
+            return max(480, halfPanel.rounded(.down))
         }
     }
 

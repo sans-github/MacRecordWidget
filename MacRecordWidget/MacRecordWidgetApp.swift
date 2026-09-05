@@ -65,21 +65,6 @@ struct MacRecordWidgetApp: App {
 
                 Spacer(minLength: 12)
 
-                Picker("Panel size", selection: scaleBinding) {
-                    ForEach(PanelScale.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .controlSize(scale.controlSize)
-                .fixedSize()
-                .help("Panel size")
-                .accessibilityLabel("Panel size")
-                .accessibilityIdentifier("panelScalePicker")
-
-                Spacer(minLength: 12)
-
                 // An icon toggle button rather than a switch: a switch is a wide
                 // capsule sitting next to round glyphs, so no amount of sizing
                 // makes it read as part of the same family.
@@ -97,6 +82,22 @@ struct MacRecordWidgetApp: App {
 
                 if recordingManager.videoEnabled {
                     CameraControls(camera: camera, scale: scale)
+
+                    // Sits with the camera picker, and only while the preview is
+                    // open: the size it changes is mostly the size of the
+                    // preview, so it has nothing to act on otherwise.
+                    Picker("Panel size", selection: scaleBinding) {
+                        ForEach(PanelScale.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .controlSize(scale.controlSize)
+                    .fixedSize()
+                    .help("Panel size")
+                    .accessibilityLabel("Panel size")
+                    .accessibilityIdentifier("panelScalePicker")
                 }
 
                 Button {

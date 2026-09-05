@@ -10,7 +10,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Five Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`record.circle.fill` in red while idle / `stop.fill` on a red fill while recording), a spacer, the S/M/L size picker, a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), and a bordered power button. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`record.circle.fill` in red while idle / `stop.fill` on a red fill while recording), a spacer, a camera toggle button (`video.fill`), then the camera picker and the S/M/L size picker (both only while the camera is on), and a bordered power button. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. **Recording is audio only.** Photo Booth is never launched.
 
 Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required. Minimum macOS deployment target is 14.0.
@@ -61,10 +61,20 @@ into `projects/master/`.
 S/M/L choice: preview size, glyph size and font, `ControlSize`, row spacing,
 padding, corner radius and picker width. It is one enum on purpose, because the
 row and the preview have to scale together and spreading the numbers across the
-views is how they drift apart. `large` is half the screen's visible width rather
-than a hardcoded number, clamped to at least the medium width so a small display
-cannot put the three sizes out of order. The choice persists in `UserDefaults`
-under `panelScale`.
+views is how they drift apart. The choice persists in `UserDefaults` under
+`panelScale`.
+
+At `large` it is the **panel** that measures half the screen, not the preview
+inside it, so `previewWidth` subtracts the screen margin and both horizontal
+paddings first. Sizing the preview to half the screen instead makes the panel
+wider than half by exactly that much, which laps over a window tiled to the left
+half of the display. `large` is clamped to at least the medium width, so a
+narrow display cannot put the three sizes out of order.
+
+The picker is only mounted while the preview is open. A consequence worth
+knowing: leaving the scale on `large` and closing the preview leaves an
+oversized button row with no visible way to shrink it until the camera goes back
+on.
 
 ### Panel sizing gotchas
 
