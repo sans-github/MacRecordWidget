@@ -9,6 +9,7 @@ struct MacRecordWidgetApp: App {
     @State private var recordingManager = RecordingManager()
     @State private var camera = CameraManager()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var measuredSize: CGSize = .zero
 
     var body: some Scene {
         MenuBarExtra {
@@ -69,17 +70,24 @@ struct MacRecordWidgetApp: App {
             .focusEffectDisabled()
             // Trailing-aligned so the row stays put as the panel grows leftward.
             // Without an explicit alignment the row centers and slides 152pt.
-            .frame(width: CameraManager.rowWidth, alignment: .trailing)
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
             if recordingManager.videoEnabled {
                 CameraPreviewPanel(camera: camera)
                     .transition(.opacity)
             }
             }
+            .frame(width: contentWidth, alignment: .trailing)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .frame(width: panelWidth, alignment: .trailing)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: recordingManager.videoEnabled)
+            .fixedSize()
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.preference(key: PanelSizeKey.self, value: proxy.size)
+                }
+            )
+            .background(PanelSizer(size: measuredSize, animated: !reduceMotion))
+            .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
             .task(id: recordingManager.videoEnabled) {
                 if recordingManager.videoEnabled {
                     await camera.start()
@@ -94,10 +102,10 @@ struct MacRecordWidgetApp: App {
         .menuBarExtraStyle(.window)
     }
 
-    /// 200pt collapsed, 504pt with the preview open (480 preview + 12pt padding
-    /// each side). The panel's trailing edge is the anchor.
-    private var panelWidth: CGFloat {
-        recordingManager.videoEnabled ? 504 : 200
+    /// Content width inside the 12pt horizontal padding: 176pt collapsed, or
+    /// 480pt to match the preview. Total panel is this plus 24pt.
+    private var contentWidth: CGFloat {
+        recordingManager.videoEnabled ? CameraPreviewPanel.previewWidth : 176
     }
 
     @MainActor

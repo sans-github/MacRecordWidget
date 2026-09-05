@@ -11,6 +11,7 @@
 		A1000003238F1E8900000001 /* RecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004238F1E8900000001 /* RecordingManager.swift */; };
 		A1000007238F1E8900000001 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008238F1E8900000001 /* CameraManager.swift */; };
 		A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A238F1E8900000001 /* CameraPreviewView.swift */; };
+		A100000B238F1E8900000001 /* PanelSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000C238F1E8900000001 /* PanelSizer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		A1000006238F1E8900000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1000008238F1E8900000001 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		A100000A238F1E8900000001 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		A100000C238F1E8900000001 /* PanelSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelSizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +50,7 @@
 				A1000004238F1E8900000001 /* RecordingManager.swift */,
 				A1000008238F1E8900000001 /* CameraManager.swift */,
 				A100000A238F1E8900000001 /* CameraPreviewView.swift */,
+				A100000C238F1E8900000001 /* PanelSizer.swift */,
 				A1000006238F1E8900000001 /* Info.plist */,
 			);
 			path = MacRecordWidget;
@@ -115,6 +118,7 @@
 			files = (
 				A1000001238F1E8900000001 /* MacRecordWidgetApp.swift in Sources */,
 				A1000003238F1E8900000001 /* RecordingManager.swift in Sources */,
+				A100000B238F1E8900000001 /* PanelSizer.swift in Sources */,
 				A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */,
 				A1000007238F1E8900000001 /* CameraManager.swift in Sources */,
 			);
