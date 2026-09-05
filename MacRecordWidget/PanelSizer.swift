@@ -2,19 +2,6 @@ import AppKit
 import SwiftUI
 
 
-enum PanelLog {
-    static let path = "/tmp/macrecordwidget-panel.log"
-    static func write(_ message: String) {
-        let line = "[\(Date())] \(message)\n"
-        guard let data = line.data(using: .utf8) else { return }
-        if let handle = FileHandle(forWritingAtPath: path) {
-            handle.seekToEndOfFile(); handle.write(data); try? handle.close()
-        } else {
-            try? data.write(to: URL(fileURLWithPath: path))
-        }
-    }
-}
-
 /// Reports the measured size of the popover content.
 struct PanelSizeKey: PreferenceKey {
     static var defaultValue: CGSize = .zero
@@ -55,9 +42,14 @@ final class PanelAnchorView: NSView {
 /// immediately shows the old x. Measured on a real panel: asking for x=1072
 /// landed at x=848, and asking for x=768 landed at x=376.
 ///
-/// The revert is scoped to that call, so the origin is reasserted with
-/// `setFrameOrigin` on the next runloop pass, where it holds. Do not fold that
-/// deferred call back into the `setFrame` above; it will stop working.
+/// The revert is scoped to that call, so `setFrameOrigin` immediately after it
+/// sticks. Both are applied with screen updates suppressed and flushed once, so
+/// the anchored intermediate position is never painted; correcting it on a
+/// later runloop pass instead makes the panel visibly flick from centre to
+/// right.
+///
+/// Do not animate the resize. `animator().setFrame` animates the reverted
+/// origin too, sliding the panel across the screen before the correction lands.
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
     let animated: Bool
@@ -125,18 +117,7 @@ struct PanelSizer: NSViewRepresentable {
             window.disableScreenUpdatesUntilFlush()
             window.setFrame(target, display: false)
             window.setFrameOrigin(target.origin)
-            let afterSync = window.frame
             window.displayIfNeeded()
-            PanelLog.write("sync -> \(afterSync) wanted=\(target)")
-
-            // Fallback only if the synchronous correction did not hold.
-            if abs(afterSync.origin.x - target.origin.x) > 0.5 {
-                let origin = target.origin
-                DispatchQueue.main.async { [weak window] in
-                    window?.setFrameOrigin(origin)
-                    if let w = window { PanelLog.write("deferred fallback -> \(w.frame)") }
-                }
-            }
         }
 
         deinit {

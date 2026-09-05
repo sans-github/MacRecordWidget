@@ -52,8 +52,15 @@ into `projects/master/`.
   is honoured and the move is silently discarded, so reading the frame back
   immediately shows the old x. Measured: asking for x=1072 landed at x=848,
   asking for x=768 landed at x=376. The revert is scoped to that call, so
-  `PanelSizer` reasserts the origin via `setFrameOrigin` on the next runloop
-  pass. Do not fold that deferred call back into `setFrame`; it will stop working.
+  `setFrameOrigin` immediately afterwards sticks.
+- **Never animate the panel resize.** `animator().setFrame` animates the reverted
+  origin as well, sliding the panel across the screen before the correction
+  lands. `PanelSizer` applies size and corrected origin with
+  `disableScreenUpdatesUntilFlush()` and flushes once, so the anchored
+  intermediate position is never painted.
+- **The panel is a fixed 504pt wide in both states.** A width change forces AppKit
+  to reposition as well as resize, and the anchored position is shown before the
+  correction. Holding the width constant means only the height moves.
 - **AppKit grows the panel to fit content but never shrinks it back.** Without an
   explicit frame the panel strands at full size with the collapsed row floating
   in the middle of it.
