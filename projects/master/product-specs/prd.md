@@ -1,13 +1,14 @@
-> Status: Approved — Human
-> Approved: 2026-09-04
+> Status: Draft — PM, pending human re-approval
+> Last approved: 2026-09-04 (superseded by the 2026-09-05 revisions below)
+> Updated: 2026-09-05
 
 # PRD: MacRecordWidget (Master)
 
 Consolidated product baseline. Describes the app **as it actually ships today**.
 
-**Shipped:** production polish (2026-05-18), popover button layout (2026-05-21), live camera preview (2026-09-04).
+**Shipped:** production polish (2026-05-18), popover button layout (2026-05-21), live camera preview (2026-09-04), panel pinning and scaling (2026-09-05).
 
-> **Reading this document:** every unmarked statement describes current, shipped behaviour. The live camera preview shipped on 2026-09-04 and then went through several rounds of UI revision with the human on the same day. Criteria that the revisions invalidated are kept in **Superseded acceptance criteria** with the reason and date, so the decision trail survives.
+> **Reading this document:** every unmarked statement describes current, shipped behaviour. The live camera preview shipped on 2026-09-04 and then went through several rounds of UI revision with the human on the same day, and a further round on 2026-09-05 (pin toggle, S/M/L panel scaling, edge-to-edge preview, mic glyph, "Audio" label removed). Criteria that the revisions invalidated are kept in **Superseded acceptance criteria** with the reason and date, so the decision trail survives.
 
 ## Goals
 
@@ -18,6 +19,8 @@ Consolidated product baseline. Describes the app **as it actually ships today**.
 | Zero-friction recording | Start or stop a recording in one click from the menu bar. |
 | Chained sessions | Stop a recording and start a new one without reopening the widget. |
 | One control per idea | Each control does exactly one thing. No control silently triggers a second effect. |
+| Fits any display | Three panel sizes. Every dimension derives from one choice, so the row and the preview never drift apart. |
+| Stays put on demand | The panel can be pinned so another app taking focus does not fold it away. |
 | Native macOS feel | Controls use standard macOS control types and sizing. Correct in light and dark mode. |
 | Reliable lifecycle | Rapid or double taps never fire a duplicate shortcut. Failed launches never leave the UI in a false state. |
 | Idiomatic Swift | No deprecated observation APIs. No raw `DispatchQueue` on the UI path. No optimistic state divergence. |
@@ -47,7 +50,7 @@ Consolidated product baseline. Describes the app **as it actually ships today**.
 
 ## Elevator pitch
 
-MacRecordWidget is a menu bar app that starts and stops an audio recording in one click. It fires two user-created Shortcuts ("Start" and "Stop") and quits Voice Memos first so macOS does not throw an audio-service error. A second toggle opens a live 480x270pt camera preview inside the popover, purely so the user can check framing. The whole UI is one row of small icon controls plus an optional preview below it.
+MacRecordWidget is a menu bar app that starts and stops an audio recording in one click. It fires two user-created Shortcuts ("Start" and "Stop") and quits Voice Memos first so macOS does not throw an audio-service error. A second toggle opens a live camera preview inside the panel, purely so the user can check framing. The whole UI is one row of icon controls plus an optional preview below it. The panel has three sizes (S/M/L) and can be pinned so it survives losing focus.
 
 ---
 
@@ -61,6 +64,10 @@ Prior versions of the widget added their own friction:
 - The popover dismissed itself after Start, so stopping required reopening it from the menu bar
 - Start and Stop were two separate buttons, one of which was always disabled
 - The video toggle overloaded two effects (preview plus a Photo Booth launch) onto one click
+- The panel folded away as soon as another app was clicked, so it could not be watched while working
+- One fixed panel size served every display: too small on a large screen, too wide on a laptop
+- The audio toggle wore a red record disc, the generic record mark, which reads as video as readily as audio
+- An "Audio" text label sat beside it, implying a "Video" counterpart that does not exist
 
 ---
 
@@ -77,16 +84,30 @@ Prior versions of the widget added their own friction:
 - Menu bar icon (`record.circle`) that turns green while recording, with a blinking amber badge dot that respects Reduce Motion
 - The icon never changes glyph (no mic or camera swap)
 
-**Popover row (left to right)**
-- A small secondary "Audio" text label at 11pt, hidden from accessibility
-- **One** audio toggle (`recordToggle`): `.toggleStyle(.button)`, `.controlSize(.small)`, tinted red. `record.circle.fill` when idle, `stop.fill` while recording. Click starts, click again stops
+**Button row (left to right)**
+- Pin toggle (`pinToggle`): `pin.slash` when off, `pin.fill` when on. Keeps the panel on screen when another app takes focus. Persisted
+- **One** audio toggle (`recordToggle`): `.toggleStyle(.button)`, tinted red, glyph `mic.fill`. Idle it is plain button chrome with the glyph in the default label colour; while recording the button fills red. The glyph never changes, exactly like every other toggle in the row. Click starts, click again stops
 - A spacer
 - Camera toggle (`videoModeToggle`): `.toggleStyle(.button)`, glyph `video.fill`. Shows and hides the preview. Never disabled by recording state
-- Camera picker (`cameraPicker`), max 200pt wide, visible **only** while the camera toggle is on
+- Camera picker (`cameraPicker`), visible **only** while the camera toggle is on
+- Three S/M/L panel-size toggles (`panelScalePicker`), visible **only** while the camera toggle is on
 - Quit button (`quitButton`): `.buttonStyle(.bordered)`, glyph `power`. Stops an in-progress recording, then terminates
+- There is no text label anywhere in the row. Every control is a glyph or a single letter
+
+**Tooltips and VoiceOver**
+
+| Control | Tooltip | VoiceOver label |
+|---------|---------|-----------------|
+| Audio toggle | "Record audio to Voice Memos" / "Stop and save to Voice Memos" | "Start recording" / "Stop recording" |
+| Camera toggle | "Show camera preview" / "Hide camera preview" | same as tooltip |
+| Pin toggle | "Keep panel open" / "Let panel close on its own" | "Keep panel open" |
+| S/M/L | "Small panel" / "Medium panel" / "Large panel" | "Small panel size", and so on |
+| Quit | "Quit" | "Quit MacRecordWidget" |
+
+The VoiceOver label deliberately differs from the tooltip where the tooltip is too terse without the visual context: "Quit" is unambiguous next to a power glyph, but not read aloud on its own.
 
 **Control chrome**
-- Every control is `.controlSize(.small)` with a 13pt glyph in a 16pt frame
+- Every control's size, glyph size, font, corner radius, and `ControlSize` derive from the chosen panel scale
 - Every control carries a constant 1pt separator-coloured outline, so an off toggle and an on toggle read as one control in two states rather than two different objects
 - No focus ring on any control (`focusEffectDisabled`)
 
@@ -98,7 +119,8 @@ Prior versions of the widget added their own friction:
 - A failed shortcut launch throws `shortcutLaunchFailed` and surfaces through an `NSAlert`
 
 **Camera preview**
-- Live 480x270pt (16:9) preview below the button row, visible only while the camera toggle is on
+- Live 16:9 preview below the button row, visible only while the camera toggle is on. 480x270pt at the medium scale
+- Runs flush to the panel's left, right, and bottom edges. No inset, no border. Only its bottom corners are rounded, matching the panel's own 10pt radius
 - Display-only: never writes a file, buffer, or pasteboard image
 - Mirroring is hardcoded on (selfie orientation); no user-facing mirror control
 - Camera picker across all connected video devices, persisted across launches
@@ -106,13 +128,21 @@ Prior versions of the widget added their own friction:
 - The audio toggle stays usable in every preview state
 
 **Panel**
-- Fixed 504pt wide in both states; only the height changes
-- Right-aligned 8pt from the screen's visible frame
+- Three sizes, chosen with the S/M/L toggles and persisted: small, medium (default), large
+- Width is the chosen scale's width (320 / 480 / half the screen's visible width, never below 480). It is the same whether the camera is on or off, so toggling the camera changes the height only
+- Flush against the right edge of the screen's visible frame (zero margin)
 - Not draggable, and the resize is not animated
 
-**Popover lifecycle**
-- Popover stays open through Start and Stop; it closes only when the user clicks the menu bar icon
-- The capture session starts when the camera toggle turns on and stops when the popover closes
+**Panel scale**
+- One `PanelScale` enum owns every derived dimension: preview size, glyph size and font, `ControlSize` (`.mini` / `.small` / `.regular`), row spacing, horizontal and vertical padding, corner radius, picker width, and the two text fonts
+- Large tracks the display rather than a fixed number, so the panel is half the screen on any Mac
+- The three sizes are toggle buttons, not a segmented picker: `NSSegmentedControl` ignores SwiftUI's `.font()`, so segmented labels stayed 13pt while everything around them grew
+
+**Panel lifecycle**
+- The panel stays open through Start and Stop
+- Unpinned (default): it closes when the menu bar icon is clicked, or when another app takes focus
+- Pinned: it stays on screen through focus loss; only a menu bar icon click closes it
+- The capture session starts when the camera toggle turns on and stops when the panel closes
 
 ---
 
@@ -124,7 +154,8 @@ Prior versions of the widget added their own friction:
 - A Recording session owns **no** capture process. Nothing captures video.
 - One **Preview session** exists in memory, separate from the Recording session, never writing a file.
 - A Preview session shows exactly one **Camera device**, chosen from the connected video devices. A Camera device has a stable unique identifier, a display name, and a connected status.
-- One **Preference** outlives a launch: the selected camera's unique identifier. Mirroring is a constant, not a preference.
+- Three **Preferences** outlive a launch: the selected camera's unique identifier, the pinned flag, and the panel scale. Mirroring is a constant, not a preference.
+- A **Panel scale** is one of three values (small, medium, large) and derives every dimension in the panel. Nothing else sets a size directly.
 - A Preview session has a **status**: idle, running, or a message state (permission not determined, denied, restricted, no camera, generic failure).
 
 ---
@@ -139,6 +170,7 @@ Prior versions of the widget added their own friction:
 | Popover button layout | 2026-05-21 | Popover status dot removed, single horizontal row, popover stays open through Start and Stop |
 | Live camera preview | 2026-09-04 | Preview surface, fixed 504pt panel driven by `PanelSizer`, camera picker in the button row, hardcoded mirroring, permission and failure states, camera-ID persistence |
 | Post-ship UI revisions | 2026-09-04 | Record and Stop merged into one toggle, Photo Booth launch deleted, mirror toggle removed, control strip removed, uniform control chrome, dead `accessibilityDenied` case removed |
+| Pinning and scaling | 2026-09-05 | Pin toggle, S/M/L panel scaling driven by one `PanelScale` enum, edge-to-edge preview, panel flush to the screen edge, `mic.fill` audio glyph, "Audio" label removed, state-dependent camera tooltip, self-signed local install |
 
 ### Deferred
 
@@ -153,8 +185,9 @@ Prior versions of the widget added their own friction:
 | Preview snapshot or still capture | Would be the app's first capture path; out of scope for a framing aid |
 | Detached or full-screen preview window | Contradicts the no-window, menu-bar-only product shape |
 | Keeping the capture session alive while the popover is closed | Human accepted the camera activity light cycling instead |
-| Multi-camera simultaneous preview | No demand; would not fit a 504pt panel |
-| A variable-width panel | AppKit repositions as well as resizes on a width change, and paints the anchored position before the correction lands |
+| Multi-camera simultaneous preview | No demand; would not fit the panel at any scale |
+| A user-resizable panel (drag handle) | The S/M/L scales cover the need with three fixed widths. A drag handle on a status-item panel fights AppKit's anchoring |
+| Persisting the panel's pinned state per display or per app | The single `panelPinned` flag is enough for a solo user |
 
 ---
 
@@ -165,8 +198,8 @@ Prior versions of the widget added their own friction:
 | Surface | Purpose |
 |---------|---------|
 | Menu bar icon | Always-visible status. Green while recording. Click toggles the popover. |
-| Popover, button row | "Audio" label, audio toggle, camera toggle, camera picker (when on), Quit. |
-| Popover, preview area | Visible only while the camera toggle is on. Holds the live image or an inline state message. |
+| Panel, button row | Pin toggle, audio toggle, camera toggle, camera picker and S/M/L sizes (when the camera is on), Quit. |
+| Panel, preview area | Visible only while the camera toggle is on. Holds the live image or an inline state message. Runs flush to the panel's left, right, and bottom edges. |
 | System Settings → Privacy & Security → Camera | External. Reached from the denied-permission state's "Open Settings" action. |
 
 ### User roles and access
@@ -184,8 +217,18 @@ Prior versions of the widget added their own friction:
 
 **2. Check framing (no recording involved)**
 1. Click the camera toggle; the panel grows downward and the preview starts
-2. Pick a different camera from the picker if needed
+2. Pick a different camera, or a different S/M/L size, from the controls beside the toggle
 3. Click the camera toggle again; the preview collapses and the session stops
+
+**2b. Resize the panel**
+1. With the preview open, click S, M, or L
+2. Every dimension changes together: preview, glyphs, fonts, spacing, padding, picker width
+3. The choice persists; the next launch opens at the same size
+
+**2c. Keep the panel open while working**
+1. Click the pin toggle; the glyph changes from `pin.slash` to `pin.fill`
+2. Click into another app; the panel stays on screen
+3. Click the menu bar icon to close it, or unpin to restore the default close-on-focus-loss behaviour
 
 **3. Quit while recording**
 1. Click the Quit (power) button during a recording
@@ -227,27 +270,35 @@ In **every** state below, the audio toggle, the camera toggle, and Quit remain f
 
 All criteria below describe shipped behaviour. Criteria invalidated by the 2026-09-04 revisions are in **Superseded acceptance criteria**.
 
-### Popover layout
+### Panel layout
 
-- **AC-L-1:** The popover content is a `VStack`: a single `HStack` button row, with the preview below it when the camera toggle is on.
-- **AC-L-2:** The button row is ordered: "Audio" label, audio toggle, spacer, camera toggle, camera picker (only when the camera toggle is on), Quit.
-- **AC-L-3:** No recording-status dot appears anywhere in the popover, in any state.
-- **AC-L-4:** Every control is icon-only (except the "Audio" text label) with an `accessibilityLabel` and a stable `accessibilityIdentifier`.
+- **AC-L-1:** The panel content is a `VStack` with zero spacing: a single `HStack` button row, with the preview below it when the camera toggle is on.
+- **AC-L-2:** The button row is ordered: pin toggle, audio toggle, spacer, camera toggle, camera picker, S/M/L size toggles, Quit. The picker and the size toggles are present only while the camera toggle is on.
+- **AC-L-3:** No recording-status dot appears anywhere in the panel, in any state.
+- **AC-L-4:** Every control is a glyph or a single letter, with an `accessibilityLabel`. There is no text label in the row.
 - **AC-L-5:** No control shows a focus ring.
-- **AC-L-6:** Every control renders at `.controlSize(.small)` with a 13pt glyph inside a 16pt frame.
+- **AC-L-6:** Every control's `ControlSize`, glyph size, glyph font, and corner radius come from the current `PanelScale`. No view hardcodes any of them.
 - **AC-L-7:** Every control carries a constant 1pt separator-coloured outline, present whether the control is on or off.
-- **AC-L-8:** The "Audio" label renders at 11pt in the secondary foreground style and is hidden from accessibility.
-- **AC-L-9:** There is no control strip below the preview. The camera picker lives in the button row.
+- **AC-L-8:** Padding is applied to the button row, not to the panel, so the preview can reach the panel's edges.
+- **AC-L-9:** There is no control strip below the preview. The camera picker and the size toggles live in the button row.
+- **AC-L-10:** The preview runs flush to the panel's left, right, and bottom edges. No inset, no margin, no border.
+- **AC-L-11:** Only the preview's bottom two corners are rounded, at 10pt, matching the panel's own radius. Its top corners are square.
 
 ### Controls
 
 - **AC-C-1:** A **single** audio toggle (`recordToggle`) starts and stops recording. There is no separate Stop button.
-- **AC-C-2:** The audio toggle uses `.toggleStyle(.button)`, is tinted red, and shows `record.circle.fill` when idle and `stop.fill` while recording.
+- **AC-C-2:** The audio toggle uses `.toggleStyle(.button)`, is tinted red, and shows `mic.fill` in **both** states. Only the button fill changes: plain button chrome with the glyph in the default label colour when idle, a red fill while recording. The glyph does not swap, so the control behaves like every other toggle in the row (pin, camera, and S/M/L all keep their glyph and flip their fill). See AC-AX-7 for how the state stays distinguishable without hue.
+- **AC-C-2b:** `stop.fill` appears nowhere in the app. The idle mic is **not** red.
 - **AC-C-3:** The audio toggle is disabled only while an invocation is in flight.
 - **AC-C-4:** The camera toggle (`videoModeToggle`) uses `.toggleStyle(.button)` with the `video.fill` glyph and shows or hides the preview.
 - **AC-C-5:** The camera toggle is **never** disabled by recording state. It has no bearing on what is recorded.
-- **AC-C-6:** Quit (`quitButton`) uses `.buttonStyle(.bordered)` with the `power` glyph, carries a tooltip, and is never disabled.
-- **AC-C-7:** The camera picker is present in the button row only while the camera toggle is on, and is at most 200pt wide.
+- **AC-C-6:** Quit (`quitButton`) uses `.buttonStyle(.bordered)` with the `power` glyph, carries the tooltip "Quit", and is never disabled.
+- **AC-C-7:** The camera picker is present in the button row only while the camera toggle is on, and is capped at the current scale's picker width (150 / 200 / 260pt).
+- **AC-C-8:** A pin toggle (`pinToggle`) is the leftmost control in the row. It shows `pin.slash` when off and `pin.fill` when on, and is never disabled.
+- **AC-C-9:** The panel sizes are three separate `.toggleStyle(.button)` controls labelled S, M, and L. They are **not** a segmented `Picker`, because `NSSegmentedControl` ignores SwiftUI's `.font()` and would not scale with the rest of the row.
+- **AC-C-10:** The S/M/L toggles are mounted only while the camera toggle is on, immediately after the camera picker.
+- **AC-C-11:** Turning on a size toggle selects that size. Turning off the already-selected one is ignored: exactly one size is always selected.
+- **AC-C-12:** Each control's tooltip matches the Tooltips and VoiceOver table. The audio and camera tooltips change with state; the camera tooltip is never stuck on "Show camera preview" while the preview is open.
 
 ### Menu bar icon
 
@@ -257,12 +308,15 @@ All criteria below describe shipped behaviour. Criteria invalidated by the 2026-
 - **AC-M-4:** The badge dot is hidden from accessibility.
 - **AC-M-5:** The icon glyph never changes to a mic or camera symbol.
 
-### Popover lifecycle
+### Panel lifecycle
 
-- **AC-P-1:** The popover stays open after starting a recording.
-- **AC-P-2:** The popover stays open after stopping a recording.
-- **AC-P-3:** The popover closes only when the user clicks the menu bar icon.
+- **AC-P-1:** The panel stays open after starting a recording.
+- **AC-P-2:** The panel stays open after stopping a recording.
+- **AC-P-3:** Unpinned, the panel closes on a menu bar icon click or when another app takes focus. Pinned, only the icon click closes it.
 - **AC-P-4:** No code path calls `popover.close()` or `panel?.orderOut(nil)` after start or stop.
+- **AC-P-5:** While pinned, the window is re-shown on `didResignKeyNotification`, twice: once synchronously and once on the next runloop pass, because the order in which AppKit's own handler runs is not guaranteed.
+- **AC-P-6:** `hidesOnDeactivate` is forced off on the panel window, since the app is `LSUIElement` and deactivates as soon as another app is clicked.
+- **AC-P-7:** The pinned state persists in `UserDefaults` under `panelPinned` and is restored on the next launch.
 
 ### Recording behaviour
 
@@ -287,7 +341,7 @@ All criteria below describe shipped behaviour. Criteria invalidated by the 2026-
 ### Preview surface
 
 - **AC-PV-1:** The preview area sits **below** the button row, never above it and never beside it.
-- **AC-PV-2:** The preview image is 480x270pt at a 16:9 aspect ratio.
+- **AC-PV-2:** The preview is 16:9 at every scale, and its width is the panel's width. At medium that is 480x270pt.
 - **AC-PV-3:** The preview area is visible only while the camera toggle is on, and is fully removed from the layout when it is off.
 - **AC-PV-4:** The preview is display-only: no code path writes the preview stream to a file, a buffer on disk, or the pasteboard.
 - **AC-PV-5:** The preview keeps rendering while `isRecording` is true. Starting or stopping a recording does not stop, pause, or restart the session.
@@ -297,13 +351,26 @@ All criteria below describe shipped behaviour. Criteria invalidated by the 2026-
 
 ### Panel sizing
 
-- **AC-PNL-1:** The panel is a fixed 504pt wide in **both** states. Toggling the preview changes the height only.
-- **AC-PNL-2:** The panel's trailing edge sits 8pt from the right of the screen's visible frame, imposed by `PanelSizer`.
+- **AC-PNL-1:** For a given scale the panel width is the same whether the camera is on or off. Toggling the camera changes the height only.
+- **AC-PNL-2:** The panel's trailing edge sits flush against the right of the screen's visible frame (zero margin), imposed by `PanelSizer`.
 - **AC-PNL-3:** The resize is **not** animated. No `animator().setFrame` or `NSAnimationContext` drives the panel frame.
 - **AC-PNL-4:** The panel is not draggable: `isMovable` and `isMovableByWindowBackground` are both false.
 - **AC-PNL-5:** No panel size change causes the button row controls to reflow, reorder, or change size.
 - **AC-PNL-6:** The anchored intermediate position is never painted. Size and corrected origin are applied under `disableScreenUpdatesUntilFlush()` and flushed once.
 - **AC-PNL-7:** Closing the preview shrinks the panel back. No empty full-height panel is left stranded.
+- **AC-PNL-8:** Changing the scale changes the width. Because the panel is right-anchored, only the left edge moves, and the anchored intermediate frame is never painted.
+
+### Panel scale
+
+- **AC-SC-1:** Three sizes exist: small, medium, large. Medium is the default on a first launch.
+- **AC-SC-2:** A single `PanelScale` enum owns every derived dimension: preview width and height, glyph size, glyph font, control font, size-label font, `ControlSize`, row spacing, horizontal and vertical padding, corner radius, and picker width. No view computes any of them independently.
+- **AC-SC-3:** `ControlSize` maps to `.mini` at small, `.small` at medium, `.regular` at large.
+- **AC-SC-4:** Small is 320pt wide and medium is 480pt wide.
+- **AC-SC-5:** Large is exactly half the screen's visible width, rounded down, clamped to no less than the medium width so the three sizes never fall out of order.
+- **AC-SC-6:** Large measures the **panel**, not the preview inside it, so a panel at large never laps over a window tiled to the left half of the screen.
+- **AC-SC-7:** The preview height is the preview width times 9/16, rounded.
+- **AC-SC-8:** The chosen scale persists in `UserDefaults` under `panelScale` and is restored on the next launch. An unrecognised stored value falls back to medium.
+- **AC-SC-9:** Changing the scale resizes the row and the preview together. Neither changes without the other.
 
 ### Camera picker
 
@@ -314,7 +381,7 @@ All criteria below describe shipped behaviour. Criteria invalidated by the 2026-
 - **AC-CAM-5:** Reconnecting the stored device after a fallback restores it as the previewed camera.
 - **AC-CAM-6:** The picker changes the preview only. No code path attempts to drive any other app's camera.
 - **AC-CAM-7:** The picker remains usable in every non-running preview state where a device exists.
-- **AC-CAM-8:** A long device name does not push any control out of the 504pt panel; the picker is capped at 200pt and truncates.
+- **AC-CAM-8:** A long device name does not push any control out of the panel at any scale; the picker is capped at the scale's picker width and truncates.
 
 ### Mirroring
 
@@ -346,19 +413,23 @@ All criteria below describe shipped behaviour. Criteria invalidated by the 2026-
 
 ### Accessibility
 
-- **AC-AX-1:** The audio toggle, camera toggle, camera picker, and Quit each carry an `accessibilityLabel` and a stable `accessibilityIdentifier` (`recordToggle`, `videoModeToggle`, `cameraPicker`, `quitButton`).
+- **AC-AX-1:** The pin toggle, audio toggle, camera toggle, camera picker, and Quit each carry an `accessibilityLabel` and a stable `accessibilityIdentifier` (`pinToggle`, `recordToggle`, `videoModeToggle`, `cameraPicker`, `quitButton`).
+- **AC-AX-1b:** The three S/M/L toggles each carry a spelled-out `accessibilityLabel` ("Small panel size", and so on). The identifier `panelScalePicker` is on their container, not on the individual toggles.
 - **AC-AX-2:** The audio toggle's label and tooltip reflect its current state ("Start recording" / "Stop recording").
 - **AC-AX-3:** The preview area carries an accessibility label describing what it is (`cameraPreview`).
 - **AC-AX-4:** Every inline state message is readable by VoiceOver.
 - **AC-AX-5:** The preview area and its controls introduce no focus ring, consistent with the button row.
-- **AC-AX-6:** The decorative "Audio" label is hidden from accessibility, since the toggle it labels carries its own label.
+- **AC-AX-6:** Where a tooltip is too terse to stand alone in speech, the `accessibilityLabel` is written out in full: Quit reads "Quit MacRecordWidget", and the audio toggle reads "Start recording" / "Stop recording".
+- **AC-AX-7:** Recording state is distinguishable **without relying on hue**. The audio toggle's two states differ by button fill, which is a large luminance change and therefore survives greyscale and Increase Contrast. It does **not** rely on a glyph swap: the glyph is `mic.fill` in both states.
+- **AC-AX-8:** Recording state is also carried by three non-visual or out-of-panel channels: the tooltip, the VoiceOver label, and the menu bar icon (green plus a blinking amber dot). At least one of these is available when the panel is closed.
 
 ### Persistence
 
-- **AC-PS-1:** Exactly **one** value persists: the selected camera's unique identifier (string), under `preview.cameraDeviceID`.
+- **AC-PS-1:** Exactly **three** values persist: the selected camera's unique identifier under `preview.cameraDeviceID`, the pinned flag under `panelPinned`, and the panel scale under `panelScale`.
 - **AC-PS-2:** Persistence uses `UserDefaults`. No SwiftData model container is introduced. This is a recorded deviation from `tech-config.md`, which lists SwiftData for the macOS layer.
 - **AC-PS-3:** A first launch with no stored value uses a connected default camera.
 - **AC-PS-4:** No other UI state persists. The camera toggle and the recording state both reset on each launch.
+- **AC-PS-5:** The panel scale is stored as the enum's raw string, because `@AppStorage` cannot hold an enum directly.
 
 ---
 
@@ -386,6 +457,23 @@ Kept for the decision trail. **Do not test against any criterion below.** Each w
 | AC-AX-1 (old) | The camera picker **and mirror toggle** each carry a label and identifier | AC-AX-1 | No mirror toggle exists | 2026-09-04 |
 | AC-PS-1 (old) | Exactly two values persist: camera ID and the mirror flag | AC-PS-1, AC-MIR-3 | Only the camera ID persists. Any stored mirror flag is deliberately not read | 2026-09-04 |
 | AC-PR-1 to AC-PR-4 (old) | Engineering prerequisites (actor isolation, `NSCameraUsageDescription`, persistence, remove `accessibilityDenied`) | n/a | All four are done. AC-SW-1, AC-SW-7, AC-PS-2 now cover them as shipped behaviour | 2026-09-04 |
+| AC-L-2 (2026-09-04) | The row is ordered: "Audio" label, audio toggle, spacer, camera toggle, camera picker, Quit | AC-L-2 | A pin toggle joined at the head of the row and three S/M/L size toggles after the picker. The "Audio" label was removed | 2026-09-05 |
+| AC-L-4 (2026-09-04) | Every control is icon-only **except the "Audio" text label** | AC-L-4 | The label is gone. A row-level "Audio" caption implied a "Video" counterpart that this product does not have | 2026-09-05 |
+| AC-L-6 (2026-09-04) | Every control renders at `.controlSize(.small)` with a 13pt glyph in a 16pt frame | AC-L-6, AC-SC-2, AC-SC-3 | Those numbers are now the *medium* scale only. Every dimension derives from `PanelScale` | 2026-09-05 |
+| AC-L-8 (2026-09-04) | The "Audio" label renders at 11pt secondary and is hidden from accessibility | n/a | The label was deleted | 2026-09-05 |
+| AC-C-2 (2026-09-04) | The audio toggle shows `record.circle.fill` when idle and `stop.fill` while recording | AC-C-2 | A red disc is the generic record mark and reads as video as readily as audio. `mic.fill` names the medium and pairs with `video.fill` beside it. It also survives the 11pt small scale, which thinner audio symbols do not | 2026-09-05 |
+| AC-C-2 (interim, 2026-09-05) | The audio toggle shows a **red** `mic.fill` when idle and `stop.fill` while recording | AC-C-2, AC-C-2b, AC-AX-7 | Swapping the glyph made this the only control in the row that changed shape rather than fill. One glyph, fill flips. The idle glyph also lost its red, so red now means exactly one thing: recording | 2026-09-05 |
+| Any AC arguing recording state "survives greyscale because the glyph swaps" | Colour-independence justified by the `record.circle.fill` to `stop.fill` shape change | AC-AX-7, AC-AX-8 | **False as of 2026-09-05.** The shapes are identical now. The argument was rewritten around fill luminance, tooltip, VoiceOver label, and the menu bar icon | 2026-09-05 |
+| AC-C-7 (2026-09-04) | The camera picker is at most 200pt wide | AC-C-7 | 200pt is the medium width. The cap now follows the scale (150 / 200 / 260) | 2026-09-05 |
+| AC-P-3 (2026-09-04) | The popover closes **only** when the user clicks the menu bar icon | AC-P-3, AC-C-8 | Incorrect as written: the panel always also closed on focus loss. The pin toggle makes that behaviour opt-out and the AC now states both paths | 2026-09-05 |
+| AC-PV-2 (2026-09-04) | The preview image is 480x270pt | AC-PV-2, AC-SC-4 to AC-SC-7 | 480x270 is the medium scale. The preview is 16:9 at three widths | 2026-09-05 |
+| AC-PNL-1 (2026-09-04) | The panel is a fixed 504pt wide in both states | AC-PNL-1, AC-PNL-8, AC-SC-4 to AC-SC-6 | Width now follows the scale. The rule that survived is narrower: the width does not change when the *camera* toggles, only when the *scale* does | 2026-09-05 |
+| AC-PNL-2 (2026-09-04) | The panel's trailing edge sits 8pt from the right of the visible frame | AC-PNL-2 | Margin dropped to zero. With an edge-to-edge preview, an 8pt gap read as a misalignment rather than a margin | 2026-09-05 |
+| AC-CAM-8 (2026-09-04) | A long name does not push a control out of the **504pt** panel; the picker caps at 200pt | AC-CAM-8 | Both numbers were scale-specific | 2026-09-05 |
+| AC-AX-1 (2026-09-04) | Audio toggle, camera toggle, picker, and Quit carry a label and identifier | AC-AX-1, AC-AX-1b | The pin toggle joined the row; the size toggles carry labels but share a container identifier | 2026-09-05 |
+| AC-AX-6 (2026-09-04) | The decorative "Audio" label is hidden from accessibility | AC-AX-6 | No such label exists. The slot now holds the rule that actually matters: VoiceOver labels are written out where the tooltip is too terse | 2026-09-05 |
+| AC-PS-1 (2026-09-04) | Exactly **one** value persists: the camera ID | AC-PS-1 | Two more preferences joined: `panelPinned` and `panelScale` | 2026-09-05 |
+| Deferred: "a variable-width panel" (2026-09-04) | A variable width was ruled out because AppKit repositions as well as resizes | AC-PNL-8, AC-SC-1 | Superseded by measurement: the repositioning is survivable when the panel is right-anchored and painting is suppressed until the corrected frame lands. Only the left edge moves | 2026-09-05 |
 
 ---
 
@@ -396,14 +484,17 @@ Kept for the decision trail. **Do not test against any criterion below.** Each w
 | The two Shortcuts are missing or renamed | Medium | High | `NSWorkspace.open` failure throws a typed error and the alert names the required Shortcut |
 | Voice Memos takes longer than 1.5s to exit | Low | Medium | `VMAudioServiceErrorDomain` error 5 surfaces in Shortcuts; the wait is documented in CLAUDE.md and can be lengthened |
 | A user expects the camera toggle to record video | **High** | Medium | The toggle's label and tooltip both say "Show camera preview". The gap is stated at the top of this PRD. Accepted, not solved |
-| One toggle for start and stop hides the "stop" affordance | Low | Medium | The glyph changes to `stop.fill` and the tooltip changes to "Stop audio recording" while recording |
-| Icon-only controls are unlearnable for a new user | Medium | Medium | Every control carries an accessibility label and a tooltip; the audio toggle also carries a visible "Audio" text label |
+| One toggle for start and stop hides the "stop" affordance | Medium | Medium | The button fills red while recording, the tooltip changes to "Stop and save to Voice Memos", the VoiceOver label changes to "Stop recording", and the menu bar icon turns green with a blinking dot. **The glyph itself does not change**, so fill is the only in-row visual cue. Accepted in exchange for the control behaving like every other toggle in the row |
+| Icon-only controls are unlearnable for a new user | **High** | Medium | Every control carries an accessibility label and a tooltip. The last visible text label was removed on 2026-09-05, so tooltips are now the only in-app affordance. Accepted for a solo-use app |
 | Popover staying open is mistaken for a hung UI | Low | Low | The menu bar icon turns green and the badge blinks, so recording state is visible outside the popover |
 | macOS 14 minimum excludes macOS 13 users | Low | High | Documented minimum; solo-use app |
-| A 504pt panel feels oversized at rest, even with the preview closed | Medium | Low | Accepted deliberately. A variable width made the panel jump horizontally, which was worse than a wide empty row |
+| The panel feels oversized at rest, even with the preview closed | Medium | Low | The S/M/L scales let the user pick a narrower resting width. The width still does not shrink when the camera closes, because that would move the left edge on every toggle |
+| Large scale on an ultrawide display produces a very large panel | Medium | Low | Large is half the *visible* width by definition, so it never covers more than half the screen and never laps a left-tiled window (AC-SC-6) |
+| The S/M/L toggles are unreachable while the camera is off | Medium | Low | Deliberate: at rest the scale mostly governs the preview. Accepted; revisit if a user wants to resize the bare row |
+| A pinned panel is forgotten and left on screen | Low | Low | The glyph flips to `pin.fill`, and the state persists so it is at least consistent between launches |
 | Camera activity light cycling with the popover confuses the user | Medium | Low | Accepted trade-off; the alternative is holding the camera open in the background |
 | A preview failure blocks a recording the user needed | Low | High | AC-ST-7 and AC-ST-8 make non-blocking behaviour testable in every failure state; AC-ST-9 forbids modal alerts |
-| CI's unsigned build re-prompts for camera permission on every rebuild | High | Low | Documented in the CI note so a repeated prompt is not mistaken for a permission bug |
+| An ad-hoc CI build re-prompts for camera permission on every rebuild | High | Low | Solved, not just documented: `scripts/install-latest.sh` re-signs the downloaded build with a stable self-signed certificate, so the TCC grant survives rebuilds |
 | Long external camera names overflow the picker | Medium | Low | AC-CAM-8 caps the picker at 200pt and requires truncation |
 | Removing `@MainActor` annotations builds locally but fails in CI | Medium | Medium | AC-SW-8 makes the annotations a testable requirement; the reason is recorded in CLAUDE.md |
 
@@ -414,9 +505,11 @@ Kept for the decision trail. **Do not test against any criterion below.** Each w
 - **No video capture.** See the dedicated section above. This is the largest single gap in the product.
 - **Mirroring is not user-adjustable.** It is hardcoded on. A user who wants an unmirrored view has no way to get one.
 - **The camera activity light cycles with the popover.** The session stops on close and resumes on open. Accepted by the human in exchange for not holding the camera open in the background.
-- **The panel is a fixed 504pt wide even with the preview closed.** Chosen over a variable width because a width change made the panel visibly jump.
-- **The panel cannot be moved.** It is pinned 8pt from the right of the screen's visible frame.
-- **Nothing but the camera ID persists.** The camera toggle resets on every launch.
+- **The panel width does not shrink when the preview closes.** It stays at the chosen scale's width so that toggling the camera moves only the bottom edge.
+- **The panel cannot be moved.** It is fixed flush against the right of the screen's visible frame.
+- **The S/M/L controls only exist while the camera is on.** There is no way to change the scale from the bare button row.
+- **The audio toggle's glyph does not change while recording.** Only the fill does, plus the tooltip and the menu bar icon.
+- **Only three values persist:** the camera ID, the pinned flag, and the panel scale. The camera toggle still resets on every launch.
 
 ---
 
@@ -443,7 +536,7 @@ Every assumption recorded as open before implementation is now settled.
 
 **AppKit interop:** there is no SwiftUI-native camera preview on macOS 14, so `CameraPreviewView` wraps `AVCaptureVideoPreviewLayer` in an `NSViewRepresentable`. Mandatory, not stylistic.
 
-**CI and permission note:** CI builds unsigned. macOS ties the camera TCC grant to the signing identity and path, so **the camera permission prompt reappears on every rebuild and reinstall.** Expected for an unsigned artifact, not a defect.
+**Distribution and camera permission:** CI builds are ad-hoc signed. For an ad-hoc app macOS pins the camera TCC grant to the **binary hash**, so every new build is a new app to TCC and the permission prompt reappears on each install. `scripts/install-latest.sh` therefore downloads the CI artifact and re-signs it locally with a stable self-signed certificate (created once by `scripts/create-signing-cert.sh`) before installing to `/Applications`. With a stable identity the grant survives rebuilds. A repeated prompt after that means the certificate changed, not that permissions are broken.
 
 **Path exception (recorded):** Swift sources stay in `MacRecordWidget/`, not under `src/` as `tech-config.md` lists. Confirmed by the human on 2026-09-04 as a deliberate exception, not drift.
 

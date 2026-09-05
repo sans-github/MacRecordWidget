@@ -224,7 +224,9 @@ class="toc-section-number">1.16</span> Platform notes</a></li>
 </ul>
 </nav>
 <blockquote>
-<p>Status: Approved — Human Approved: 2026-09-04</p>
+<p>Status: Draft — PM, pending human re-approval Last approved:
+2026-09-04 (superseded by the 2026-09-05 revisions below) Updated:
+2026-09-05</p>
 </blockquote>
 <h1 data-number="1" id="prd-macrecordwidget-master"><span
 class="header-section-number">1</span> PRD: MacRecordWidget
@@ -232,13 +234,16 @@ class="header-section-number">1</span> PRD: MacRecordWidget
 <p>Consolidated product baseline. Describes the app <strong>as it
 actually ships today</strong>.</p>
 <p><strong>Shipped:</strong> production polish (2026-05-18), popover
-button layout (2026-05-21), live camera preview (2026-09-04).</p>
+button layout (2026-05-21), live camera preview (2026-09-04), panel
+pinning and scaling (2026-09-05).</p>
 <blockquote>
 <p><strong>Reading this document:</strong> every unmarked statement
 describes current, shipped behaviour. The live camera preview shipped on
 2026-09-04 and then went through several rounds of UI revision with the
-human on the same day. Criteria that the revisions invalidated are kept
-in <strong>Superseded acceptance criteria</strong> with the reason and
+human on the same day, and a further round on 2026-09-05 (pin toggle,
+S/M/L panel scaling, edge-to-edge preview, mic glyph, "Audio" label
+removed). Criteria that the revisions invalidated are kept in
+<strong>Superseded acceptance criteria</strong> with the reason and
 date, so the decision trail survives.</p>
 </blockquote>
 <h2 data-number="1.1" id="goals"><span
@@ -268,6 +273,16 @@ widget.</td>
 <td>One control per idea</td>
 <td>Each control does exactly one thing. No control silently triggers a
 second effect.</td>
+</tr>
+<tr>
+<td>Fits any display</td>
+<td>Three panel sizes. Every dimension derives from one choice, so the
+row and the preview never drift apart.</td>
+</tr>
+<tr>
+<td>Stays put on demand</td>
+<td>The panel can be pinned so another app taking focus does not fold it
+away.</td>
 </tr>
 <tr>
 <td>Native macOS feel</td>
@@ -324,10 +339,10 @@ class="header-section-number">1.3</span> Elevator pitch</h2>
 <p>MacRecordWidget is a menu bar app that starts and stops an audio
 recording in one click. It fires two user-created Shortcuts ("Start" and
 "Stop") and quits Voice Memos first so macOS does not throw an
-audio-service error. A second toggle opens a live 480x270pt camera
-preview inside the popover, purely so the user can check framing. The
-whole UI is one row of small icon controls plus an optional preview
-below it.</p>
+audio-service error. A second toggle opens a live camera preview inside
+the panel, purely so the user can check framing. The whole UI is one row
+of icon controls plus an optional preview below it. The panel has three
+sizes (S/M/L) and can be pinned so it survives losing focus.</p>
 <hr />
 <h2 data-number="1.4" id="problem"><span
 class="header-section-number">1.4</span> Problem</h2>
@@ -347,6 +362,14 @@ reopening it from the menu bar</li>
 disabled</li>
 <li>The video toggle overloaded two effects (preview plus a Photo Booth
 launch) onto one click</li>
+<li>The panel folded away as soon as another app was clicked, so it
+could not be watched while working</li>
+<li>One fixed panel size served every display: too small on a large
+screen, too wide on a laptop</li>
+<li>The audio toggle wore a red record disc, the generic record mark,
+which reads as video as readily as audio</li>
+<li>An "Audio" text label sat beside it, implying a "Video" counterpart
+that does not exist</li>
 </ul>
 <hr />
 <h2 data-number="1.5" id="target-audience"><span
@@ -365,29 +388,75 @@ recording, with a blinking amber badge dot that respects Reduce
 Motion</li>
 <li>The icon never changes glyph (no mic or camera swap)</li>
 </ul>
-<p><strong>Popover row (left to right)</strong></p>
+<p><strong>Button row (left to right)</strong></p>
 <ul>
-<li>A small secondary "Audio" text label at 11pt, hidden from
-accessibility</li>
+<li>Pin toggle (<code>pinToggle</code>): <code>pin.slash</code> when
+off, <code>pin.fill</code> when on. Keeps the panel on screen when
+another app takes focus. Persisted</li>
 <li><strong>One</strong> audio toggle (<code>recordToggle</code>):
-<code>.toggleStyle(.button)</code>, <code>.controlSize(.small)</code>,
-tinted red. <code>record.circle.fill</code> when idle,
-<code>stop.fill</code> while recording. Click starts, click again
-stops</li>
+<code>.toggleStyle(.button)</code>, tinted red, glyph
+<code>mic.fill</code>. Idle it is plain button chrome with the glyph in
+the default label colour; while recording the button fills red. The
+glyph never changes, exactly like every other toggle in the row. Click
+starts, click again stops</li>
 <li>A spacer</li>
 <li>Camera toggle (<code>videoModeToggle</code>):
 <code>.toggleStyle(.button)</code>, glyph <code>video.fill</code>. Shows
 and hides the preview. Never disabled by recording state</li>
-<li>Camera picker (<code>cameraPicker</code>), max 200pt wide, visible
+<li>Camera picker (<code>cameraPicker</code>), visible
 <strong>only</strong> while the camera toggle is on</li>
+<li>Three S/M/L panel-size toggles (<code>panelScalePicker</code>),
+visible <strong>only</strong> while the camera toggle is on</li>
 <li>Quit button (<code>quitButton</code>):
 <code>.buttonStyle(.bordered)</code>, glyph <code>power</code>. Stops an
 in-progress recording, then terminates</li>
+<li>There is no text label anywhere in the row. Every control is a glyph
+or a single letter</li>
 </ul>
+<p><strong>Tooltips and VoiceOver</strong></p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Tooltip</th>
+<th>VoiceOver label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Audio toggle</td>
+<td>"Record audio to Voice Memos" / "Stop and save to Voice Memos"</td>
+<td>"Start recording" / "Stop recording"</td>
+</tr>
+<tr>
+<td>Camera toggle</td>
+<td>"Show camera preview" / "Hide camera preview"</td>
+<td>same as tooltip</td>
+</tr>
+<tr>
+<td>Pin toggle</td>
+<td>"Keep panel open" / "Let panel close on its own"</td>
+<td>"Keep panel open"</td>
+</tr>
+<tr>
+<td>S/M/L</td>
+<td>"Small panel" / "Medium panel" / "Large panel"</td>
+<td>"Small panel size", and so on</td>
+</tr>
+<tr>
+<td>Quit</td>
+<td>"Quit"</td>
+<td>"Quit MacRecordWidget"</td>
+</tr>
+</tbody>
+</table>
+<p>The VoiceOver label deliberately differs from the tooltip where the
+tooltip is too terse without the visual context: "Quit" is unambiguous
+next to a power glyph, but not read aloud on its own.</p>
 <p><strong>Control chrome</strong></p>
 <ul>
-<li>Every control is <code>.controlSize(.small)</code> with a 13pt glyph
-in a 16pt frame</li>
+<li>Every control's size, glyph size, font, corner radius, and
+<code>ControlSize</code> derive from the chosen panel scale</li>
 <li>Every control carries a constant 1pt separator-coloured outline, so
 an off toggle and an on toggle read as one control in two states rather
 than two different objects</li>
@@ -406,8 +475,11 @@ and surfaces through an <code>NSAlert</code></li>
 </ul>
 <p><strong>Camera preview</strong></p>
 <ul>
-<li>Live 480x270pt (16:9) preview below the button row, visible only
-while the camera toggle is on</li>
+<li>Live 16:9 preview below the button row, visible only while the
+camera toggle is on. 480x270pt at the medium scale</li>
+<li>Runs flush to the panel's left, right, and bottom edges. No inset,
+no border. Only its bottom corners are rounded, matching the panel's own
+10pt radius</li>
 <li>Display-only: never writes a file, buffer, or pasteboard image</li>
 <li>Mirroring is hardcoded on (selfie orientation); no user-facing
 mirror control</li>
@@ -419,16 +491,37 @@ restricted, no camera, and generic failure</li>
 </ul>
 <p><strong>Panel</strong></p>
 <ul>
-<li>Fixed 504pt wide in both states; only the height changes</li>
-<li>Right-aligned 8pt from the screen's visible frame</li>
+<li>Three sizes, chosen with the S/M/L toggles and persisted: small,
+medium (default), large</li>
+<li>Width is the chosen scale's width (320 / 480 / half the screen's
+visible width, never below 480). It is the same whether the camera is on
+or off, so toggling the camera changes the height only</li>
+<li>Flush against the right edge of the screen's visible frame (zero
+margin)</li>
 <li>Not draggable, and the resize is not animated</li>
 </ul>
-<p><strong>Popover lifecycle</strong></p>
+<p><strong>Panel scale</strong></p>
 <ul>
-<li>Popover stays open through Start and Stop; it closes only when the
-user clicks the menu bar icon</li>
+<li>One <code>PanelScale</code> enum owns every derived dimension:
+preview size, glyph size and font, <code>ControlSize</code>
+(<code>.mini</code> / <code>.small</code> / <code>.regular</code>), row
+spacing, horizontal and vertical padding, corner radius, picker width,
+and the two text fonts</li>
+<li>Large tracks the display rather than a fixed number, so the panel is
+half the screen on any Mac</li>
+<li>The three sizes are toggle buttons, not a segmented picker:
+<code>NSSegmentedControl</code> ignores SwiftUI's <code>.font()</code>,
+so segmented labels stayed 13pt while everything around them grew</li>
+</ul>
+<p><strong>Panel lifecycle</strong></p>
+<ul>
+<li>The panel stays open through Start and Stop</li>
+<li>Unpinned (default): it closes when the menu bar icon is clicked, or
+when another app takes focus</li>
+<li>Pinned: it stays on screen through focus loss; only a menu bar icon
+click closes it</li>
 <li>The capture session starts when the camera toggle turns on and stops
-when the popover closes</li>
+when the panel closes</li>
 </ul>
 <hr />
 <h2 data-number="1.7" id="conceptual-data-model"><span
@@ -447,9 +540,12 @@ the Recording session, never writing a file.</li>
 <li>A Preview session shows exactly one <strong>Camera device</strong>,
 chosen from the connected video devices. A Camera device has a stable
 unique identifier, a display name, and a connected status.</li>
-<li>One <strong>Preference</strong> outlives a launch: the selected
-camera's unique identifier. Mirroring is a constant, not a
-preference.</li>
+<li>Three <strong>Preferences</strong> outlive a launch: the selected
+camera's unique identifier, the pinned flag, and the panel scale.
+Mirroring is a constant, not a preference.</li>
+<li>A <strong>Panel scale</strong> is one of three values (small,
+medium, large) and derives every dimension in the panel. Nothing else
+sets a size directly.</li>
 <li>A Preview session has a <strong>status</strong>: idle, running, or a
 message state (permission not determined, denied, restricted, no camera,
 generic failure).</li>
@@ -494,6 +590,14 @@ mirroring, permission and failure states, camera-ID persistence</td>
 <td>Record and Stop merged into one toggle, Photo Booth launch deleted,
 mirror toggle removed, control strip removed, uniform control chrome,
 dead <code>accessibilityDenied</code> case removed</td>
+</tr>
+<tr>
+<td>Pinning and scaling</td>
+<td>2026-09-05</td>
+<td>Pin toggle, S/M/L panel scaling driven by one
+<code>PanelScale</code> enum, edge-to-edge preview, panel flush to the
+screen edge, <code>mic.fill</code> audio glyph, "Audio" label removed,
+state-dependent camera tooltip, self-signed local install</td>
 </tr>
 </tbody>
 </table>
@@ -548,12 +652,17 @@ aid</td>
 </tr>
 <tr>
 <td>Multi-camera simultaneous preview</td>
-<td>No demand; would not fit a 504pt panel</td>
+<td>No demand; would not fit the panel at any scale</td>
 </tr>
 <tr>
-<td>A variable-width panel</td>
-<td>AppKit repositions as well as resizes on a width change, and paints
-the anchored position before the correction lands</td>
+<td>A user-resizable panel (drag handle)</td>
+<td>The S/M/L scales cover the need with three fixed widths. A drag
+handle on a status-item panel fights AppKit's anchoring</td>
+</tr>
+<tr>
+<td>Persisting the panel's pinned state per display or per app</td>
+<td>The single <code>panelPinned</code> flag is enough for a solo
+user</td>
 </tr>
 </tbody>
 </table>
@@ -576,14 +685,15 @@ class="header-section-number">1.9.1</span> Site map</h3>
 popover.</td>
 </tr>
 <tr>
-<td>Popover, button row</td>
-<td>"Audio" label, audio toggle, camera toggle, camera picker (when on),
-Quit.</td>
+<td>Panel, button row</td>
+<td>Pin toggle, audio toggle, camera toggle, camera picker and S/M/L
+sizes (when the camera is on), Quit.</td>
 </tr>
 <tr>
-<td>Popover, preview area</td>
+<td>Panel, preview area</td>
 <td>Visible only while the camera toggle is on. Holds the live image or
-an inline state message.</td>
+an inline state message. Runs flush to the panel's left, right, and
+bottom edges.</td>
 </tr>
 <tr>
 <td>System Settings → Privacy &amp; Security → Camera</td>
@@ -622,9 +732,25 @@ throughout</li>
 <ol type="1">
 <li>Click the camera toggle; the panel grows downward and the preview
 starts</li>
-<li>Pick a different camera from the picker if needed</li>
+<li>Pick a different camera, or a different S/M/L size, from the
+controls beside the toggle</li>
 <li>Click the camera toggle again; the preview collapses and the session
 stops</li>
+</ol>
+<p><strong>2b. Resize the panel</strong></p>
+<ol type="1">
+<li>With the preview open, click S, M, or L</li>
+<li>Every dimension changes together: preview, glyphs, fonts, spacing,
+padding, picker width</li>
+<li>The choice persists; the next launch opens at the same size</li>
+</ol>
+<p><strong>2c. Keep the panel open while working</strong></p>
+<ol type="1">
+<li>Click the pin toggle; the glyph changes from <code>pin.slash</code>
+to <code>pin.fill</code></li>
+<li>Click into another app; the panel stays on screen</li>
+<li>Click the menu bar icon to close it, or unpin to restore the default
+close-on-focus-loss behaviour</li>
 </ol>
 <p><strong>3. Quit while recording</strong></p>
 <ol type="1">
@@ -716,31 +842,38 @@ class="header-section-number">1.11</span> Acceptance criteria</h2>
 <p>All criteria below describe shipped behaviour. Criteria invalidated
 by the 2026-09-04 revisions are in <strong>Superseded acceptance
 criteria</strong>.</p>
-<h3 data-number="1.11.1" id="popover-layout"><span
-class="header-section-number">1.11.1</span> Popover layout</h3>
+<h3 data-number="1.11.1" id="panel-layout"><span
+class="header-section-number">1.11.1</span> Panel layout</h3>
 <ul>
-<li><strong>AC-L-1:</strong> The popover content is a
-<code>VStack</code>: a single <code>HStack</code> button row, with the
+<li><strong>AC-L-1:</strong> The panel content is a <code>VStack</code>
+with zero spacing: a single <code>HStack</code> button row, with the
 preview below it when the camera toggle is on.</li>
-<li><strong>AC-L-2:</strong> The button row is ordered: "Audio" label,
-audio toggle, spacer, camera toggle, camera picker (only when the camera
-toggle is on), Quit.</li>
+<li><strong>AC-L-2:</strong> The button row is ordered: pin toggle,
+audio toggle, spacer, camera toggle, camera picker, S/M/L size toggles,
+Quit. The picker and the size toggles are present only while the camera
+toggle is on.</li>
 <li><strong>AC-L-3:</strong> No recording-status dot appears anywhere in
-the popover, in any state.</li>
-<li><strong>AC-L-4:</strong> Every control is icon-only (except the
-"Audio" text label) with an <code>accessibilityLabel</code> and a stable
-<code>accessibilityIdentifier</code>.</li>
+the panel, in any state.</li>
+<li><strong>AC-L-4:</strong> Every control is a glyph or a single
+letter, with an <code>accessibilityLabel</code>. There is no text label
+in the row.</li>
 <li><strong>AC-L-5:</strong> No control shows a focus ring.</li>
-<li><strong>AC-L-6:</strong> Every control renders at
-<code>.controlSize(.small)</code> with a 13pt glyph inside a 16pt
-frame.</li>
+<li><strong>AC-L-6:</strong> Every control's <code>ControlSize</code>,
+glyph size, glyph font, and corner radius come from the current
+<code>PanelScale</code>. No view hardcodes any of them.</li>
 <li><strong>AC-L-7:</strong> Every control carries a constant 1pt
 separator-coloured outline, present whether the control is on or
 off.</li>
-<li><strong>AC-L-8:</strong> The "Audio" label renders at 11pt in the
-secondary foreground style and is hidden from accessibility.</li>
+<li><strong>AC-L-8:</strong> Padding is applied to the button row, not
+to the panel, so the preview can reach the panel's edges.</li>
 <li><strong>AC-L-9:</strong> There is no control strip below the
-preview. The camera picker lives in the button row.</li>
+preview. The camera picker and the size toggles live in the button
+row.</li>
+<li><strong>AC-L-10:</strong> The preview runs flush to the panel's
+left, right, and bottom edges. No inset, no margin, no border.</li>
+<li><strong>AC-L-11:</strong> Only the preview's bottom two corners are
+rounded, at 10pt, matching the panel's own radius. Its top corners are
+square.</li>
 </ul>
 <h3 data-number="1.11.2" id="controls"><span
 class="header-section-number">1.11.2</span> Controls</h3>
@@ -750,8 +883,14 @@ class="header-section-number">1.11.2</span> Controls</h3>
 separate Stop button.</li>
 <li><strong>AC-C-2:</strong> The audio toggle uses
 <code>.toggleStyle(.button)</code>, is tinted red, and shows
-<code>record.circle.fill</code> when idle and <code>stop.fill</code>
-while recording.</li>
+<code>mic.fill</code> in <strong>both</strong> states. Only the button
+fill changes: plain button chrome with the glyph in the default label
+colour when idle, a red fill while recording. The glyph does not swap,
+so the control behaves like every other toggle in the row (pin, camera,
+and S/M/L all keep their glyph and flip their fill). See AC-AX-7 for how
+the state stays distinguishable without hue.</li>
+<li><strong>AC-C-2b:</strong> <code>stop.fill</code> appears nowhere in
+the app. The idle mic is <strong>not</strong> red.</li>
 <li><strong>AC-C-3:</strong> The audio toggle is disabled only while an
 invocation is in flight.</li>
 <li><strong>AC-C-4:</strong> The camera toggle
@@ -762,9 +901,27 @@ preview.</li>
 disabled by recording state. It has no bearing on what is recorded.</li>
 <li><strong>AC-C-6:</strong> Quit (<code>quitButton</code>) uses
 <code>.buttonStyle(.bordered)</code> with the <code>power</code> glyph,
-carries a tooltip, and is never disabled.</li>
+carries the tooltip "Quit", and is never disabled.</li>
 <li><strong>AC-C-7:</strong> The camera picker is present in the button
-row only while the camera toggle is on, and is at most 200pt wide.</li>
+row only while the camera toggle is on, and is capped at the current
+scale's picker width (150 / 200 / 260pt).</li>
+<li><strong>AC-C-8:</strong> A pin toggle (<code>pinToggle</code>) is
+the leftmost control in the row. It shows <code>pin.slash</code> when
+off and <code>pin.fill</code> when on, and is never disabled.</li>
+<li><strong>AC-C-9:</strong> The panel sizes are three separate
+<code>.toggleStyle(.button)</code> controls labelled S, M, and L. They
+are <strong>not</strong> a segmented <code>Picker</code>, because
+<code>NSSegmentedControl</code> ignores SwiftUI's <code>.font()</code>
+and would not scale with the rest of the row.</li>
+<li><strong>AC-C-10:</strong> The S/M/L toggles are mounted only while
+the camera toggle is on, immediately after the camera picker.</li>
+<li><strong>AC-C-11:</strong> Turning on a size toggle selects that
+size. Turning off the already-selected one is ignored: exactly one size
+is always selected.</li>
+<li><strong>AC-C-12:</strong> Each control's tooltip matches the
+Tooltips and VoiceOver table. The audio and camera tooltips change with
+state; the camera tooltip is never stuck on "Show camera preview" while
+the preview is open.</li>
 </ul>
 <h3 data-number="1.11.3" id="menu-bar-icon"><span
 class="header-section-number">1.11.3</span> Menu bar icon</h3>
@@ -781,18 +938,29 @@ accessibility.</li>
 <li><strong>AC-M-5:</strong> The icon glyph never changes to a mic or
 camera symbol.</li>
 </ul>
-<h3 data-number="1.11.4" id="popover-lifecycle"><span
-class="header-section-number">1.11.4</span> Popover lifecycle</h3>
+<h3 data-number="1.11.4" id="panel-lifecycle"><span
+class="header-section-number">1.11.4</span> Panel lifecycle</h3>
 <ul>
-<li><strong>AC-P-1:</strong> The popover stays open after starting a
+<li><strong>AC-P-1:</strong> The panel stays open after starting a
 recording.</li>
-<li><strong>AC-P-2:</strong> The popover stays open after stopping a
+<li><strong>AC-P-2:</strong> The panel stays open after stopping a
 recording.</li>
-<li><strong>AC-P-3:</strong> The popover closes only when the user
-clicks the menu bar icon.</li>
+<li><strong>AC-P-3:</strong> Unpinned, the panel closes on a menu bar
+icon click or when another app takes focus. Pinned, only the icon click
+closes it.</li>
 <li><strong>AC-P-4:</strong> No code path calls
 <code>popover.close()</code> or <code>panel?.orderOut(nil)</code> after
 start or stop.</li>
+<li><strong>AC-P-5:</strong> While pinned, the window is re-shown on
+<code>didResignKeyNotification</code>, twice: once synchronously and
+once on the next runloop pass, because the order in which AppKit's own
+handler runs is not guaranteed.</li>
+<li><strong>AC-P-6:</strong> <code>hidesOnDeactivate</code> is forced
+off on the panel window, since the app is <code>LSUIElement</code> and
+deactivates as soon as another app is clicked.</li>
+<li><strong>AC-P-7:</strong> The pinned state persists in
+<code>UserDefaults</code> under <code>panelPinned</code> and is restored
+on the next launch.</li>
 </ul>
 <h3 data-number="1.11.5" id="recording-behaviour"><span
 class="header-section-number">1.11.5</span> Recording behaviour</h3>
@@ -847,8 +1015,8 @@ class="header-section-number">1.11.7</span> Preview surface</h3>
 <li><strong>AC-PV-1:</strong> The preview area sits
 <strong>below</strong> the button row, never above it and never beside
 it.</li>
-<li><strong>AC-PV-2:</strong> The preview image is 480x270pt at a 16:9
-aspect ratio.</li>
+<li><strong>AC-PV-2:</strong> The preview is 16:9 at every scale, and
+its width is the panel's width. At medium that is 480x270pt.</li>
 <li><strong>AC-PV-3:</strong> The preview area is visible only while the
 camera toggle is on, and is fully removed from the layout when it is
 off.</li>
@@ -868,12 +1036,12 @@ light and dark mode.</li>
 <h3 data-number="1.11.8" id="panel-sizing"><span
 class="header-section-number">1.11.8</span> Panel sizing</h3>
 <ul>
-<li><strong>AC-PNL-1:</strong> The panel is a fixed 504pt wide in
-<strong>both</strong> states. Toggling the preview changes the height
-only.</li>
-<li><strong>AC-PNL-2:</strong> The panel's trailing edge sits 8pt from
-the right of the screen's visible frame, imposed by
-<code>PanelSizer</code>.</li>
+<li><strong>AC-PNL-1:</strong> For a given scale the panel width is the
+same whether the camera is on or off. Toggling the camera changes the
+height only.</li>
+<li><strong>AC-PNL-2:</strong> The panel's trailing edge sits flush
+against the right of the screen's visible frame (zero margin), imposed
+by <code>PanelSizer</code>.</li>
 <li><strong>AC-PNL-3:</strong> The resize is <strong>not</strong>
 animated. No <code>animator().setFrame</code> or
 <code>NSAnimationContext</code> drives the panel frame.</li>
@@ -887,9 +1055,42 @@ never painted. Size and corrected origin are applied under
 <code>disableScreenUpdatesUntilFlush()</code> and flushed once.</li>
 <li><strong>AC-PNL-7:</strong> Closing the preview shrinks the panel
 back. No empty full-height panel is left stranded.</li>
+<li><strong>AC-PNL-8:</strong> Changing the scale changes the width.
+Because the panel is right-anchored, only the left edge moves, and the
+anchored intermediate frame is never painted.</li>
 </ul>
-<h3 data-number="1.11.9" id="camera-picker"><span
-class="header-section-number">1.11.9</span> Camera picker</h3>
+<h3 data-number="1.11.9" id="panel-scale"><span
+class="header-section-number">1.11.9</span> Panel scale</h3>
+<ul>
+<li><strong>AC-SC-1:</strong> Three sizes exist: small, medium, large.
+Medium is the default on a first launch.</li>
+<li><strong>AC-SC-2:</strong> A single <code>PanelScale</code> enum owns
+every derived dimension: preview width and height, glyph size, glyph
+font, control font, size-label font, <code>ControlSize</code>, row
+spacing, horizontal and vertical padding, corner radius, and picker
+width. No view computes any of them independently.</li>
+<li><strong>AC-SC-3:</strong> <code>ControlSize</code> maps to
+<code>.mini</code> at small, <code>.small</code> at medium,
+<code>.regular</code> at large.</li>
+<li><strong>AC-SC-4:</strong> Small is 320pt wide and medium is 480pt
+wide.</li>
+<li><strong>AC-SC-5:</strong> Large is exactly half the screen's visible
+width, rounded down, clamped to no less than the medium width so the
+three sizes never fall out of order.</li>
+<li><strong>AC-SC-6:</strong> Large measures the <strong>panel</strong>,
+not the preview inside it, so a panel at large never laps over a window
+tiled to the left half of the screen.</li>
+<li><strong>AC-SC-7:</strong> The preview height is the preview width
+times 9/16, rounded.</li>
+<li><strong>AC-SC-8:</strong> The chosen scale persists in
+<code>UserDefaults</code> under <code>panelScale</code> and is restored
+on the next launch. An unrecognised stored value falls back to
+medium.</li>
+<li><strong>AC-SC-9:</strong> Changing the scale resizes the row and the
+preview together. Neither changes without the other.</li>
+</ul>
+<h3 data-number="1.11.10" id="camera-picker"><span
+class="header-section-number">1.11.10</span> Camera picker</h3>
 <ul>
 <li><strong>AC-CAM-1:</strong> The picker lists every connected video
 device discovered on the system, by display name.</li>
@@ -908,11 +1109,11 @@ code path attempts to drive any other app's camera.</li>
 <li><strong>AC-CAM-7:</strong> The picker remains usable in every
 non-running preview state where a device exists.</li>
 <li><strong>AC-CAM-8:</strong> A long device name does not push any
-control out of the 504pt panel; the picker is capped at 200pt and
-truncates.</li>
+control out of the panel at any scale; the picker is capped at the
+scale's picker width and truncates.</li>
 </ul>
-<h3 data-number="1.11.10" id="mirroring"><span
-class="header-section-number">1.11.10</span> Mirroring</h3>
+<h3 data-number="1.11.11" id="mirroring"><span
+class="header-section-number">1.11.11</span> Mirroring</h3>
 <ul>
 <li><strong>AC-MIR-1:</strong> Mirroring is hardcoded on.
 <code>isMirrored</code> is a constant, not a stored or user-settable
@@ -926,8 +1127,8 @@ is <strong>deliberately not read</strong>, so an earlier saved
 <code>isVideoMirrored</code> on the preview connection with
 <code>automaticallyAdjustsVideoMirroring</code> off.</li>
 </ul>
-<h3 data-number="1.11.11" id="session-lifecycle"><span
-class="header-section-number">1.11.11</span> Session lifecycle</h3>
+<h3 data-number="1.11.12" id="session-lifecycle"><span
+class="header-section-number">1.11.12</span> Session lifecycle</h3>
 <ul>
 <li><strong>AC-LC-1:</strong> The capture session starts when the camera
 toggle is turned on while the popover is open.</li>
@@ -940,8 +1141,8 @@ camera toggle is off.</li>
 <li><strong>AC-LC-5:</strong> Rapidly toggling the camera on and off
 leaves at most one capture session running and no orphaned session.</li>
 </ul>
-<h3 data-number="1.11.12" id="permission-and-failure-states"><span
-class="header-section-number">1.11.12</span> Permission and failure
+<h3 data-number="1.11.13" id="permission-and-failure-states"><span
+class="header-section-number">1.11.13</span> Permission and failure
 states</h3>
 <ul>
 <li><strong>AC-ST-1:</strong> On the first toggle-on with permission not
@@ -975,14 +1176,19 @@ All preview state messaging is inline in the preview area.</li>
 <li><strong>AC-ST-10:</strong> All state messages follow the product's
 voice: clear, non-blaming, sentence case, no exclamation marks.</li>
 </ul>
-<h3 data-number="1.11.13" id="accessibility"><span
-class="header-section-number">1.11.13</span> Accessibility</h3>
+<h3 data-number="1.11.14" id="accessibility"><span
+class="header-section-number">1.11.14</span> Accessibility</h3>
 <ul>
-<li><strong>AC-AX-1:</strong> The audio toggle, camera toggle, camera
-picker, and Quit each carry an <code>accessibilityLabel</code> and a
-stable <code>accessibilityIdentifier</code> (<code>recordToggle</code>,
-<code>videoModeToggle</code>, <code>cameraPicker</code>,
-<code>quitButton</code>).</li>
+<li><strong>AC-AX-1:</strong> The pin toggle, audio toggle, camera
+toggle, camera picker, and Quit each carry an
+<code>accessibilityLabel</code> and a stable
+<code>accessibilityIdentifier</code> (<code>pinToggle</code>,
+<code>recordToggle</code>, <code>videoModeToggle</code>,
+<code>cameraPicker</code>, <code>quitButton</code>).</li>
+<li><strong>AC-AX-1b:</strong> The three S/M/L toggles each carry a
+spelled-out <code>accessibilityLabel</code> ("Small panel size", and so
+on). The identifier <code>panelScalePicker</code> is on their container,
+not on the individual toggles.</li>
 <li><strong>AC-AX-2:</strong> The audio toggle's label and tooltip
 reflect its current state ("Start recording" / "Stop recording").</li>
 <li><strong>AC-AX-3:</strong> The preview area carries an accessibility
@@ -991,16 +1197,29 @@ label describing what it is (<code>cameraPreview</code>).</li>
 VoiceOver.</li>
 <li><strong>AC-AX-5:</strong> The preview area and its controls
 introduce no focus ring, consistent with the button row.</li>
-<li><strong>AC-AX-6:</strong> The decorative "Audio" label is hidden
-from accessibility, since the toggle it labels carries its own
-label.</li>
+<li><strong>AC-AX-6:</strong> Where a tooltip is too terse to stand
+alone in speech, the <code>accessibilityLabel</code> is written out in
+full: Quit reads "Quit MacRecordWidget", and the audio toggle reads
+"Start recording" / "Stop recording".</li>
+<li><strong>AC-AX-7:</strong> Recording state is distinguishable
+<strong>without relying on hue</strong>. The audio toggle's two states
+differ by button fill, which is a large luminance change and therefore
+survives greyscale and Increase Contrast. It does <strong>not</strong>
+rely on a glyph swap: the glyph is <code>mic.fill</code> in both
+states.</li>
+<li><strong>AC-AX-8:</strong> Recording state is also carried by three
+non-visual or out-of-panel channels: the tooltip, the VoiceOver label,
+and the menu bar icon (green plus a blinking amber dot). At least one of
+these is available when the panel is closed.</li>
 </ul>
-<h3 data-number="1.11.14" id="persistence"><span
-class="header-section-number">1.11.14</span> Persistence</h3>
+<h3 data-number="1.11.15" id="persistence"><span
+class="header-section-number">1.11.15</span> Persistence</h3>
 <ul>
-<li><strong>AC-PS-1:</strong> Exactly <strong>one</strong> value
-persists: the selected camera's unique identifier (string), under
-<code>preview.cameraDeviceID</code>.</li>
+<li><strong>AC-PS-1:</strong> Exactly <strong>three</strong> values
+persist: the selected camera's unique identifier under
+<code>preview.cameraDeviceID</code>, the pinned flag under
+<code>panelPinned</code>, and the panel scale under
+<code>panelScale</code>.</li>
 <li><strong>AC-PS-2:</strong> Persistence uses
 <code>UserDefaults</code>. No SwiftData model container is introduced.
 This is a recorded deviation from <code>tech-config.md</code>, which
@@ -1009,6 +1228,9 @@ lists SwiftData for the macOS layer.</li>
 connected default camera.</li>
 <li><strong>AC-PS-4:</strong> No other UI state persists. The camera
 toggle and the recording state both reset on each launch.</li>
+<li><strong>AC-PS-5:</strong> The panel scale is stored as the enum's
+raw string, because <code>@AppStorage</code> cannot hold an enum
+directly.</li>
 </ul>
 <hr />
 <h2 data-number="1.12" id="superseded-acceptance-criteria"><span
@@ -1184,6 +1406,161 @@ not read</td>
 shipped behaviour</td>
 <td>2026-09-04</td>
 </tr>
+<tr>
+<td>AC-L-2 (2026-09-04)</td>
+<td>The row is ordered: "Audio" label, audio toggle, spacer, camera
+toggle, camera picker, Quit</td>
+<td>AC-L-2</td>
+<td>A pin toggle joined at the head of the row and three S/M/L size
+toggles after the picker. The "Audio" label was removed</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-L-4 (2026-09-04)</td>
+<td>Every control is icon-only <strong>except the "Audio" text
+label</strong></td>
+<td>AC-L-4</td>
+<td>The label is gone. A row-level "Audio" caption implied a "Video"
+counterpart that this product does not have</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-L-6 (2026-09-04)</td>
+<td>Every control renders at <code>.controlSize(.small)</code> with a
+13pt glyph in a 16pt frame</td>
+<td>AC-L-6, AC-SC-2, AC-SC-3</td>
+<td>Those numbers are now the <em>medium</em> scale only. Every
+dimension derives from <code>PanelScale</code></td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-L-8 (2026-09-04)</td>
+<td>The "Audio" label renders at 11pt secondary and is hidden from
+accessibility</td>
+<td>n/a</td>
+<td>The label was deleted</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-C-2 (2026-09-04)</td>
+<td>The audio toggle shows <code>record.circle.fill</code> when idle and
+<code>stop.fill</code> while recording</td>
+<td>AC-C-2</td>
+<td>A red disc is the generic record mark and reads as video as readily
+as audio. <code>mic.fill</code> names the medium and pairs with
+<code>video.fill</code> beside it. It also survives the 11pt small
+scale, which thinner audio symbols do not</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-C-2 (interim, 2026-09-05)</td>
+<td>The audio toggle shows a <strong>red</strong> <code>mic.fill</code>
+when idle and <code>stop.fill</code> while recording</td>
+<td>AC-C-2, AC-C-2b, AC-AX-7</td>
+<td>Swapping the glyph made this the only control in the row that
+changed shape rather than fill. One glyph, fill flips. The idle glyph
+also lost its red, so red now means exactly one thing: recording</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>Any AC arguing recording state "survives greyscale because the glyph
+swaps"</td>
+<td>Colour-independence justified by the <code>record.circle.fill</code>
+to <code>stop.fill</code> shape change</td>
+<td>AC-AX-7, AC-AX-8</td>
+<td><strong>False as of 2026-09-05.</strong> The shapes are identical
+now. The argument was rewritten around fill luminance, tooltip,
+VoiceOver label, and the menu bar icon</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-C-7 (2026-09-04)</td>
+<td>The camera picker is at most 200pt wide</td>
+<td>AC-C-7</td>
+<td>200pt is the medium width. The cap now follows the scale (150 / 200
+/ 260)</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-P-3 (2026-09-04)</td>
+<td>The popover closes <strong>only</strong> when the user clicks the
+menu bar icon</td>
+<td>AC-P-3, AC-C-8</td>
+<td>Incorrect as written: the panel always also closed on focus loss.
+The pin toggle makes that behaviour opt-out and the AC now states both
+paths</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-PV-2 (2026-09-04)</td>
+<td>The preview image is 480x270pt</td>
+<td>AC-PV-2, AC-SC-4 to AC-SC-7</td>
+<td>480x270 is the medium scale. The preview is 16:9 at three
+widths</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-PNL-1 (2026-09-04)</td>
+<td>The panel is a fixed 504pt wide in both states</td>
+<td>AC-PNL-1, AC-PNL-8, AC-SC-4 to AC-SC-6</td>
+<td>Width now follows the scale. The rule that survived is narrower: the
+width does not change when the <em>camera</em> toggles, only when the
+<em>scale</em> does</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-PNL-2 (2026-09-04)</td>
+<td>The panel's trailing edge sits 8pt from the right of the visible
+frame</td>
+<td>AC-PNL-2</td>
+<td>Margin dropped to zero. With an edge-to-edge preview, an 8pt gap
+read as a misalignment rather than a margin</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-CAM-8 (2026-09-04)</td>
+<td>A long name does not push a control out of the
+<strong>504pt</strong> panel; the picker caps at 200pt</td>
+<td>AC-CAM-8</td>
+<td>Both numbers were scale-specific</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-AX-1 (2026-09-04)</td>
+<td>Audio toggle, camera toggle, picker, and Quit carry a label and
+identifier</td>
+<td>AC-AX-1, AC-AX-1b</td>
+<td>The pin toggle joined the row; the size toggles carry labels but
+share a container identifier</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-AX-6 (2026-09-04)</td>
+<td>The decorative "Audio" label is hidden from accessibility</td>
+<td>AC-AX-6</td>
+<td>No such label exists. The slot now holds the rule that actually
+matters: VoiceOver labels are written out where the tooltip is too
+terse</td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>AC-PS-1 (2026-09-04)</td>
+<td>Exactly <strong>one</strong> value persists: the camera ID</td>
+<td>AC-PS-1</td>
+<td>Two more preferences joined: <code>panelPinned</code> and
+<code>panelScale</code></td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td>Deferred: "a variable-width panel" (2026-09-04)</td>
+<td>A variable width was ruled out because AppKit repositions as well as
+resizes</td>
+<td>AC-PNL-8, AC-SC-1</td>
+<td>Superseded by measurement: the repositioning is survivable when the
+panel is right-anchored and painting is suppressed until the corrected
+frame lands. Only the left edge moves</td>
+<td>2026-09-05</td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -1223,17 +1600,22 @@ gap is stated at the top of this PRD. Accepted, not solved</td>
 </tr>
 <tr>
 <td>One toggle for start and stop hides the "stop" affordance</td>
-<td>Low</td>
 <td>Medium</td>
-<td>The glyph changes to <code>stop.fill</code> and the tooltip changes
-to "Stop audio recording" while recording</td>
+<td>Medium</td>
+<td>The button fills red while recording, the tooltip changes to "Stop
+and save to Voice Memos", the VoiceOver label changes to "Stop
+recording", and the menu bar icon turns green with a blinking dot.
+<strong>The glyph itself does not change</strong>, so fill is the only
+in-row visual cue. Accepted in exchange for the control behaving like
+every other toggle in the row</td>
 </tr>
 <tr>
 <td>Icon-only controls are unlearnable for a new user</td>
+<td><strong>High</strong></td>
 <td>Medium</td>
-<td>Medium</td>
-<td>Every control carries an accessibility label and a tooltip; the
-audio toggle also carries a visible "Audio" text label</td>
+<td>Every control carries an accessibility label and a tooltip. The last
+visible text label was removed on 2026-09-05, so tooltips are now the
+only in-app affordance. Accepted for a solo-use app</td>
 </tr>
 <tr>
 <td>Popover staying open is mistaken for a hung UI</td>
@@ -1249,12 +1631,34 @@ state is visible outside the popover</td>
 <td>Documented minimum; solo-use app</td>
 </tr>
 <tr>
-<td>A 504pt panel feels oversized at rest, even with the preview
-closed</td>
+<td>The panel feels oversized at rest, even with the preview closed</td>
 <td>Medium</td>
 <td>Low</td>
-<td>Accepted deliberately. A variable width made the panel jump
-horizontally, which was worse than a wide empty row</td>
+<td>The S/M/L scales let the user pick a narrower resting width. The
+width still does not shrink when the camera closes, because that would
+move the left edge on every toggle</td>
+</tr>
+<tr>
+<td>Large scale on an ultrawide display produces a very large panel</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Large is half the <em>visible</em> width by definition, so it never
+covers more than half the screen and never laps a left-tiled window
+(AC-SC-6)</td>
+</tr>
+<tr>
+<td>The S/M/L toggles are unreachable while the camera is off</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Deliberate: at rest the scale mostly governs the preview. Accepted;
+revisit if a user wants to resize the bare row</td>
+</tr>
+<tr>
+<td>A pinned panel is forgotten and left on screen</td>
+<td>Low</td>
+<td>Low</td>
+<td>The glyph flips to <code>pin.fill</code>, and the state persists so
+it is at least consistent between launches</td>
 </tr>
 <tr>
 <td>Camera activity light cycling with the popover confuses the
@@ -1272,12 +1676,13 @@ the background</td>
 failure state; AC-ST-9 forbids modal alerts</td>
 </tr>
 <tr>
-<td>CI's unsigned build re-prompts for camera permission on every
+<td>An ad-hoc CI build re-prompts for camera permission on every
 rebuild</td>
 <td>High</td>
 <td>Low</td>
-<td>Documented in the CI note so a repeated prompt is not mistaken for a
-permission bug</td>
+<td>Solved, not just documented: <code>scripts/install-latest.sh</code>
+re-signs the downloaded build with a stable self-signed certificate, so
+the TCC grant survives rebuilds</td>
 </tr>
 <tr>
 <td>Long external camera names overflow the picker</td>
@@ -1306,13 +1711,20 @@ on. A user who wants an unmirrored view has no way to get one.</li>
 <li><strong>The camera activity light cycles with the popover.</strong>
 The session stops on close and resumes on open. Accepted by the human in
 exchange for not holding the camera open in the background.</li>
-<li><strong>The panel is a fixed 504pt wide even with the preview
-closed.</strong> Chosen over a variable width because a width change
-made the panel visibly jump.</li>
-<li><strong>The panel cannot be moved.</strong> It is pinned 8pt from
-the right of the screen's visible frame.</li>
-<li><strong>Nothing but the camera ID persists.</strong> The camera
-toggle resets on every launch.</li>
+<li><strong>The panel width does not shrink when the preview
+closes.</strong> It stays at the chosen scale's width so that toggling
+the camera moves only the bottom edge.</li>
+<li><strong>The panel cannot be moved.</strong> It is fixed flush
+against the right of the screen's visible frame.</li>
+<li><strong>The S/M/L controls only exist while the camera is
+on.</strong> There is no way to change the scale from the bare button
+row.</li>
+<li><strong>The audio toggle's glyph does not change while
+recording.</strong> Only the fill does, plus the tooltip and the menu
+bar icon.</li>
+<li><strong>Only three values persist:</strong> the camera ID, the
+pinned flag, and the panel scale. The camera toggle still resets on
+every launch.</li>
 </ul>
 <hr />
 <h2 data-number="1.15" id="assumptions-resolved"><span
@@ -1380,10 +1792,16 @@ introduced.</p>
 preview on macOS 14, so <code>CameraPreviewView</code> wraps
 <code>AVCaptureVideoPreviewLayer</code> in an
 <code>NSViewRepresentable</code>. Mandatory, not stylistic.</p>
-<p><strong>CI and permission note:</strong> CI builds unsigned. macOS
-ties the camera TCC grant to the signing identity and path, so
-<strong>the camera permission prompt reappears on every rebuild and
-reinstall.</strong> Expected for an unsigned artifact, not a defect.</p>
+<p><strong>Distribution and camera permission:</strong> CI builds are
+ad-hoc signed. For an ad-hoc app macOS pins the camera TCC grant to the
+<strong>binary hash</strong>, so every new build is a new app to TCC and
+the permission prompt reappears on each install.
+<code>scripts/install-latest.sh</code> therefore downloads the CI
+artifact and re-signs it locally with a stable self-signed certificate
+(created once by <code>scripts/create-signing-cert.sh</code>) before
+installing to <code>/Applications</code>. With a stable identity the
+grant survives rebuilds. A repeated prompt after that means the
+certificate changed, not that permissions are broken.</p>
 <p><strong>Path exception (recorded):</strong> Swift sources stay in
 <code>MacRecordWidget/</code>, not under <code>src/</code> as
 <code>tech-config.md</code> lists. Confirmed by the human on 2026-09-04
