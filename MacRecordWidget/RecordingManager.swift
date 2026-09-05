@@ -4,14 +4,11 @@ import Observation
 
 enum RecordingError: Error, LocalizedError {
     case shortcutLaunchFailed(reason: String)
-    case accessibilityDenied
 
     var errorDescription: String? {
         switch self {
         case .shortcutLaunchFailed(let reason):
             return "Could not launch the recording shortcut. \(reason)"
-        case .accessibilityDenied:
-            return "Accessibility permission was denied."
         }
     }
 }
@@ -23,6 +20,9 @@ enum RecordingError: Error, LocalizedError {
 @Observable
 final class RecordingManager {
     var isRecording = false
+    /// Controls the in-popover camera preview only. It does NOT affect what is
+    /// recorded: recording is audio, via the "Start" Shortcut into Voice Memos.
+    /// Photo Booth is no longer launched.
     var videoEnabled = false
     var isInFlight = false
 
@@ -59,10 +59,6 @@ final class RecordingManager {
 
         // State is set only after the URL opens successfully (AC-SW-7)
         isRecording = true
-
-        if videoEnabled {
-            launchPhotoBooth()
-        }
     }
 
     func stopRecording() async throws {
@@ -80,9 +76,5 @@ final class RecordingManager {
         }
 
         isRecording = false
-    }
-
-    private func launchPhotoBooth() {
-        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Photo Booth.app"))
     }
 }

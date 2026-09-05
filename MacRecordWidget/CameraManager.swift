@@ -4,9 +4,9 @@ import Observation
 
 /// Display-only camera state for the popover preview.
 ///
-/// This never writes a file and never records. Photo Booth remains the sole
-/// capturer; this only drives an `AVCaptureVideoPreviewLayer` so the user can
-/// frame a shot before pressing Start.
+/// This never writes a file and never records. It only drives an
+/// `AVCaptureVideoPreviewLayer` so the user can see themselves; recording is
+/// audio only, handled by the "Start" Shortcut into Voice Memos.
 @MainActor
 @Observable
 final class CameraManager {
@@ -34,7 +34,7 @@ final class CameraManager {
     /// the persisted preference: after a fallback these differ on purpose.
     private(set) var activeCamera: AVCaptureDevice?
 
-    /// Mirroring is always on, matching Photo Booth. The user-facing toggle was
+    /// Mirroring is always on, selfie-style. The user-facing toggle was
     /// removed, so the stored preference is deliberately not read: a previously
     /// saved `false` would otherwise strand the preview unmirrored with no way
     /// to change it back.

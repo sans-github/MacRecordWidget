@@ -21,8 +21,8 @@ struct MacRecordWidgetApp: App {
                 }
                 .toggleStyle(.switch)
                 .controlSize(.small)
-                .disabled(recordingManager.isRecording)
-                .accessibilityLabel("Include video in recording")
+                .help("Show camera preview")
+                .accessibilityLabel("Show camera preview")
                 .accessibilityIdentifier("videoModeToggle")
 
                 Button {
@@ -139,9 +139,6 @@ struct MacRecordWidgetApp: App {
         let alert = NSAlert()
         alert.alertStyle = .critical
         switch error as? RecordingError {
-        case .accessibilityDenied:
-            alert.messageText = "Accessibility Permission Required"
-            alert.informativeText = "MacRecordWidget needs Accessibility permission to make Photo Booth full-screen. Open System Settings > Privacy & Security > Accessibility and enable MacRecordWidget."
         case .shortcutLaunchFailed(let reason):
             alert.messageText = "Could Not Start Recording"
             alert.informativeText = "The recording shortcut could not be launched. Make sure a Shortcut named \"Start\" (or \"Stop\") exists in the Shortcuts app. Detail: \(reason)"
