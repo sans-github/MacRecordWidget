@@ -10,6 +10,11 @@ struct MacRecordWidgetApp: App {
     @State private var camera = CameraManager()
     @State private var measuredSize: CGSize = .zero
 
+    /// Whether the panel stays on screen when another app is clicked.
+    /// Persisted, because it is a working preference rather than a per-session
+    /// mode: someone who wants the panel to stay put wants that every launch.
+    @AppStorage("panelPinned") private var isPinned = false
+
     var body: some Scene {
         MenuBarExtra {
             VStack(alignment: .trailing, spacing: 8) {
@@ -57,6 +62,18 @@ struct MacRecordWidgetApp: App {
                     CameraControls(camera: camera)
                 }
 
+                Toggle(isOn: $isPinned) {
+                    Image(systemName: isPinned ? "pin.fill" : "pin.slash")
+                        .font(Self.glyphFont)
+                        .frame(width: Self.glyphSize, height: Self.glyphSize)
+                }
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .overlay(Self.controlOutline)
+                .help(isPinned ? "Panel stays open when you click another app" : "Panel closes when you click another app")
+                .accessibilityLabel("Keep panel open")
+                .accessibilityIdentifier("pinToggle")
+
                 Button {
                     Task {
                         if recordingManager.isRecording {
@@ -96,7 +113,7 @@ struct MacRecordWidgetApp: App {
                     Color.clear.preference(key: PanelSizeKey.self, value: proxy.size)
                 }
             )
-            .background(PanelSizer(size: measuredSize))
+            .background(PanelSizer(size: measuredSize, isPinned: isPinned))
             .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
             .task(id: recordingManager.videoEnabled) {
                 if recordingManager.videoEnabled {

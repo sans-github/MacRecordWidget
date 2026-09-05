@@ -26,6 +26,7 @@ _Last triaged: --_
 |  | Infra | debt | `feature-init.sh` prints a folder tree that does not match what it creates (shows `feature-workflow-config.md` / `plan-with-human-gates.md`; actually writes `feature-setup.md` / `delivery-tracker.md`, and prints a stray `src/` line) | Agent | 2026-09-04 |
 |  | Swift | bug | `NSWorkspace.open` returns true whenever the `shortcuts://` scheme is claimed, so a missing "Start"/"Stop" Shortcut still flips the app into the recording state and the `shortcutLaunchFailed` alert is unreachable | Agent | 2026-09-04 |
 |  | Swift | bug | Recording name uses `DateFormatter.localizedString`, so it is locale-dependent and retains commas/spaces; `.urlQueryAllowed` is also the wrong character set for a query value | Agent | 2026-09-04 |
+|  | Swift | debt | The panel pin (`PanelSizer.keepVisibleIfPinned`) fights `MenuBarExtra`'s private close-on-resign-key by re-ordering the window front, both synchronously and on the next runloop pass, because the ordering against AppKit's own handler is not guaranteed. No public API for this; could break on a future macOS | Agent | 2026-09-05 |
 |  | Swift | ux | A cancelled `Task.sleep` in the Voice Memos wait surfaces as a generic "Recording Error" alert instead of being ignored | Agent | 2026-09-04 |
 
 **Active:**

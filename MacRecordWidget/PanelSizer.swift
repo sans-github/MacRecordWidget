@@ -53,11 +53,16 @@ final class PanelAnchorView: NSView {
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
 
+    /// When true the panel is kept on screen after it loses key status, so
+    /// clicking another app no longer folds it away.
+    let isPinned: Bool
+
     /// Gap between the panel's trailing edge and the right of the screen.
     fileprivate static let screenMargin: CGFloat = 8
 
     final class Coordinator {
         var size: CGSize = .zero
+        var isPinned = false
         private var tokens: [NSObjectProtocol] = []
         private weak var window: NSWindow?
         private var isApplying = false
@@ -77,6 +82,9 @@ struct PanelSizer: NSViewRepresentable {
                     MainActor.assumeIsolated { self?.align() }
                 })
             }
+            tokens.append(center.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.keepVisibleIfPinned() }
+            })
             align()
         }
 
@@ -118,6 +126,28 @@ struct PanelSizer: NSViewRepresentable {
             window.displayIfNeeded()
         }
 
+        /// Re-shows the panel after it resigns key.
+        ///
+        /// `MenuBarExtra(.window)` closes its panel by ordering it out when the
+        /// window stops being key; there is no public switch for that. The
+        /// order of our observer against AppKit's own handler is not
+        /// guaranteed, so the re-show runs twice: once synchronously (in case
+        /// the order-out already happened) and once on the next runloop pass
+        /// (in case it has not).
+        func keepVisibleIfPinned() {
+            guard isPinned else { return }
+            orderFront()
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated { self?.orderFront() }
+            }
+        }
+
+        private func orderFront() {
+            guard isPinned, let window, !window.isVisible else { return }
+            window.orderFrontRegardless()
+            align()
+        }
+
         deinit {
             tokens.forEach(NotificationCenter.default.removeObserver)
         }
@@ -130,6 +160,10 @@ struct PanelSizer: NSViewRepresentable {
         view.onAttach = { window in
             window.isMovable = false
             window.isMovableByWindowBackground = false
+            // The app is an accessory (LSUIElement), so it deactivates as soon
+            // as another app is clicked. Left at the default this would hide
+            // the panel before the pin observer ever runs.
+            window.hidesOnDeactivate = false
             context.coordinator.attach(to: window)
         }
         return view
@@ -137,6 +171,7 @@ struct PanelSizer: NSViewRepresentable {
 
     func updateNSView(_ nsView: PanelAnchorView, context: Context) {
         context.coordinator.size = size
+        context.coordinator.isPinned = isPinned
         if let window = nsView.window {
             context.coordinator.attach(to: window)
             context.coordinator.align()

@@ -10,7 +10,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Five Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: an "Audio" label, ONE audio toggle button (`record.circle.fill` idle / `stop.fill` recording, tinted red), a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), and a bordered power button. Every control is `.controlSize(.small)` with a 13pt glyph in a 16pt frame and a constant 1pt outline, so an off toggle and an on toggle read as one control in two states. Panel stays open after start/stop; it closes only when the user clicks the menu bar icon. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: an "Audio" label, ONE audio toggle button (`record.circle.fill` idle / `stop.fill` recording, tinted red), a spacer, a camera toggle button (`video.fill`), the camera picker (only while the camera is on), a pin toggle, and a bordered power button. Every control is `.controlSize(.small)` with a 13pt glyph in a 16pt frame and a constant 1pt outline, so an off toggle and an on toggle read as one control in two states. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `videoEnabled`, and `isInFlight` state. `startRecording()` is `async throws`: quits Voice Memos first (if open) with a 1.5s wait, then fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. **Recording is audio only.** Photo Booth is never launched.
 
 Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessibility permission required. Minimum macOS deployment target is 14.0.
@@ -20,7 +20,7 @@ Requires two user-created Shortcuts named exactly "Start" and "Stop". No Accessi
 ## Gotchas
 
 - Voice Memos must be quit before firing the Start shortcut or macOS raises `VMAudioServiceErrorDomain` error 5. The quit + wait runs inside a `Task { }` using `async`/`await` so the UI doesn't block.
-- Do not call `popover.close()` or `panel?.orderOut(nil)` after Start/Stop. The panel intentionally stays open during recording so the user can press Stop without re-opening the popover. The panel closes only via the menu bar icon click (native MenuBarExtra behavior).
+- Do not call `popover.close()` or `panel?.orderOut(nil)` after Start/Stop. The panel intentionally stays open during recording so the user can press Stop without re-opening the popover. Closing is left to the native MenuBarExtra behavior: the menu bar icon click, plus focus loss unless the panel is pinned.
 - `NSWorkspace.open` returns `true` whenever something claims the `shortcuts://` scheme, which the Shortcuts app always does. It says nothing about whether the "Start" Shortcut exists or ran, so the app cannot detect a missing or broken Shortcut. Do not read that return value as proof a recording started.
 
 ## Live camera preview
@@ -74,8 +74,17 @@ into `projects/master/`.
   in the middle of it.
 - **Padding order matters.** `.frame(width:)` must size the content *before*
   `.padding` is added outside it, or the row is squeezed by the 24pt of padding.
-- The button row is trailing-aligned. An `HStack` in a `.frame(width:)` with no
-  alignment argument centers, so it slides when the frame widens.
+- The button row is leading-aligned (`.frame(maxWidth: .infinity, alignment: .leading)`).
+  An `HStack` in a fixed-width frame with no alignment argument centers, so the
+  row slides instead of filling the panel.
+- **The pin toggle fights an undocumented behaviour too.** `MenuBarExtra(.window)`
+  closes its panel by ordering it out when the window resigns key, and there is
+  no public switch for that. `PanelSizer.keepVisibleIfPinned` re-shows the
+  window on `didResignKeyNotification`, twice: once synchronously (in case the
+  order-out already ran) and once on the next runloop pass (in case it has not).
+  `hidesOnDeactivate` is also forced off, because the app is `LSUIElement` and
+  deactivates the moment another app is clicked. The pinned state persists in
+  `UserDefaults` under `panelPinned`.
 
 ### Verified on hardware (these were open questions in the design)
 
