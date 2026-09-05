@@ -1,7 +1,10 @@
 import SwiftUI
 import AppKit
 
+// Explicit @MainActor: Swift 5.9 (Xcode 15.2, which CI uses) does not infer it
+// on App, so the @State initializers below would be nonisolated without it.
 @main
+@MainActor
 struct MacRecordWidgetApp: App {
     @State private var recordingManager = RecordingManager()
     @State private var camera = CameraManager()
@@ -137,6 +140,7 @@ struct MacRecordWidgetApp: App {
 
 // MARK: - MenuBarIcon
 
+@MainActor
 private struct MenuBarIcon: View {
     let isRecording: Bool
 

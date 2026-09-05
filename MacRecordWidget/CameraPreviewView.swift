@@ -3,6 +3,7 @@ import SwiftUI
 
 /// macOS 14 has no SwiftUI-native camera preview, so the live image has to come
 /// from an `AVCaptureVideoPreviewLayer` hosted in AppKit.
+@MainActor
 struct CameraPreviewLayerView: NSViewRepresentable {
     let session: AVCaptureSession
 
@@ -24,6 +25,7 @@ struct CameraPreviewLayerView: NSViewRepresentable {
 
 /// The preview block that sits below the button row: the image or a message
 /// state, with the camera picker and mirror toggle underneath.
+@MainActor
 struct CameraPreviewPanel: View {
     @Bindable var camera: CameraManager
 
