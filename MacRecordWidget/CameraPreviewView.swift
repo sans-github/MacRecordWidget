@@ -49,8 +49,6 @@ struct CameraPreviewPanel: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Camera preview")
             .accessibilityIdentifier("cameraPreview")
-
-            controlStrip
         }
     }
 
@@ -101,13 +99,20 @@ struct CameraPreviewPanel: View {
         NSWorkspace.shared.open(url)
     }
 
-    // MARK: - Controls
+}
 
-    private var controlStrip: some View {
-        HStack(spacing: 12) {
-            // The picker's own selected value is the passive camera-name
-            // indicator: it names the device actually feeding the layer, which
-            // after a fallback is not the persisted preference.
+
+/// Camera picker and mirror checkbox, mounted at the trailing end of the button
+/// row rather than under the preview, so the row carries every control.
+@MainActor
+struct CameraControls: View {
+    @Bindable var camera: CameraManager
+
+    var body: some View {
+        HStack(spacing: 8) {
+            // The picker's selected value is also the camera-name indicator: it
+            // names the device actually feeding the layer, which after a
+            // fallback is not the persisted preference.
             Picker("Camera", selection: cameraSelection) {
                 if camera.availableCameras.isEmpty {
                     Text("No camera").tag("")
@@ -118,19 +123,20 @@ struct CameraPreviewPanel: View {
             }
             .labelsHidden()
             .controlSize(.small)
-            .frame(maxWidth: 260)
+            .frame(maxWidth: 200)
             .disabled(camera.availableCameras.isEmpty)
             .accessibilityLabel("Preview camera")
             .accessibilityIdentifier("cameraPicker")
 
-            Spacer(minLength: 0)
-
-            Toggle("Mirror", isOn: $camera.isMirrored)
+            // Label removed by request; the accessibility label carries it.
+            Toggle("", isOn: $camera.isMirrored)
                 .toggleStyle(.checkbox)
                 .controlSize(.small)
+                .labelsHidden()
+                .help("Mirror the preview")
+                .accessibilityLabel("Mirror preview")
                 .accessibilityIdentifier("mirrorToggle")
         }
-        .frame(width: Self.previewWidth)
     }
 
     private var cameraSelection: Binding<String> {

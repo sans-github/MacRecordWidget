@@ -66,11 +66,17 @@ struct MacRecordWidgetApp: App {
                 .help("Quit MacRecordWidget")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
+
+                Spacer(minLength: 12)
+
+                if recordingManager.videoEnabled {
+                    CameraControls(camera: camera)
+                }
             }
             .focusEffectDisabled()
             // Trailing-aligned so the row stays put as the panel grows leftward.
             // Without an explicit alignment the row centers and slides 152pt.
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             if recordingManager.videoEnabled {
                 CameraPreviewPanel(camera: camera)
@@ -102,11 +108,12 @@ struct MacRecordWidgetApp: App {
         .menuBarExtraStyle(.window)
     }
 
-    /// Content width inside the 12pt horizontal padding: 176pt collapsed, or
-    /// 480pt to match the preview. Total panel is this plus 24pt.
-    private var contentWidth: CGFloat {
-        recordingManager.videoEnabled ? CameraPreviewPanel.previewWidth : 176
-    }
+    /// Fixed at the preview width in both states. A panel that changes width
+    /// has to be repositioned as well as resized, and AppKit shows the move
+    /// before the correction lands, which reads as the panel jumping from the
+    /// centre to the right. Holding the width constant means only the height
+    /// ever changes, so the trailing edge never moves.
+    private var contentWidth: CGFloat { CameraPreviewPanel.previewWidth }
 
     @MainActor
     private func startOnly() async {
