@@ -23,8 +23,8 @@ struct CameraPreviewLayerView: NSViewRepresentable {
     }
 }
 
-/// The preview block that sits below the button row: the image or a message
-/// state, with the camera picker and mirror toggle underneath.
+/// The preview block below the button row: either the live image or a message
+/// state. Its controls live in the button row, not here.
 @MainActor
 struct CameraPreviewPanel: View {
     @Bindable var camera: CameraManager
@@ -102,8 +102,9 @@ struct CameraPreviewPanel: View {
 }
 
 
-/// Camera picker and mirror checkbox, mounted at the trailing end of the button
-/// row rather than under the preview, so the row carries every control.
+/// The camera picker, mounted in the button row next to the camera toggle so
+/// the two camera controls sit together. The mirror checkbox was removed;
+/// mirroring is now always on.
 @MainActor
 struct CameraControls: View {
     @Bindable var camera: CameraManager

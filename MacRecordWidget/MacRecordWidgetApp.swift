@@ -8,7 +8,6 @@ import AppKit
 struct MacRecordWidgetApp: App {
     @State private var recordingManager = RecordingManager()
     @State private var camera = CameraManager()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var measuredSize: CGSize = .zero
 
     var body: some Scene {
@@ -78,8 +77,9 @@ struct MacRecordWidgetApp: App {
                 .accessibilityIdentifier("quitButton")
             }
             .focusEffectDisabled()
-            // Trailing-aligned so the row stays put as the panel grows leftward.
-            // Without an explicit alignment the row centers and slides 152pt.
+            // Leading-aligned: the panel is a fixed width, so the row fills it
+            // and each group sits at its own end. Without an explicit alignment
+            // an HStack centers inside its frame.
             .frame(maxWidth: .infinity, alignment: .leading)
 
             if recordingManager.videoEnabled {
@@ -96,7 +96,7 @@ struct MacRecordWidgetApp: App {
                     Color.clear.preference(key: PanelSizeKey.self, value: proxy.size)
                 }
             )
-            .background(PanelSizer(size: measuredSize, animated: !reduceMotion))
+            .background(PanelSizer(size: measuredSize))
             .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
             .task(id: recordingManager.videoEnabled) {
                 if recordingManager.videoEnabled {

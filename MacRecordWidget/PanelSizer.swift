@@ -52,21 +52,19 @@ final class PanelAnchorView: NSView {
 /// origin too, sliding the panel across the screen before the correction lands.
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
-    let animated: Bool
 
     /// Gap between the panel's trailing edge and the right of the screen.
     fileprivate static let screenMargin: CGFloat = 8
 
     final class Coordinator {
         var size: CGSize = .zero
-        var animated = false
         private var tokens: [NSObjectProtocol] = []
         private weak var window: NSWindow?
         private var isApplying = false
 
         func attach(to window: NSWindow) {
             guard self.window !== window else {
-                align(animated: false)
+                align()
                 return
             }
             tokens.forEach(NotificationCenter.default.removeObserver)
@@ -76,13 +74,13 @@ struct PanelSizer: NSViewRepresentable {
             let center = NotificationCenter.default
             for name in [NSWindow.didMoveNotification, NSWindow.didResizeNotification] {
                 tokens.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
-                    MainActor.assumeIsolated { self?.align(animated: false) }
+                    MainActor.assumeIsolated { self?.align() }
                 })
             }
-            align(animated: false)
+            align()
         }
 
-        func align(animated: Bool) {
+        func align() {
             // Our own setFrame triggers didMove/didResize; ignore the echo.
             guard !isApplying, let window, size.width > 0, size.height > 0 else { return }
             let current = window.frame
@@ -139,10 +137,9 @@ struct PanelSizer: NSViewRepresentable {
 
     func updateNSView(_ nsView: PanelAnchorView, context: Context) {
         context.coordinator.size = size
-        context.coordinator.animated = animated
         if let window = nsView.window {
             context.coordinator.attach(to: window)
-            context.coordinator.align(animated: animated)
+            context.coordinator.align()
         }
     }
 }
