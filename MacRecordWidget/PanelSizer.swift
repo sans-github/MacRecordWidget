@@ -121,14 +121,28 @@ struct PanelSizer: NSViewRepresentable {
                 PanelLog.write("applied -> frame=\(window.frame)")
             }
 
-            guard animated else {
+            // MenuBarExtraWindow reverts the origin inside setFrame to keep
+            // itself anchored to the status item, so the size lands but the
+            // move is discarded. Try to reassert the origin outside that call.
+            if animated {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.22
+                    context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    window.animator().setFrame(target, display: true)
+                }
+            } else {
                 window.setFrame(target, display: true)
-                return
             }
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.22
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                window.animator().setFrame(target, display: true)
+
+            let origin = target.origin
+            DispatchQueue.main.async { [weak window] in
+                guard let window else { return }
+                window.setFrameOrigin(origin)
+                PanelLog.write("deferred setFrameOrigin(\(origin)) -> \(window.frame)")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak window] in
+                    guard let window else { return }
+                    PanelLog.write("settled -> \(window.frame)")
+                }
             }
         }
 
