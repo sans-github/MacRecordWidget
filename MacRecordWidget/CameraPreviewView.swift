@@ -30,24 +30,32 @@ struct CameraPreviewPanel: View {
     @Bindable var camera: CameraManager
     let scale: PanelScale
 
+    /// Matches the rounding of the `MenuBarExtra` panel itself. The preview runs
+    /// flush to the panel's left, right and bottom edges, so only its bottom
+    /// corners are rounded; square ones would poke out past the window.
+    private static let panelCornerRadius: CGFloat = 10
+
     var body: some View {
-        VStack(alignment: .trailing, spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: scale.cornerRadius + 1)
-                    .fill(Color(nsColor: .underPageBackgroundColor))
-                if camera.state == .running {
-                    CameraPreviewLayerView(session: camera.session)
-                        .clipShape(RoundedRectangle(cornerRadius: scale.cornerRadius + 1))
-                } else {
-                    messageView
-                        .padding(.horizontal, 16)
-                }
+        ZStack {
+            Rectangle()
+                .fill(Color(nsColor: .underPageBackgroundColor))
+            if camera.state == .running {
+                CameraPreviewLayerView(session: camera.session)
+            } else {
+                messageView
+                    .padding(.horizontal, 16)
             }
-            .frame(width: scale.previewWidth, height: scale.previewHeight)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Camera preview")
-            .accessibilityIdentifier("cameraPreview")
         }
+        .frame(width: scale.previewWidth, height: scale.previewHeight)
+        .clipShape(
+            .rect(
+                bottomLeadingRadius: Self.panelCornerRadius,
+                bottomTrailingRadius: Self.panelCornerRadius
+            )
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Camera preview")
+        .accessibilityIdentifier("cameraPreview")
     }
 
     // MARK: - States
@@ -118,10 +126,13 @@ struct CameraControls: View {
                     Text("No camera").tag("")
                 }
                 ForEach(camera.availableCameras, id: \.uniqueID) { device in
-                    Text(device.localizedName).tag(device.uniqueID)
+                    Text(device.localizedName)
+                        .font(scale.controlFont)
+                        .tag(device.uniqueID)
                 }
             }
             .labelsHidden()
+            .font(scale.controlFont)
             .controlSize(scale.controlSize)
             .frame(maxWidth: scale.pickerMaxWidth)
             .disabled(camera.availableCameras.isEmpty)

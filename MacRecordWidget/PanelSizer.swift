@@ -58,7 +58,8 @@ struct PanelSizer: NSViewRepresentable {
     let isPinned: Bool
 
     /// Gap between the panel's trailing edge and the right of the screen.
-    fileprivate static let screenMargin: CGFloat = 8
+    /// Zero: the panel sits flush against the edge.
+    fileprivate static let screenMargin: CGFloat = 0
 
     final class Coordinator {
         var size: CGSize = .zero
@@ -216,9 +217,10 @@ enum PanelScale: String, CaseIterable, Identifiable {
         case .small: return 320
         case .medium: return 480
         case .large:
+            // The preview runs the full width of the panel, so this is the
+            // panel width too and large can be half the screen exactly.
             let screenWidth = NSScreen.main?.visibleFrame.width ?? 960
-            let halfPanel = screenWidth / 2 - PanelSizer.screenMargin - horizontalPadding * 2
-            return max(480, halfPanel.rounded(.down))
+            return max(480, (screenWidth / 2 - PanelSizer.screenMargin).rounded(.down))
         }
     }
 
@@ -238,6 +240,19 @@ enum PanelScale: String, CaseIterable, Identifiable {
         case .small: .system(size: 11, weight: .regular)
         case .medium: .system(size: 13, weight: .regular)
         case .large: .system(size: 16, weight: .regular)
+        }
+    }
+
+    /// Text inside controls: the camera name and the S/M/L labels.
+    ///
+    /// `ControlSize` alone does not carry this. `.regular` still draws 13pt
+    /// text, which next to 20pt glyphs in a taller row reads as too small, so
+    /// large sets the font explicitly.
+    var controlFont: Font {
+        switch self {
+        case .small: .system(size: 10)
+        case .medium: .system(size: 12)
+        case .large: .system(size: 15)
         }
     }
 

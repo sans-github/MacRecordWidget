@@ -100,7 +100,11 @@ on.
   explicit frame the panel strands at full size with the collapsed row floating
   in the middle of it.
 - **Padding order matters.** `.frame(width:)` must size the content *before*
-  `.padding` is added outside it, or the row is squeezed by the 24pt of padding.
+  `.padding` is added outside it, or the row is squeezed by the padding.
+- **Padding belongs to the button row, not to the panel.** The outer `VStack`
+  has `spacing: 0` and no padding, so the preview runs flush to the panel's
+  left, right and bottom edges. Only the preview's bottom corners are rounded,
+  matching the window; square ones poke out past it.
 - The button row is leading-aligned (`.frame(maxWidth: .infinity, alignment: .leading)`).
   An `HStack` in a fixed-width frame with no alignment argument centers, so the
   row slides instead of filling the panel.
@@ -117,7 +121,8 @@ on.
 
 - The panel does **not** pin its own trailing edge, contrary to what the design
   assumed. It anchors to the status item; right-alignment is something
-  `PanelSizer` imposes, 8pt from the screen's visible frame.
+  `PanelSizer` imposes, flush against the screen's visible frame
+  (`screenMargin` is 0).
 - The resize is **not** animated. Animating it animates the reverted origin too,
   which slides the panel across the screen before the correction lands.
 - Camera contention with Photo Booth is **moot**: Photo Booth is no longer

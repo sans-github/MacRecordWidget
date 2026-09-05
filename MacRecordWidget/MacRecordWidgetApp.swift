@@ -21,7 +21,9 @@ struct MacRecordWidgetApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            VStack(alignment: .trailing, spacing: 8) {
+            // spacing: 0 and no padding on this stack. The row carries its own
+            // padding; the preview is meant to touch the panel's edges.
+            VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: scale.rowSpacing) {
                 Toggle(isOn: $isPinned) {
                     Image(systemName: isPinned ? "pin.fill" : "pin.slash")
@@ -88,11 +90,14 @@ struct MacRecordWidgetApp: App {
                     // preview, so it has nothing to act on otherwise.
                     Picker("Panel size", selection: scaleBinding) {
                         ForEach(PanelScale.allCases) { option in
-                            Text(option.label).tag(option)
+                            Text(option.label)
+                                .font(scale.controlFont)
+                                .tag(option)
                         }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                    .font(scale.controlFont)
                     .controlSize(scale.controlSize)
                     .fixedSize()
                     .help("Panel size")
@@ -124,15 +129,17 @@ struct MacRecordWidgetApp: App {
             // and each group sits at its own end. Without an explicit alignment
             // an HStack centers inside its frame.
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Padding is on the row, not on the panel, so the preview below can
+            // run flush to the left, right and bottom edges.
+            .padding(.horizontal, scale.horizontalPadding)
+            .padding(.vertical, scale.verticalPadding)
 
             if recordingManager.videoEnabled {
                 CameraPreviewPanel(camera: camera, scale: scale)
                     .transition(.opacity)
             }
             }
-            .frame(width: contentWidth, alignment: .trailing)
-            .padding(.horizontal, scale.horizontalPadding)
-            .padding(.vertical, scale.verticalPadding)
+            .frame(width: contentWidth)
             .fixedSize()
             .background(
                 GeometryReader { proxy in
