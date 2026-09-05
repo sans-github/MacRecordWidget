@@ -97,7 +97,7 @@ struct MacRecordWidgetApp: App {
                         ForEach(PanelScale.allCases) { option in
                             Toggle(isOn: scaleBinding(for: option)) {
                                 Text(option.label)
-                                    .font(scale.controlFont)
+                                    .font(scale.scaleLabelFont)
                                     .frame(width: scale.glyphSize, height: scale.glyphSize)
                             }
                             .toggleStyle(.button)

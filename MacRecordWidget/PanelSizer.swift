@@ -252,7 +252,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Text inside controls: the camera name and the S/M/L labels.
+    /// Text inside controls: currently the camera name.
     ///
     /// `ControlSize` alone does not carry this. `.regular` still draws 13pt
     /// text, which next to 20pt glyphs in a taller row reads as too small, so
@@ -260,6 +260,18 @@ enum PanelScale: String, CaseIterable, Identifiable {
     var controlFont: Font {
         switch self {
         case .small: .system(size: 10)
+        case .medium: .system(size: 12)
+        case .large: .system(size: 15)
+        }
+    }
+
+    /// The S/M/L letters. A letter fills its box more solidly than a glyph
+    /// does, so at the small scale it needs to be a point under `controlFont`
+    /// to carry the same weight as the icons beside it. At medium and large the
+    /// two agree.
+    var scaleLabelFont: Font {
+        switch self {
+        case .small: .system(size: 9)
         case .medium: .system(size: 12)
         case .large: .system(size: 15)
         }
