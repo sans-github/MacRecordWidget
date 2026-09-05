@@ -58,6 +58,18 @@ struct MacRecordWidgetApp: App {
                 .controlSize(scale.controlSize)
                 .tint(.red)
                 .overlay(controlOutline)
+                // Sits on the button's bottom-right corner, offset outward so
+                // most of it falls on the panel background rather than on the
+                // red fill underneath, where amber on red would barely read.
+                .overlay(alignment: .bottomTrailing) {
+                    if recordingManager.isRecording {
+                        RecordingDot(diameter: scale.recordingDotSize)
+                            .offset(
+                                x: scale.recordingDotSize * 0.45,
+                                y: scale.recordingDotSize * 0.45
+                            )
+                    }
+                }
                 .disabled(recordingManager.isInFlight)
                 .help(recordingManager.isRecording ? "Stop and save to Voice Memos" : "Record audio to Voice Memos")
                 .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
@@ -239,16 +251,46 @@ struct MacRecordWidgetApp: App {
     }
 }
 
+// MARK: - RecordingDot
+
+/// The blinking amber "recording" dot, shared by the menu bar icon and the
+/// audio button so the two indicators cannot drift apart in colour or rhythm.
+///
+/// Mount it only while recording: the blink starts in `onAppear`, so its
+/// lifetime *is* the recording state and there is no separate flag to keep in
+/// sync. Under Reduce Motion it holds steady rather than disappearing, since it
+/// is the indicator, not decoration.
+@MainActor
+struct RecordingDot: View {
+    let diameter: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var opacity: Double = 1.0
+
+    static let color = Color(red: 1.0, green: 0.620, blue: 0.200)
+
+    var body: some View {
+        Circle()
+            .fill(Self.color)
+            .frame(width: diameter, height: diameter)
+            .opacity(reduceMotion ? 1.0 : opacity)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    opacity = 0.15
+                }
+            }
+            // The toggle already announces recording state; a second
+            // announcement for the dot would just be noise.
+            .accessibilityHidden(true)
+    }
+}
+
 // MARK: - MenuBarIcon
 
 @MainActor
 private struct MenuBarIcon: View {
     let isRecording: Bool
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var blinkOpacity: Double = 1.0
-
-    private let dotColor = Color(red: 1.0, green: 0.620, blue: 0.200)
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -257,21 +299,8 @@ private struct MenuBarIcon: View {
                 .foregroundStyle(isRecording ? .green : .primary)
 
             if isRecording {
-                Circle()
-                    .fill(dotColor)
-                    .frame(width: 5, height: 5)
-                    .opacity(reduceMotion ? 1.0 : blinkOpacity)
+                RecordingDot(diameter: 5)
                     .offset(x: 2, y: 2)
-                    .accessibilityHidden(true)
-            }
-        }
-        .onChange(of: isRecording) { _, recording in
-            if recording && !reduceMotion {
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                    blinkOpacity = 0.15
-                }
-            } else {
-                blinkOpacity = 1.0
             }
         }
     }

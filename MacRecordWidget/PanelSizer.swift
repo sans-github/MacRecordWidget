@@ -285,6 +285,15 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Diameter of the blinking recording dot on the audio button.
+    var recordingDotSize: CGFloat {
+        switch self {
+        case .small: 5
+        case .medium: 6
+        case .large: 7
+        }
+    }
+
     var rowSpacing: CGFloat {
         switch self {
         case .small: 10
