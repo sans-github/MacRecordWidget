@@ -2,6 +2,19 @@ import AppKit
 import SwiftUI
 
 
+enum PanelLog {
+    static let path = "/tmp/macrecordwidget-panel.log"
+    static func write(_ message: String) {
+        let line = "[\(Date())] \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let handle = FileHandle(forWritingAtPath: path) {
+            handle.seekToEndOfFile(); handle.write(data); try? handle.close()
+        } else {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+}
+
 /// Reports the measured size of the popover content.
 struct PanelSizeKey: PreferenceKey {
     static var defaultValue: CGSize = .zero
@@ -100,25 +113,28 @@ struct PanelSizer: NSViewRepresentable {
                 isApplying = false
             }
 
-            // MenuBarExtraWindow reverts the origin inside setFrame to keep
-            // itself anchored to the status item, so the size lands but the
-            // move is discarded. Try to reassert the origin outside that call.
-            if animated {
-                NSAnimationContext.runAnimationGroup { context in
-                    context.duration = 0.22
-                    context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                    window.animator().setFrame(target, display: true)
-                }
-            } else {
-                window.setFrame(target, display: true)
-            }
+            // Any frame change makes AppKit re-anchor the panel to the status
+            // item, reverting the origin inside setFrame. Correcting it on a
+            // later runloop pass means the anchored position gets painted
+            // first, which is the flicker from centre to right. So suppress
+            // drawing, apply size and corrected origin together, then flush.
+            //
+            // The resize is deliberately not animated: animating setFrame
+            // animates the reverted origin too, sliding the panel across the
+            // screen before the correction lands.
+            window.disableScreenUpdatesUntilFlush()
+            window.setFrame(target, display: false)
+            window.setFrameOrigin(target.origin)
+            let afterSync = window.frame
+            window.displayIfNeeded()
+            PanelLog.write("sync -> \(afterSync) wanted=\(target)")
 
-            let origin = target.origin
-            DispatchQueue.main.async { [weak window] in
-                guard let window else { return }
-                window.setFrameOrigin(origin)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak window] in
-                    guard let window else { return }
+            // Fallback only if the synchronous correction did not hold.
+            if abs(afterSync.origin.x - target.origin.x) > 0.5 {
+                let origin = target.origin
+                DispatchQueue.main.async { [weak window] in
+                    window?.setFrameOrigin(origin)
+                    if let w = window { PanelLog.write("deferred fallback -> \(w.frame)") }
                 }
             }
         }
