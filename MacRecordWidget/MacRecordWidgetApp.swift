@@ -40,8 +40,13 @@ struct MacRecordWidgetApp: App {
                     Button {
                         Task { await stopOnly() }
                     } label: {
-                        Image(systemName: "square")
-                            .font(Self.glyphFont)
+                        // Drawn rather than the `square` SF Symbol: that symbol
+                        // is a hairline outline, which reads as weightless next
+                        // to the solid record disc. An explicit stroke width
+                        // lets it match.
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .stroke(lineWidth: 2.5)
+                            .frame(width: 12, height: 12)
                             .frame(width: Self.glyphSize, height: Self.glyphSize)
                     }
                     .buttonStyle(.plain)
