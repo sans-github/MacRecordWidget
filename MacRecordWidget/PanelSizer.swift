@@ -10,48 +10,63 @@ struct PanelSizeKey: PreferenceKey {
     }
 }
 
-/// Drives the `MenuBarExtra(.window)` panel's own `NSWindow` frame.
+/// An `NSView` that reports the moment it is attached to a window.
 ///
-/// Two AppKit behaviours make this necessary. The panel grows to fit its
-/// content but never shrinks back, which strands a full-size empty window when
-/// the preview closes. And AppKit re-anchors the panel under the status item
-/// every time it opens, which overrides any position set earlier.
+/// `updateNSView` is not a reliable hook for this: it runs only when SwiftUI
+/// re-renders, and on first appearance the view has no window yet, so a frame
+/// applied there is silently dropped and never retried.
+final class PanelAnchorView: NSView {
+    var onAttach: ((NSWindow) -> Void)?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let window { onAttach?(window) }
+    }
+}
+
+/// Pins the `MenuBarExtra(.window)` panel to the right of the screen and keeps
+/// it sized to its content.
 ///
-/// So the frame is applied both when the content size changes and again when
-/// the window becomes key, which is the point AppKit has finished positioning
-/// it. The trailing edge is pinned to the right of the screen.
+/// AppKit fights this in three ways: it grows the panel to fit content but
+/// never shrinks it back, it re-anchors the panel under the status item on each
+/// open, and it does that positioning after SwiftUI's view update. So rather
+/// than trying to win a race, this observes the window's own move and resize
+/// notifications and corrects the frame whenever AppKit changes it.
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
     let animated: Bool
 
     /// Gap between the panel's trailing edge and the right of the screen.
-    private static let screenMargin: CGFloat = 8
+    fileprivate static let screenMargin: CGFloat = 8
 
     final class Coordinator {
         var size: CGSize = .zero
         var animated = false
-        private var observer: NSObjectProtocol?
-        private weak var observed: NSWindow?
+        private var tokens: [NSObjectProtocol] = []
+        private weak var window: NSWindow?
+        private var isApplying = false
 
-        /// Re-applies the frame once AppKit has placed the panel for this open.
-        func observe(_ window: NSWindow) {
-            guard observed !== window else { return }
-            if let observer { NotificationCenter.default.removeObserver(observer) }
-            observed = window
-            observer = NotificationCenter.default.addObserver(
-                forName: NSWindow.didBecomeKeyNotification,
-                object: window,
-                queue: .main
-            ) { [weak self] _ in
-                guard let self else { return }
-                // Never animate this one: it is a placement correction at open,
-                // not a resize the user initiated.
-                MainActor.assumeIsolated { self.apply(to: window, animated: false) }
+        func attach(to window: NSWindow) {
+            guard self.window !== window else {
+                align(animated: false)
+                return
             }
+            tokens.forEach(NotificationCenter.default.removeObserver)
+            tokens.removeAll()
+            self.window = window
+
+            let center = NotificationCenter.default
+            for name in [NSWindow.didMoveNotification, NSWindow.didResizeNotification] {
+                tokens.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.align(animated: false) }
+                })
+            }
+            align(animated: false)
         }
 
-        func apply(to window: NSWindow, animated: Bool) {
-            guard size.width > 0, size.height > 0 else { return }
+        func align(animated: Bool) {
+            // Our own setFrame triggers didMove/didResize; ignore the echo.
+            guard !isApplying, let window, size.width > 0, size.height > 0 else { return }
             let current = window.frame
             let screen = window.screen ?? NSScreen.main
             let rightEdge = screen.map { $0.visibleFrame.maxX - PanelSizer.screenMargin } ?? current.maxX
@@ -61,12 +76,14 @@ struct PanelSizer: NSViewRepresentable {
                 width: size.width,
                 height: size.height
             )
-            // Reposition when the position is stale too, not only the size.
             guard abs(current.origin.x - target.origin.x) > 0.5
                     || abs(current.origin.y - target.origin.y) > 0.5
                     || abs(current.width - target.width) > 0.5
                     || abs(current.height - target.height) > 0.5
             else { return }
+
+            isApplying = true
+            defer { isApplying = false }
 
             guard animated else {
                 window.setFrame(target, display: true)
@@ -80,26 +97,28 @@ struct PanelSizer: NSViewRepresentable {
         }
 
         deinit {
-            if let observer { NotificationCenter.default.removeObserver(observer) }
+            tokens.forEach(NotificationCenter.default.removeObserver)
         }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeNSView(context: Context) -> NSView { NSView(frame: .zero) }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        context.coordinator.size = size
-        context.coordinator.animated = animated
-        // Deferred: the window is not attached during the first layout pass.
-        DispatchQueue.main.async {
-            guard let window = nsView.window else { return }
-            // Dragging stays off: the panel is anchored to the screen edge, and
-            // AppKit would re-anchor it on the next open anyway.
+    func makeNSView(context: Context) -> PanelAnchorView {
+        let view = PanelAnchorView(frame: .zero)
+        view.onAttach = { window in
             window.isMovable = false
             window.isMovableByWindowBackground = false
-            context.coordinator.observe(window)
-            context.coordinator.apply(to: window, animated: animated)
+            context.coordinator.attach(to: window)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: PanelAnchorView, context: Context) {
+        context.coordinator.size = size
+        context.coordinator.animated = animated
+        if let window = nsView.window {
+            context.coordinator.attach(to: window)
+            context.coordinator.align(animated: animated)
         }
     }
 }
