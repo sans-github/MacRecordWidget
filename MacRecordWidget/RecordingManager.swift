@@ -41,9 +41,11 @@ final class RecordingManager {
     /// Measured 2026-09-06 by firing Start, waiting a known interval, firing
     /// Stop and comparing against the audio duration in the resulting file:
     /// 1.54s lost with Voice Memos quit, 0.88-0.93s with it already running
-    /// (n=3, spread 0.05s). 2.0s covers the slower path with a little margin.
+    /// (n=3, spread 0.05s). Set to 3s: comfortably above the measured 1.54s,
+    /// because losing the first words costs more than waiting an extra second,
+    /// and the measurement was taken on an idle machine.
     /// Tune here; nothing else depends on the value.
-    static let armingDelay: Duration = .milliseconds(2000)
+    static let armingDelay: Duration = .milliseconds(3000)
 
     private var armingTask: Task<Void, Never>?
 
