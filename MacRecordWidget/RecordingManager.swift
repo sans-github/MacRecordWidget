@@ -26,6 +26,27 @@ final class RecordingManager {
     var videoEnabled = false
     var isInFlight = false
 
+    /// True between firing the Start shortcut and the point where Voice Memos
+    /// is actually capturing. The UI shows a distinct "starting" state so the
+    /// user knows not to speak yet.
+    ///
+    /// This exists because there is no signal for "capture has begun".
+    /// Measured: the `.m4a` does not appear until *after* Stop, the process is
+    /// up 1.3s before audio flows, and the filename records when the shortcut
+    /// fired rather than when recording started. So the delay is a constant.
+    private(set) var isArming = false
+
+    /// How long to wait before declaring the recording live.
+    ///
+    /// Measured 2026-09-06 by firing Start, waiting a known interval, firing
+    /// Stop and comparing against the audio duration in the resulting file:
+    /// 1.54s lost with Voice Memos quit, 0.88-0.93s with it already running
+    /// (n=3, spread 0.05s). 2.0s covers the slower path with a little margin.
+    /// Tune here; nothing else depends on the value.
+    static let armingDelay: Duration = .milliseconds(2000)
+
+    private var armingTask: Task<Void, Never>?
+
     /// When the current recording started, or nil when not recording.
     ///
     /// The elapsed time is derived from this rather than accumulated by a
@@ -56,13 +77,17 @@ final class RecordingManager {
         isInFlight = true
         defer { isInFlight = false }
 
-        // Quit Voice Memos before firing the Start shortcut. If Voice Memos is
-        // open, macOS raises VMAudioServiceErrorDomain error 5. The 1.5s wait
-        // gives it time to fully exit. See CLAUDE.md "Gotchas".
-        let voiceMemos = NSWorkspace.shared.runningApplications
-            .first(where: { $0.bundleIdentifier == "com.apple.VoiceMemos" })
-        voiceMemos?.terminate()
-        if voiceMemos != nil {
+        // Voice Memos must not be running when Start fires, or macOS raises
+        // VMAudioServiceErrorDomain error 5. See CLAUDE.md "Gotchas".
+        //
+        // `stopRecording()` now quits it, so on the common path it is already
+        // gone and this costs nothing. This is the fallback for the first
+        // recording after launch, or if the user opened Voice Memos by hand.
+        // Keeping the quit here is deliberate: warm starts were measured
+        // working, but four successes are not enough to delete a documented
+        // failure mode whose trigger conditions are unknown.
+        if let voiceMemos = Self.runningVoiceMemos() {
+            voiceMemos.terminate()
             try await Task.sleep(for: .seconds(1.5))
         }
 
@@ -83,17 +108,35 @@ final class RecordingManager {
         }
 
         // State is set only after the URL opens successfully (AC-SW-7).
-        // The clock resets here, not on stop, so the previous recording's
-        // duration stays readable until a new one actually begins.
-        lastElapsed = 0
-        startedAt = Date()
-        isRecording = true
+        //
+        // Recording is not live yet: Shortcuts still has to run and Voice Memos
+        // still has to arm the mic. Hold an explicit arming state for that
+        // window so the timer does not over-report and the user is not invited
+        // to start talking into a mic that is not listening.
+        isArming = true
+        armingTask?.cancel()
+        armingTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.armingDelay)
+            guard !Task.isCancelled, let self else { return }
+            self.isArming = false
+            // The clock resets here, not on stop, so the previous recording's
+            // duration stays readable until a new one actually begins.
+            self.lastElapsed = 0
+            self.startedAt = Date()
+            self.isRecording = true
+        }
     }
 
     func stopRecording() async throws {
         guard !isInFlight else { return }
         isInFlight = true
         defer { isInFlight = false }
+
+        // Stopping during the arming window must not leave a pending task that
+        // flips the UI to "recording" seconds after the user stopped.
+        armingTask?.cancel()
+        armingTask = nil
+        isArming = false
 
         guard let url = URL(string: "shortcuts://run-shortcut?name=Stop") else {
             throw RecordingError.shortcutLaunchFailed(reason: "Could not construct Stop shortcut URL")
@@ -109,5 +152,19 @@ final class RecordingManager {
         }
         startedAt = nil
         isRecording = false
+
+        // Quit Voice Memos here rather than before the next Start. The app has
+        // to guarantee it is not running when Start fires, and paying that cost
+        // now moves ~1.5s of dead time out of the moment the user is waiting to
+        // speak. The delay gives Voice Memos time to finish writing the file.
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            Self.runningVoiceMemos()?.terminate()
+        }
+    }
+
+    private static func runningVoiceMemos() -> NSRunningApplication? {
+        NSWorkspace.shared.runningApplications
+            .first(where: { $0.bundleIdentifier == "com.apple.VoiceMemos" })
     }
 }

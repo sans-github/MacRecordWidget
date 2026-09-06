@@ -53,6 +53,11 @@ struct MacRecordWidgetApp: App {
                     Image(systemName: "mic.fill")
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
+                        // Dimmed while Voice Memos is still coming up. The red
+                        // fill, the blinking dot and the timer all arrive
+                        // together a moment later, which is the "speak now"
+                        // signal.
+                        .opacity(recordingManager.isArming ? 0.35 : 1)
                 }
                 .toggleStyle(.button)
                 .controlSize(scale.controlSize)
@@ -70,9 +75,9 @@ struct MacRecordWidgetApp: App {
                             )
                     }
                 }
-                .disabled(recordingManager.isInFlight)
-                .help(recordingManager.isRecording ? "Stop and save to Voice Memos" : "Record audio to Voice Memos")
-                .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
+                .disabled(recordingManager.isInFlight || recordingManager.isArming)
+                .help(armingAwareHelp)
+                .accessibilityLabel(armingAwareHelp)
                 .accessibilityIdentifier("recordToggle")
 
                 RecordingTimer(manager: recordingManager, scale: scale)
@@ -208,7 +213,23 @@ struct MacRecordWidgetApp: App {
     /// corrected frame is in place.
     private var contentWidth: CGFloat { scale.previewWidth }
 
+    /// Says what the button will do, and during arming says why it is waiting.
+    /// VoiceOver gets the same string: "starting" is exactly what a screen
+    /// reader user needs to hear before they start talking.
+    private var armingAwareHelp: String {
+        if recordingManager.isArming { return "Starting… wait to speak" }
+        return recordingManager.isRecording
+            ? "Stop and save to Voice Memos"
+            : "Record audio to Voice Memos"
+    }
+
     /// Drives the single audio control: on starts, off stops.
+    ///
+    /// Deliberately reads `isRecording`, not "recording or arming": the red
+    /// fill is the "you are being captured" signal, and showing it while Voice
+    /// Memos is still coming up would be the same lie the arming state exists
+    /// to remove. The button is disabled during arming, so it cannot be clicked
+    /// twice while it looks off.
     private var recordingBinding: Binding<Bool> {
         Binding(
             get: { recordingManager.isRecording },
