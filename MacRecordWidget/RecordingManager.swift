@@ -26,6 +26,31 @@ final class RecordingManager {
     var videoEnabled = false
     var isInFlight = false
 
+    /// When the current recording started, or nil when not recording.
+    ///
+    /// The elapsed time is derived from this rather than accumulated by a
+    /// ticking counter, so it stays correct while the panel is closed and
+    /// cannot drift. Nothing has to run in the background to keep it accurate.
+    private(set) var startedAt: Date?
+
+    /// Elapsed time of the last finished recording. Held on screen after stop
+    /// until the next recording begins, and 0 before the first one, which is
+    /// what puts 00:00 on screen at launch.
+    private(set) var lastElapsed: TimeInterval = 0
+
+    /// Seconds to display: live while recording, otherwise the retained value.
+    func elapsed(asOf now: Date = Date()) -> TimeInterval {
+        guard let startedAt else { return lastElapsed }
+        return max(0, now.timeIntervalSince(startedAt))
+    }
+
+    /// MM:SS. Minutes are not capped at 59, so a long recording reads 74:05
+    /// rather than wrapping back to 14:05.
+    static func formatElapsed(_ interval: TimeInterval) -> String {
+        let seconds = Int(interval.rounded(.down))
+        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
+
     func startRecording() async throws {
         guard !isInFlight else { return }
         isInFlight = true
@@ -57,7 +82,11 @@ final class RecordingManager {
             throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false")
         }
 
-        // State is set only after the URL opens successfully (AC-SW-7)
+        // State is set only after the URL opens successfully (AC-SW-7).
+        // The clock resets here, not on stop, so the previous recording's
+        // duration stays readable until a new one actually begins.
+        lastElapsed = 0
+        startedAt = Date()
         isRecording = true
     }
 
@@ -75,6 +104,10 @@ final class RecordingManager {
             throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false for Stop")
         }
 
+        if let startedAt {
+            lastElapsed = max(0, Date().timeIntervalSince(startedAt))
+        }
+        startedAt = nil
         isRecording = false
     }
 }

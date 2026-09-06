@@ -252,7 +252,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Text inside controls: currently the camera name.
+    /// Text in the button row: the camera name and the MM:SS timer.
     ///
     /// `ControlSize` alone does not carry this. `.regular` still draws 13pt
     /// text, which next to 20pt glyphs in a taller row reads as too small, so

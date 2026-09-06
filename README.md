@@ -67,6 +67,7 @@ Click the menu bar icon to open the panel. The controls run left to right:
 |---|---|
 | **Pin toggle** (pin icon) | Off, the panel closes when you click another app. On, it stays open. The setting persists across launches. |
 | **Audio toggle** (microphone) | Starts and stops the audio recording. One button in two states: plain when idle, filled red with a blinking amber dot while recording. |
+| **Timer** (MM:SS) | Counts up while recording. Shows `00:00` at launch, and keeps the last recording's duration on screen after you stop, until you start the next one. |
 | **Size buttons** (S / M / L) | Scale the entire panel: controls, spacing and preview. At L the panel is half your screen wide, so it sits alongside a window tiled to the other half. Only appear while the preview is on. The choice persists across launches. |
 | **Camera toggle** (video icon) | Shows or hides the live preview below the row. It has no effect on what is recorded. |
 | **Camera picker** | Chooses which camera feeds the preview. Only appears while the preview is on. |

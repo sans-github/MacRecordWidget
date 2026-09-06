@@ -75,6 +75,8 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel(recordingManager.isRecording ? "Stop recording" : "Start recording")
                 .accessibilityIdentifier("recordToggle")
 
+                RecordingTimer(manager: recordingManager, scale: scale)
+
                 Spacer(minLength: 12)
 
                 // An icon toggle button rather than a switch: a switch is a wide
@@ -248,6 +250,46 @@ struct MacRecordWidgetApp: App {
         }
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+}
+
+// MARK: - RecordingTimer
+
+/// MM:SS beside the audio button. 00:00 at launch, counting while recording,
+/// and holding the last duration after stop until the next recording starts.
+///
+/// While recording the value comes from a `TimelineView` driven off the start
+/// date, so there is no timer to invalidate and nothing ticking while the panel
+/// is closed. Reopening the panel recomputes from the wall clock, which is also
+/// why a long recording cannot drift.
+@MainActor
+struct RecordingTimer: View {
+    let manager: RecordingManager
+    let scale: PanelScale
+
+    var body: some View {
+        Group {
+            if let startedAt = manager.startedAt {
+                TimelineView(.periodic(from: startedAt, by: 1)) { context in
+                    label(manager.elapsed(asOf: context.date))
+                }
+            } else {
+                label(manager.lastElapsed)
+            }
+        }
+        .accessibilityLabel("Recording time")
+        .accessibilityIdentifier("recordingTimer")
+    }
+
+    private func label(_ interval: TimeInterval) -> some View {
+        Text(RecordingManager.formatElapsed(interval))
+            .font(scale.controlFont)
+            // Without this the digits are proportionally spaced and the row
+            // twitches every second as the glyph widths change.
+            .monospacedDigit()
+            // Semantic styles, so both light and dark mode are handled: full
+            // strength while the number means "now", dimmed once it is history.
+            .foregroundStyle(manager.isRecording ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
     }
 }
 
