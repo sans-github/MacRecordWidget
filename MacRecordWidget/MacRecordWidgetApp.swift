@@ -37,6 +37,10 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel("Keep panel open")
                 .accessibilityIdentifier("pinToggle")
 
+                // The mic and its readout are one unit, so they sit closer to
+                // each other than to the rest of the row. Half the row spacing,
+                // which still clears the recording dot on the button's corner.
+                HStack(spacing: scale.rowSpacing / 2) {
                 // One control, not two: record and stop were always mutually
                 // exclusive with one of them disabled, so a single toggle
                 // carries the same state with half the controls.
@@ -81,6 +85,7 @@ struct MacRecordWidgetApp: App {
                 .accessibilityIdentifier("recordToggle")
 
                 RecordingTimer(manager: recordingManager, scale: scale)
+                }
 
                 Spacer(minLength: 12)
 
@@ -308,9 +313,24 @@ struct RecordingTimer: View {
             // Without this the digits are proportionally spaced and the row
             // twitches every second as the glyph widths change.
             .monospacedDigit()
+            // MM:SS is one word and must never wrap. At the small scale the row
+            // is tight enough that SwiftUI would otherwise break it across two
+            // lines mid-value, which is what "00:0 / 1" was.
+            .lineLimit(1)
+            .fixedSize()
             // Semantic styles, so both light and dark mode are handled: full
-            // strength while the number means "now", dimmed once it is history.
+            // strength while the number means "now", faded once it is history.
             .foregroundStyle(manager.isRecording ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+            .opacity(manager.isRecording ? 1 : 0.65)
+            .padding(.horizontal, scale.timerPaddingH)
+            .padding(.vertical, scale.timerPaddingV)
+            // Same 1pt separatorColor border as every control in the row, so
+            // the readout reads as part of the same family.
+            .overlay(
+                RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                    .allowsHitTesting(false)
+            )
     }
 }
 

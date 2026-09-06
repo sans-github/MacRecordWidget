@@ -285,6 +285,23 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Padding inside the timer's box, between the digits and its border.
+    var timerPaddingH: CGFloat {
+        switch self {
+        case .small: 5
+        case .medium: 6
+        case .large: 8
+        }
+    }
+
+    var timerPaddingV: CGFloat {
+        switch self {
+        case .small: 2
+        case .medium: 3
+        case .large: 4
+        }
+    }
+
     /// Diameter of the blinking recording dot on the audio button.
     var recordingDotSize: CGFloat {
         switch self {
