@@ -63,9 +63,14 @@ struct CameraPreviewPanel: View {
     @ViewBuilder
     private var messageView: some View {
         VStack(spacing: 6) {
-            Image(systemName: symbolName)
-                .font(.system(size: 22))
-                .foregroundStyle(.secondary)
+            if camera.state == .starting {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: symbolName)
+                    .font(.system(size: 22))
+                    .foregroundStyle(.secondary)
+            }
             Text(message)
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
@@ -92,6 +97,10 @@ struct CameraPreviewPanel: View {
     private var message: String {
         switch camera.state {
         case .idle, .running: ""
+        // Held until a real frame arrives, not until startRunning() is
+        // dispatched. Camera warm-up is a second or more of nothing, and a
+        // silent black rectangle for that long reads as broken.
+        case .starting: "Starting camera…"
         case .notDetermined: "Waiting for camera access…"
         case .denied: "Camera access is turned off for MacRecordWidget."
         case .restricted: "Camera access is restricted on this Mac and cannot be changed here."

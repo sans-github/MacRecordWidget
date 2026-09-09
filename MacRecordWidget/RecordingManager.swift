@@ -2,6 +2,14 @@ import AppKit
 import Foundation
 import Observation
 
+/// Which kind of recording is in progress. The two are mutually exclusive.
+enum RecordingMedium {
+    /// Voice Memos, driven by the "Start"/"Stop" Shortcuts.
+    case audio
+    /// An in-app `AVCaptureMovieFileOutput` writing into Photo Booth's library.
+    case video
+}
+
 enum RecordingError: Error, LocalizedError {
     case shortcutLaunchFailed(reason: String)
 
@@ -19,12 +27,31 @@ enum RecordingError: Error, LocalizedError {
 @MainActor
 @Observable
 final class RecordingManager {
+    /// True while *either* medium is capturing. `medium` says which.
     var isRecording = false
-    /// Controls the in-popover camera preview only. It does NOT affect what is
-    /// recorded: recording is audio, via the "Start" Shortcut into Voice Memos.
-    /// Photo Booth is no longer launched.
-    var videoEnabled = false
     var isInFlight = false
+
+    /// Which medium is arming or recording, and `nil` when idle.
+    ///
+    /// Audio and video are mutually exclusive, so this is the whole of the
+    /// mode state: one clock, one meaning, and each button disables the other
+    /// while it is set. Nothing here supports two simultaneous recordings and
+    /// that is deliberate -- a shared timer cannot honestly describe two
+    /// recordings that started at different moments.
+    private(set) var medium: RecordingMedium?
+
+    var isRecordingAudio: Bool { isRecording && medium == .audio }
+    var isRecordingVideo: Bool { isRecording && medium == .video }
+
+    /// True from the moment either button is pressed until its recording ends.
+    /// This, not `isRecording`, is what disables the other button: the arming
+    /// window is already committed to a medium.
+    var isBusy: Bool { medium != nil }
+
+    /// Called when a recording fails after the user has stopped looking at the
+    /// button, i.e. from inside the arming task, where there is no call stack
+    /// left to throw back into.
+    @ObservationIgnored var onError: ((Error) -> Void)?
 
     /// True between firing the Start shortcut and the point where Voice Memos
     /// is actually capturing. The UI shows a distinct "starting" state so the
@@ -75,9 +102,18 @@ final class RecordingManager {
     }
 
     func startRecording() async throws {
-        guard !isInFlight else { return }
+        guard !isInFlight, medium == nil else { return }
         isInFlight = true
-        defer { isInFlight = false }
+        medium = .audio
+        // Claim the medium up front so the video button is disabled for the
+        // whole attempt, including the ~1.5s Voice Memos quit below, but
+        // release it again on any failure path or the app is stuck in a mode
+        // that never started.
+        var committed = false
+        defer {
+            isInFlight = false
+            if !committed { medium = nil }
+        }
 
         // Voice Memos must not be running when Start fires, or macOS raises
         // VMAudioServiceErrorDomain error 5. See CLAUDE.md "Gotchas".
@@ -127,6 +163,7 @@ final class RecordingManager {
             self.startedAt = Date()
             self.isRecording = true
         }
+        committed = true
     }
 
     func stopRecording() async throws {
@@ -154,6 +191,7 @@ final class RecordingManager {
         }
         startedAt = nil
         isRecording = false
+        medium = nil
 
         // Quit Voice Memos here rather than before the next Start. The app has
         // to guarantee it is not running when Start fires, and paying that cost
@@ -163,6 +201,88 @@ final class RecordingManager {
             try? await Task.sleep(for: .seconds(2))
             Self.runningVoiceMemos()?.terminate()
         }
+    }
+
+    // MARK: - Video
+
+    /// Starts a video recording after the same arming delay the audio path
+    /// uses.
+    ///
+    /// The delay is a real wait, not a cosmetic one: capture begins *after* it,
+    /// so the saved `.mov` is exactly as long as the timer said. Showing an
+    /// arming state while the file was already growing would make every
+    /// recording ~3s longer than its own readout.
+    ///
+    /// Unlike audio, this has a genuine "capture has begun" signal from
+    /// AVFoundation. The delay is kept anyway so the two buttons feel the same;
+    /// see `armingDelay`.
+    func startVideoRecording(camera: CameraManager) async throws {
+        guard !isInFlight, medium == nil else { return }
+        isInFlight = true
+        medium = .video
+        var committed = false
+        defer {
+            isInFlight = false
+            if !committed { medium = nil }
+        }
+
+        guard camera.canRecordVideo else {
+            throw VideoRecordingError.cameraNotReady
+        }
+
+        isArming = true
+        armingTask?.cancel()
+        armingTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.armingDelay)
+            guard !Task.isCancelled, let self else { return }
+            do {
+                try await camera.startRecording()
+            } catch {
+                // Nothing is left to throw into: the caller returned three
+                // seconds ago. Reset and report through the app's alert path.
+                self.isArming = false
+                self.medium = nil
+                self.onError?(error)
+                return
+            }
+            // Stop may have landed while the mic was being attached above.
+            guard !Task.isCancelled else {
+                await camera.stopRecording()
+                self.isArming = false
+                self.medium = nil
+                return
+            }
+            self.isArming = false
+            // The clock resets here, not on stop, so the previous recording's
+            // duration stays readable until a new one actually begins.
+            self.lastElapsed = 0
+            self.startedAt = Date()
+            self.isRecording = true
+        }
+        committed = true
+    }
+
+    /// Stops the video recording and waits for the file to be closed and
+    /// indexed. Safe to call during the arming window.
+    func stopVideoRecording(camera: CameraManager) async {
+        guard !isInFlight else { return }
+        isInFlight = true
+        defer { isInFlight = false }
+
+        // Stopping during arming must not leave a pending task that starts a
+        // recording seconds after the user stopped.
+        armingTask?.cancel()
+        armingTask = nil
+        isArming = false
+
+        await camera.stopRecording()
+
+        if let startedAt {
+            lastElapsed = max(0, Date().timeIntervalSince(startedAt))
+        }
+        startedAt = nil
+        isRecording = false
+        medium = nil
     }
 
     private static func runningVoiceMemos() -> NSRunningApplication? {

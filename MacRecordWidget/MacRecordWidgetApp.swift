@@ -79,63 +79,99 @@ struct MacRecordWidgetApp: App {
                             )
                     }
                 }
-                .disabled(recordingManager.isInFlight || recordingManager.isArming)
+                // Also disabled while video holds the medium: the two are
+                // mutually exclusive, so one clock always has one meaning.
+                .disabled(
+                    recordingManager.isInFlight
+                    || recordingManager.isArming
+                    || recordingManager.medium == .video
+                )
                 .help(armingAwareHelp)
                 .accessibilityLabel(armingAwareHelp)
                 .accessibilityIdentifier("recordToggle")
 
                 RecordingTimer(manager: recordingManager, scale: scale)
+
+                // Video sits inside the mic+timer group, not out with the
+                // camera settings: it is a record button sharing that timer,
+                // and grouping it with the picker would file it as a preview
+                // control, which is what it used to be and no longer is.
+                //
+                // Same glyph in both states, same red fill, same corner dot as
+                // the mic. Only the medium differs.
+                Toggle(isOn: videoRecordingBinding) {
+                    Image(systemName: "video.fill")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
+                        .opacity(isArmingVideo ? 0.35 : 1)
+                }
+                .toggleStyle(.button)
+                .controlSize(scale.controlSize)
+                .tint(.red)
+                .overlay(controlOutline)
+                .overlay(alignment: .bottomTrailing) {
+                    if recordingManager.isRecordingVideo {
+                        RecordingDot(diameter: scale.recordingDotSize)
+                            .offset(
+                                x: scale.recordingDotSize * 0.45,
+                                y: scale.recordingDotSize * 0.45
+                            )
+                    }
+                }
+                .disabled(isVideoButtonDisabled)
+                .help(videoHelp)
+                .accessibilityLabel(videoHelp)
+                .accessibilityIdentifier("videoRecordToggle")
                 }
 
                 Spacer(minLength: 12)
 
-                // An icon toggle button rather than a switch: a switch is a wide
-                // capsule sitting next to round glyphs, so no amount of sizing
-                // makes it read as part of the same family.
-                Toggle(isOn: $recordingManager.videoEnabled) {
-                    Image(systemName: "video.fill")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                }
-                .toggleStyle(.button)
-                .controlSize(scale.controlSize)
-                .overlay(controlOutline)
-                .help(recordingManager.videoEnabled ? "Hide camera preview" : "Show camera preview")
-                .accessibilityLabel(recordingManager.videoEnabled ? "Hide camera preview" : "Show camera preview")
-                .accessibilityIdentifier("videoModeToggle")
+                // The preview is permanent now, so these are permanent too.
+                // They used to be mounted only with the preview, which stranded
+                // an oversized row whenever the camera was turned off at the
+                // large scale, with no visible control to shrink it.
+                CameraControls(camera: camera, scale: scale)
+                    // Switching camera reconfigures the session, which would
+                    // truncate a movie mid-write.
+                    .disabled(recordingManager.isRecordingVideo)
 
-                if recordingManager.videoEnabled {
-                    CameraControls(camera: camera, scale: scale)
-
-                    // Sits with the camera picker, and only while the preview is
-                    // open: the size it changes is mostly the size of the
-                    // preview, so it has nothing to act on otherwise.
-                    // Three toggle buttons rather than a segmented Picker.
-                    // `.pickerStyle(.segmented)` is an NSSegmentedControl,
-                    // which ignores SwiftUI's `.font()`, so its labels stayed
-                    //13pt while everything around them grew. These use the same
-                    // pattern as the rest of the row, so they scale with it.
-                    HStack(spacing: 2) {
-                        ForEach(PanelScale.allCases) { option in
-                            Toggle(isOn: scaleBinding(for: option)) {
-                                Text(option.label)
-                                    .font(scale.scaleLabelFont)
-                                    .frame(width: scale.glyphSize, height: scale.glyphSize)
-                            }
-                            .toggleStyle(.button)
-                            .controlSize(scale.controlSize)
-                            .overlay(controlOutline)
-                            .help("\(option.helpLabel) panel")
-                            .accessibilityLabel("\(option.helpLabel) panel size")
+                // Three toggle buttons rather than a segmented Picker.
+                // `.pickerStyle(.segmented)` is an NSSegmentedControl, which
+                // ignores SwiftUI's `.font()`, so its labels stayed 13pt while
+                // everything around them grew. These use the same pattern as
+                // the rest of the row, so they scale with it.
+                //
+                // This sizes the *preview* only. It has never had any bearing
+                // on the recorded video, which uses the camera's own format.
+                HStack(spacing: 2) {
+                    ForEach(PanelScale.allCases) { option in
+                        Toggle(isOn: scaleBinding(for: option)) {
+                            Text(option.label)
+                                .font(scale.scaleLabelFont)
+                                .frame(width: scale.glyphSize, height: scale.glyphSize)
                         }
+                        .toggleStyle(.button)
+                        .controlSize(scale.controlSize)
+                        .overlay(controlOutline)
+                        .help("\(option.helpLabel) preview")
+                        .accessibilityLabel("\(option.helpLabel) preview size")
                     }
-                    .accessibilityIdentifier("panelScalePicker")
                 }
+                .accessibilityIdentifier("panelScalePicker")
 
                 Button {
                     Task {
-                        if recordingManager.isRecording {
+                        // Await finalisation rather than terminating straight
+                        // away: AVCaptureMovieFileOutput closes its file
+                        // asynchronously, and a process that dies first leaves
+                        // an unplayable .mov behind.
+                        switch recordingManager.medium {
+                        case .video:
+                            await recordingManager.stopVideoRecording(camera: camera)
+                        case .audio:
                             try? await recordingManager.stopRecording()
+                        case nil:
+                            break
                         }
                         NSApplication.shared.terminate(nil)
                     }
@@ -161,10 +197,9 @@ struct MacRecordWidgetApp: App {
             .padding(.horizontal, scale.horizontalPadding)
             .padding(.vertical, scale.verticalPadding)
 
-            if recordingManager.videoEnabled {
-                CameraPreviewPanel(camera: camera, scale: scale)
-                    .transition(.opacity)
-            }
+            // Always mounted. The preview is the app's resting state now:
+            // there is no toggle, and nothing to collapse.
+            CameraPreviewPanel(camera: camera, scale: scale)
             }
             .frame(width: contentWidth)
             .fixedSize()
@@ -175,14 +210,15 @@ struct MacRecordWidgetApp: App {
             )
             .background(PanelSizer(size: measuredSize, isPinned: isPinned))
             .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
-            .task(id: recordingManager.videoEnabled) {
-                if recordingManager.videoEnabled {
-                    await camera.start()
-                } else {
-                    camera.stop()
-                }
+            .task {
+                recordingManager.onError = { error in presentAlert(for: error) }
+                await camera.start()
             }
-            .onDisappear { camera.stop() }
+            // `pause()`, not a teardown: the session stays configured so the
+            // next open skips device discovery and format negotiation. It also
+            // refuses to stop while a movie is being written, which is what
+            // lets a video recording survive the panel closing.
+            .onDisappear { camera.pause() }
         } label: {
             MenuBarIcon(isRecording: recordingManager.isRecording)
         }
@@ -244,6 +280,61 @@ struct MacRecordWidgetApp: App {
         )
     }
 
+    /// True only while the *video* button is arming, so the mic button does
+    /// not dim in sympathy during a video start.
+    private var isArmingVideo: Bool {
+        recordingManager.isArming && recordingManager.medium == .video
+    }
+
+    private var isVideoButtonDisabled: Bool {
+        if recordingManager.medium == .video {
+            // Already ours: only the arming window and an in-flight call block
+            // the press, exactly as on the mic side.
+            return recordingManager.isInFlight || recordingManager.isArming
+        }
+        // Otherwise it needs a free medium and a camera that is genuinely
+        // delivering frames. Pressing during warm-up would start a recording
+        // whose first moments are dead.
+        return recordingManager.isInFlight
+            || recordingManager.medium != nil
+            || !camera.canRecordVideo
+    }
+
+    /// Says what the button will do, or why it cannot. The unavailable reasons
+    /// come from `CameraManager`, so the tooltip and the message in the preview
+    /// area cannot disagree about what is wrong.
+    private var videoHelp: String {
+        if isArmingVideo { return "Starting… wait to perform" }
+        if recordingManager.isRecordingVideo { return "Stop and save to Photo Booth" }
+        if recordingManager.medium == .audio { return "Stop the audio recording first" }
+        if let reason = camera.videoUnavailableReason { return reason }
+        return "Record video to Photo Booth"
+    }
+
+    /// Drives the video control: on starts, off stops.
+    ///
+    /// Reads `isRecordingVideo` rather than "recording or arming", for the same
+    /// reason the mic binding does: the red fill means "you are being
+    /// captured", and during arming that is not yet true.
+    private var videoRecordingBinding: Binding<Bool> {
+        Binding(
+            get: { recordingManager.isRecordingVideo },
+            set: { shouldRecord in
+                Task {
+                    if shouldRecord {
+                        do {
+                            try await recordingManager.startVideoRecording(camera: camera)
+                        } catch {
+                            presentAlert(for: error)
+                        }
+                    } else {
+                        await recordingManager.stopVideoRecording(camera: camera)
+                    }
+                }
+            }
+        )
+    }
+
     @MainActor
     private func startOnly() async {
         do {
@@ -266,11 +357,17 @@ struct MacRecordWidgetApp: App {
     private func presentAlert(for error: Error) {
         let alert = NSAlert()
         alert.alertStyle = .critical
-        switch error as? RecordingError {
-        case .shortcutLaunchFailed(let reason):
+        switch error {
+        case RecordingError.shortcutLaunchFailed(let reason):
             alert.messageText = "Could Not Start Recording"
             alert.informativeText = "The recording shortcut could not be launched. Make sure a Shortcut named \"Start\" (or \"Stop\") exists in the Shortcuts app. Detail: \(reason)"
-        case nil:
+        case VideoRecordingError.microphoneDenied:
+            alert.messageText = "Microphone Access Needed"
+            alert.informativeText = "Video recordings include sound, so MacRecordWidget needs microphone access. Turn it on in System Settings › Privacy & Security › Microphone."
+        case let videoError as VideoRecordingError:
+            alert.messageText = "Could Not Record Video"
+            alert.informativeText = videoError.localizedDescription
+        default:
             alert.messageText = "Recording Error"
             alert.informativeText = error.localizedDescription
         }
