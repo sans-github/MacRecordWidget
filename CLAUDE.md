@@ -58,12 +58,20 @@ Three files implement it:
   video recording, and `select()` refuses anyway, because reconfiguring the
   session mid-write truncates the movie. A disconnect falls back to another
   camera *without* clearing the stored preference, so reconnecting the preferred
-  device restores it. Mirroring is hardcoded on: the user-facing toggle was
-  removed, and the stored preference is deliberately not read, because a
-  previously saved `false` would otherwise strand the preview unmirrored with no
-  way to change it back.
+  device restores it. Mirroring is hardcoded **off** (changed 2026-09-10):
+  the preview and the saved movie show the scene the way everyone else sees it,
+  so text held up to the camera reads correctly. There is no user-facing toggle
+  and the stored preference is deliberately not read. `applyMirroring` is
+  `nonisolated static` and runs on `sessionQueue`, never on the main actor --
+  connection properties take the session lock. It also owns `previewLayer`, a
+  single `AVCaptureVideoPreviewLayer` created at init and never released, and a
+  watchdog that fails the start after 10s instead of spinning forever. See the
+  deadlock note below.
 - `CameraPreviewView.swift` - `AVCaptureVideoPreviewLayer` inside an
   `NSViewRepresentable`, because macOS 14 has no SwiftUI-native camera preview.
+  The layer is **passed in, not created here**, and the view stays mounted in
+  every state (message states draw over it while it sits at `opacity(0)`), for
+  the deadlock reason below.
   `CameraControls` holds the picker, which lives in the button row rather than
   under the preview; its selected value doubles as the camera-name indicator,
   naming the device actually feeding the layer rather than the stored preference.
@@ -81,6 +89,49 @@ behaviour that matters, but reopening no longer pays for device discovery,
 lets a video recording survive the panel closing: unlike audio, which lives in
 another process, the movie file lives inside this session, so stopping it
 mid-write truncates the recording.
+
+### The "Starting camera…" hang was a deadlock, not slowness
+
+Fixed 2026-09-10. Diagnosed from a `sample` of a hung build, not inferred:
+
+- **Main thread:** CoreAnimation transaction commit ->
+  `AVCaptureVideoPreviewLayer dealloc` -> `setSession:` ->
+  `AVCaptureSession commitConfiguration` -> blocked on the session's `objc_sync`
+  lock.
+- **Session queue:** `CameraManager.configure(for:)` -> `commitConfiguration`
+  -> `_stopAndTearDownGraph` -> `AVCaptureMovieFileOutput
+  graphWillStopForSession:` -> `performSelector:onThread:waitUntilDone:YES`
+  **waiting on the main thread**.
+
+An ABBA deadlock between the session lock and the main thread. It fires when the
+preview layer is deallocated (the panel closing, or the state leaving `.running`
+unmounting the view) while the session queue is reconfiguring. Neither side can
+proceed and the app has to be killed.
+
+Three rules follow, and breaking any one of them brings the hang back:
+
+- **The preview layer is created once, owned by `CameraManager`, and never
+  deallocated.** A layer that cannot dealloc cannot take the session lock on the
+  main thread. This is why `CameraPreviewLayerView` takes a layer instead of a
+  session, and why the preview view is mounted in every state.
+- **Nothing on the main actor touches `session`, `movieOutput` or their
+  connections.** Not `session.isRunning` (mirrored in `isSessionRunning`), not
+  `startRecording`/`stopRecording` on the movie output, not `beginConfiguration`
+  for the mic input, not mirroring. Every one of those takes the session lock,
+  which `startRunning()` can hold for an unbounded time on a contended external
+  camera.
+- **The start is bounded by a watchdog.** `AVCaptureSession` has no timeout
+  anywhere: if a device never yields a frame, `.starting` lasts forever. After
+  10s the state becomes `.failed` with a "Try Again" button wired to
+  `CameraManager.retry()`.
+
+Diagnostics go to `os.Logger(subsystem: "com.macrecordwidget", category: "camera")`:
+device count, chosen device, `startRunning()` duration, first-frame latency,
+watchdog trips, recording start and stop. Watch them with:
+
+```
+log stream --predicate 'subsystem == "com.macrecordwidget"' --info --debug
+```
 
 ### Why the preview used to take 2-3 seconds
 

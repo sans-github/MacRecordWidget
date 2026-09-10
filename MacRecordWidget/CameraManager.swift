@@ -1,6 +1,15 @@
 import AVFoundation
 import CoreGraphics
 import Observation
+import os
+
+/// Camera diagnostics. Kept at file scope, not on the class, because the
+/// session queue writes to it and a `static let` inside a `@MainActor` type is
+/// main-actor isolated under Swift 5.9.
+///
+/// Watch it live with:
+///   log stream --predicate 'subsystem == "com.macrecordwidget"' --info --debug
+let cameraLog = Logger(subsystem: "com.macrecordwidget", category: "camera")
 
 enum VideoRecordingError: Error, LocalizedError {
     case cameraNotReady
@@ -61,12 +70,30 @@ final class CameraManager {
     /// True between `startRecording()` succeeding and the file being closed.
     private(set) var isRecordingVideo = false
 
-    /// Mirroring is always on, selfie-style, for the preview *and* the saved
-    /// movie: what you performed to is what lands in the file. The user-facing
-    /// toggle was removed, so the stored preference is deliberately not read.
-    let isMirrored = true
+    /// Mirroring is off: the preview and the saved movie show the scene the way
+    /// everyone else sees it, not the selfie flip. Text held up to the camera
+    /// reads correctly. There is no user-facing toggle, so the stored
+    /// preference is deliberately not read.
+    let isMirrored = false
 
     let session = AVCaptureSession()
+
+    /// The one and only preview layer, owned here and never deallocated.
+    ///
+    /// This is a deadlock fix, not a tidiness choice. `AVCaptureVideoPreviewLayer`
+    /// calls `setSession:nil` from its own `dealloc`, which runs inside a
+    /// CoreAnimation transaction on the **main thread** and takes the session
+    /// lock. If the session queue is inside `commitConfiguration()` at that
+    /// moment, it is in turn waiting on the main thread (via
+    /// `AVCaptureMovieFileOutput`'s `performSelector:onThread:waitUntilDone:`)
+    /// and the app hangs with no way out but being killed. Measured from a
+    /// `sample` of a hung build on 2026-09-10.
+    ///
+    /// A layer that is created once and outlives the app cannot dealloc, so
+    /// that side of the deadlock cannot happen. The view therefore stays
+    /// mounted at all times and message states are drawn *over* it, rather than
+    /// swapped in for it.
+    let previewLayer = AVCaptureVideoPreviewLayer()
 
     private let defaults: UserDefaults
     private let sessionQueue = DispatchQueue(label: "com.macrecordwidget.camera-session")
@@ -74,6 +101,26 @@ final class CameraManager {
     private let frameOutput = AVCaptureVideoDataOutput()
     private let frameWatcher = FirstFrameWatcher()
     private let recordingDelegate = MovieRecordingDelegate()
+
+    /// Mirror of `session.isRunning`, maintained here so the main thread never
+    /// has to ask the session anything.
+    ///
+    /// Every `AVCaptureSession` property access takes the session's internal
+    /// lock, and `startRunning()` holds that lock for as long as the device
+    /// takes to come up. On a contended external camera that is unbounded, so
+    /// reading `session.isRunning` from the main thread could freeze the entire
+    /// app with no way out but killing it. Nothing on the main actor may touch
+    /// `session` or `movieOutput` directly.
+    private var isSessionRunning = false
+
+    /// Fails the start instead of spinning forever. See `startWatchdog`.
+    private var watchdog: Task<Void, Never>?
+    private var startedStartingAt: Date?
+
+    /// How long the camera gets to produce its first frame before the preview
+    /// gives up and offers a retry. Warm starts are well under a second; a cold
+    /// external USB camera has been seen to take several.
+    private static let startTimeoutSeconds: UInt64 = 10
 
     private var currentInput: AVCaptureDeviceInput?
     private var audioInput: AVCaptureDeviceInput?
@@ -87,10 +134,18 @@ final class CameraManager {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         frameOutput.alwaysDiscardsLateVideoFrames = true
+        // Safe here and only here: the session has no clients yet, so nothing
+        // can be holding its lock.
+        previewLayer.session = session
+        previewLayer.videoGravity = .resizeAspectFill
         registerDeviceObservers()
         frameWatcher.onFirstFrame = { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, self.state == .starting else { return }
+                let waited = self.startedStartingAt.map { Date().timeIntervalSince($0) } ?? -1
+                cameraLog.notice("first frame after \(waited, format: .fixed(precision: 2))s")
+                self.watchdog?.cancel()
+                self.watchdog = nil
                 self.state = .running
             }
         }
@@ -152,13 +207,16 @@ final class CameraManager {
         }
 
         if isConfigured {
+            cameraLog.debug("start: session already configured, resuming")
             resumeRunning()
             return
         }
 
-        state = .starting
+        beginStarting("first configure")
         refreshAvailableCameras()
+        cameraLog.notice("discovered \(self.availableCameras.count) camera(s)")
         guard let device = resolveDevice() else {
+            cameraLog.error("start: no camera resolved")
             state = .noCamera
             return
         }
@@ -173,8 +231,17 @@ final class CameraManager {
     /// session and stopping it mid-write truncates the recording.
     func pause() {
         guard !isRecordingVideo else { return }
+        cameraLog.debug("pause")
+        watchdog?.cancel()
+        watchdog = nil
+        isSessionRunning = false
         let session = self.session
-        sessionQueue.async { if session.isRunning { session.stopRunning() } }
+        sessionQueue.async {
+            if session.isRunning {
+                session.stopRunning()
+                cameraLog.debug("pause: stopped")
+            }
+        }
         state = isConfigured ? .starting : .idle
         frameWatcher.rearm()
     }
@@ -184,14 +251,68 @@ final class CameraManager {
         // that never stopped, which is what happens while a video recording is
         // in progress. Going through `.starting` would flash a spinner over a
         // live recording.
-        guard !session.isRunning else {
+        //
+        // This asks the cached flag, never the session: see `isSessionRunning`.
+        guard !isSessionRunning else {
             state = .running
             return
         }
-        state = .starting
+        beginStarting("resume")
         frameWatcher.rearm()
         let session = self.session
-        sessionQueue.async { if !session.isRunning { session.startRunning() } }
+        sessionQueue.async { [weak self] in
+            let began = Date()
+            if !session.isRunning { session.startRunning() }
+            let elapsed = Date().timeIntervalSince(began)
+            cameraLog.notice("startRunning returned after \(elapsed, format: .fixed(precision: 2))s")
+            Task { @MainActor [weak self] in self?.isSessionRunning = true }
+        }
+    }
+
+    /// Enters `.starting` and arms the watchdog.
+    private func beginStarting(_ reason: String) {
+        cameraLog.notice("starting camera (\(reason, privacy: .public))")
+        state = .starting
+        startedStartingAt = Date()
+        startWatchdog()
+    }
+
+    /// Turns "spinner forever" into a failure the user can act on.
+    ///
+    /// There is no timeout anywhere in `AVCaptureSession`: if the device never
+    /// produces a frame, `startRunning()` simply never leads anywhere and the
+    /// preview sits on "Starting camera…" until the app is killed. This bounds
+    /// that wait.
+    private func startWatchdog() {
+        watchdog?.cancel()
+        watchdog = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.startTimeoutSeconds * 1_000_000_000)
+            guard !Task.isCancelled, let self, self.state == .starting else { return }
+            let name = self.activeCamera?.localizedName ?? "unknown"
+            cameraLog.error("no frame within \(Self.startTimeoutSeconds)s from \(name, privacy: .public)")
+            self.state = .failed(
+                "The camera did not start. It may be in use by another app, or need unplugging and plugging back in."
+            )
+        }
+    }
+
+    /// Tears the session's inputs back down and rebuilds them from scratch.
+    /// Reachable from the failure state's Retry button.
+    func retry() {
+        guard !isRecordingVideo else { return }
+        cameraLog.notice("retry requested")
+        watchdog?.cancel()
+        watchdog = nil
+        let session = self.session
+        sessionQueue.async { if session.isRunning { session.stopRunning() } }
+        isSessionRunning = false
+        frameWatcher.rearm()
+        refreshAvailableCameras()
+        guard let device = resolveDevice() else {
+            state = .noCamera
+            return
+        }
+        configure(for: device)
     }
 
     /// Explicit user pick from the camera menu. This one DOES persist.
@@ -227,10 +348,19 @@ final class CameraManager {
             )
         }
 
-        applyMirroring()
-
         let url = PhotoBoothLibrary.availableMovieURL()
-        movieOutput.startRecording(to: url, recordingDelegate: recordingDelegate)
+        let session = self.session
+        let movieOutput = self.movieOutput
+        let delegate = self.recordingDelegate
+        let mirrored = isMirrored
+        await withCheckedContinuation { continuation in
+            sessionQueue.async {
+                Self.applyMirroring(session: session, movieOutput: movieOutput, mirrored: mirrored)
+                movieOutput.startRecording(to: url, recordingDelegate: delegate)
+                continuation.resume()
+            }
+        }
+        cameraLog.notice("video recording started")
         isRecordingVideo = true
     }
 
@@ -242,8 +372,9 @@ final class CameraManager {
     @discardableResult
     func stopRecording() async -> URL? {
         guard isRecordingVideo else { return nil }
-        let result = await recordingDelegate.finish(movieOutput)
+        let result = await recordingDelegate.finish(movieOutput, on: sessionQueue)
         isRecordingVideo = false
+        cameraLog.notice("video recording stopped, file \(result == nil ? "missing" : "written", privacy: .public)")
 
         guard let url = result else { return nil }
         // Only now does the movie join Photo Booth's filmstrip; indexing a file
@@ -273,12 +404,16 @@ final class CameraManager {
         else { return }
 
         let session = self.session
-        session.beginConfiguration()
-        if session.canAddInput(input) {
-            session.addInput(input)
-            audioInput = input
+        let added: Bool = await withCheckedContinuation { continuation in
+            sessionQueue.async {
+                session.beginConfiguration()
+                let ok = session.canAddInput(input)
+                if ok { session.addInput(input) }
+                session.commitConfiguration()
+                continuation.resume(returning: ok)
+            }
         }
-        session.commitConfiguration()
+        if added { audioInput = input }
     }
 
     // MARK: - Session
@@ -309,9 +444,10 @@ final class CameraManager {
     /// panel's first paint. Only the resulting state lands back on the main
     /// actor.
     private func configure(for device: AVCaptureDevice) {
-        state = .starting
+        beginStarting("configure \(device.localizedName)")
         frameWatcher.rearm()
 
+        let mirrored = isMirrored
         let session = self.session
         let movieOutput = self.movieOutput
         let frameOutput = self.frameOutput
@@ -324,6 +460,7 @@ final class CameraManager {
                 input = try AVCaptureDeviceInput(device: device)
             } catch {
                 let message = error.localizedDescription
+                cameraLog.error("could not open input: \(message, privacy: .public)")
                 Task { @MainActor [weak self] in self?.state = .failed(message) }
                 return
             }
@@ -332,6 +469,7 @@ final class CameraManager {
             if let previousInput { session.removeInput(previousInput) }
             guard session.canAddInput(input) else {
                 session.commitConfiguration()
+                cameraLog.error("session refused the input")
                 Task { @MainActor [weak self] in
                     self?.state = .failed("This camera could not be opened.")
                 }
@@ -347,30 +485,44 @@ final class CameraManager {
                 if session.canAddOutput(frameOutput) { session.addOutput(frameOutput) }
             }
             session.commitConfiguration()
+            // Mirroring is set here, on the session queue, for the same reason
+            // nothing else touches the session from the main actor.
+            Self.applyMirroring(session: session, movieOutput: movieOutput, mirrored: mirrored)
 
+            let began = Date()
             if !session.isRunning { session.startRunning() }
+            let elapsed = Date().timeIntervalSince(began)
+            cameraLog.notice("startRunning returned after \(elapsed, format: .fixed(precision: 2))s")
 
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.currentInput = input
                 self.activeCamera = device
                 self.isConfigured = true
-                self.applyMirroring()
+                self.isSessionRunning = true
             }
         }
     }
 
-    /// Mirrors both the preview and the movie output, so the saved file matches
-    /// what the user was performing to.
-    private func applyMirroring() {
+    /// Applies the mirroring setting to the preview and to the movie output, so
+    /// the saved file matches what the preview showed.
+    ///
+    /// `nonisolated static` on purpose: every call site is the session queue.
+    /// Connection properties take the session lock, and taking that lock on the
+    /// main thread is what could freeze the app.
+    nonisolated private static func applyMirroring(
+        session: AVCaptureSession,
+        movieOutput: AVCaptureMovieFileOutput,
+        mirrored: Bool
+    ) {
         for connection in session.connections where connection.isVideoMirroringSupported {
             connection.automaticallyAdjustsVideoMirroring = false
-            connection.isVideoMirrored = isMirrored
+            connection.isVideoMirrored = mirrored
         }
         if let movieConnection = movieOutput.connection(with: .video),
            movieConnection.isVideoMirroringSupported {
             movieConnection.automaticallyAdjustsVideoMirroring = false
-            movieConnection.isVideoMirrored = isMirrored
+            movieConnection.isVideoMirrored = mirrored
         }
     }
 
@@ -451,13 +603,20 @@ private final class MovieRecordingDelegate: NSObject, AVCaptureFileOutputRecordi
 
     /// Stops `output` and returns once the file is finalised, or immediately if
     /// it was not recording.
-    func finish(_ output: AVCaptureMovieFileOutput) async -> URL? {
-        guard output.isRecording else { return nil }
+    /// `queue` is the session queue: `isRecording` and `stopRecording()` both
+    /// take the session lock, which must never be taken on the main thread.
+    func finish(_ output: AVCaptureMovieFileOutput, on queue: DispatchQueue) async -> URL? {
         return await withCheckedContinuation { continuation in
-            lock.lock()
-            self.continuation = continuation
-            lock.unlock()
-            output.stopRecording()
+            queue.async {
+                guard output.isRecording else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                self.lock.lock()
+                self.continuation = continuation
+                self.lock.unlock()
+                output.stopRecording()
+            }
         }
     }
 

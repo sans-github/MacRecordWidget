@@ -3,24 +3,25 @@ import SwiftUI
 
 /// macOS 14 has no SwiftUI-native camera preview, so the live image has to come
 /// from an `AVCaptureVideoPreviewLayer` hosted in AppKit.
+///
+/// The layer is **not** created here. It is owned by `CameraManager` for the
+/// app's lifetime, because a preview layer that deallocates takes the session
+/// lock on the main thread and can deadlock against the session queue. See the
+/// comment on `CameraManager.previewLayer`.
 @MainActor
 struct CameraPreviewLayerView: NSViewRepresentable {
-    let session: AVCaptureSession
+    let previewLayer: AVCaptureVideoPreviewLayer
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
-        let preview = AVCaptureVideoPreviewLayer(session: session)
-        preview.videoGravity = .resizeAspectFill
-        preview.frame = view.bounds
-        preview.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        view.layer = preview
+        previewLayer.frame = view.bounds
+        previewLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        view.layer = previewLayer
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        (nsView.layer as? AVCaptureVideoPreviewLayer)?.session = session
-    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 /// The preview block below the button row: either the live image or a message
@@ -39,11 +40,19 @@ struct CameraPreviewPanel: View {
         ZStack {
             Rectangle()
                 .fill(Color(nsColor: .underPageBackgroundColor))
-            if camera.state == .running {
-                CameraPreviewLayerView(session: camera.session)
-            } else {
-                messageView
-                    .padding(.horizontal, 16)
+            // Mounted unconditionally: unmounting it would deallocate the
+            // shared preview layer, which is one half of a main-thread deadlock
+            // against the session queue. Message states are drawn over it on an
+            // opaque background instead.
+            CameraPreviewLayerView(previewLayer: camera.previewLayer)
+                .opacity(camera.state == .running ? 1 : 0)
+            if camera.state != .running {
+                ZStack {
+                    Rectangle()
+                        .fill(Color(nsColor: .underPageBackgroundColor))
+                    messageView
+                        .padding(.horizontal, 16)
+                }
             }
         }
         .frame(width: scale.previewWidth, height: scale.previewHeight)
@@ -81,6 +90,14 @@ struct CameraPreviewPanel: View {
                 Button("Open Settings") { openCameraSettings() }
                     .font(.system(size: 12))
                     .accessibilityIdentifier("openCameraSettingsButton")
+            }
+            // The failure state is reachable from the start watchdog, so it has
+            // to offer a way back: a spinner that never resolves and no button
+            // is the state this bug used to leave the panel in.
+            if case .failed = camera.state {
+                Button("Try Again") { camera.retry() }
+                    .font(.system(size: 12))
+                    .accessibilityIdentifier("retryCameraButton")
             }
         }
     }
