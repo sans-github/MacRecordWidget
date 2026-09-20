@@ -59,7 +59,7 @@ Three files implement it:
   session mid-write truncates the movie. A disconnect falls back to another
   camera *without* clearing the stored preference, so reconnecting the preferred
   device restores it. **Mirroring is a preview-only toggle** (changed 2026-09-20): the
-  preview follows `isMirrored`, defaults to on, and persists under
+  preview follows `isMirrored`, defaults to **off**, and persists under
   `preview.mirrored`; the movie output is **pinned unmirrored forever** by
   `pinMovieOutputUnmirrored`, called both at configure time and again before
   each recording starts, because a reconfiguration can hand back a connection
