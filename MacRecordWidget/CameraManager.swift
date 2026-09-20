@@ -78,10 +78,10 @@ final class CameraManager {
     /// mirroring off in the first place fixed. So the toggle moves the preview
     /// and the movie output stays pinned unmirrored forever.
     ///
-    /// Defaults to **off** for a fresh install, and persists across launches:
-    /// the panel opens showing the scene the way everyone else sees it, which
-    /// matches what the recording will contain. The mirror is the deliberate
-    /// choice, not the resting state.
+    /// Defaults to **on** for a fresh install, and persists across launches:
+    /// the panel opens as a mirror, which is what you want while framing
+    /// yourself. Seeing the scene the way everyone else does is the deliberate
+    /// choice, and it is what the recording contains either way.
     /// Set through `setMirrored(_:)`, never directly: the connection property
     /// behind it has to be written on the session queue.
     private(set) var isMirrored: Bool
@@ -144,7 +144,9 @@ final class CameraManager {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.isMirrored = defaults.bool(forKey: Keys.mirrored)
+        // `object(forKey:)` rather than `bool(forKey:)`: the latter cannot
+        // tell "never set" from "set to false", and the default here is true.
+        self.isMirrored = defaults.object(forKey: Keys.mirrored) as? Bool ?? true
         frameOutput.alwaysDiscardsLateVideoFrames = true
         // Safe here and only here: the session has no clients yet, so nothing
         // can be holding its lock.
