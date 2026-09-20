@@ -135,8 +135,8 @@ struct CameraPreviewPanel: View {
 
 
 /// The camera picker, mounted in the button row next to the camera toggle so
-/// the two camera controls sit together. The mirror checkbox was removed;
-/// mirroring is now always on.
+/// the two camera controls sit together. Mirroring is not here: it lives in
+/// the button row beside the video record button, as a toggle.
 @MainActor
 struct CameraControls: View {
     @Bindable var camera: CameraManager

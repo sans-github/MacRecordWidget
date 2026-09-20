@@ -70,11 +70,18 @@ final class CameraManager {
     /// True between `startRecording()` succeeding and the file being closed.
     private(set) var isRecordingVideo = false
 
-    /// Mirroring is off: the preview and the saved movie show the scene the way
-    /// everyone else sees it, not the selfie flip. Text held up to the camera
-    /// reads correctly. There is no user-facing toggle, so the stored
-    /// preference is deliberately not read.
-    let isMirrored = false
+    /// Whether the *preview* is mirrored. The saved movie never is.
+    ///
+    /// The split is deliberate. A mirror is what you want while framing
+    /// yourself, which is why FaceTime and Zoom show one; but a mirrored file
+    /// has every piece of text in it backwards, which is the bug turning
+    /// mirroring off in the first place fixed. So the toggle moves the preview
+    /// and the movie output stays pinned unmirrored forever.
+    ///
+    /// Defaults to on for a fresh install, and persists across launches.
+    /// Set through `setMirrored(_:)`, never directly: the connection property
+    /// behind it has to be written on the session queue.
+    private(set) var isMirrored: Bool
 
     let session = AVCaptureSession()
 
@@ -129,10 +136,14 @@ final class CameraManager {
 
     private enum Keys {
         static let deviceID = "preview.cameraDeviceID"
+        static let mirrored = "preview.mirrored"
     }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        // `object(forKey:)` rather than `bool(forKey:)`: the latter cannot tell
+        // "never set" from "set to false", and the default here is true.
+        self.isMirrored = defaults.object(forKey: Keys.mirrored) as? Bool ?? true
         frameOutput.alwaysDiscardsLateVideoFrames = true
         // Safe here and only here: the session has no clients yet, so nothing
         // can be holding its lock.
@@ -349,13 +360,11 @@ final class CameraManager {
         }
 
         let url = PhotoBoothLibrary.availableMovieURL()
-        let session = self.session
         let movieOutput = self.movieOutput
         let delegate = self.recordingDelegate
-        let mirrored = isMirrored
         await withCheckedContinuation { continuation in
             sessionQueue.async {
-                Self.applyMirroring(session: session, movieOutput: movieOutput, mirrored: mirrored)
+                Self.pinMovieOutputUnmirrored(movieOutput: movieOutput)
                 movieOutput.startRecording(to: url, recordingDelegate: delegate)
                 continuation.resume()
             }
@@ -449,6 +458,7 @@ final class CameraManager {
 
         let mirrored = isMirrored
         let session = self.session
+        let previewLayer = self.previewLayer
         let movieOutput = self.movieOutput
         let frameOutput = self.frameOutput
         let previousInput = currentInput
@@ -487,7 +497,13 @@ final class CameraManager {
             session.commitConfiguration()
             // Mirroring is set here, on the session queue, for the same reason
             // nothing else touches the session from the main actor.
-            Self.applyMirroring(session: session, movieOutput: movieOutput, mirrored: mirrored)
+            Self.applyMirroring(
+                session: session,
+                previewLayer: previewLayer,
+                movieOutput: movieOutput,
+                mirrored: mirrored
+            )
+            Self.pinMovieOutputUnmirrored(movieOutput: movieOutput)
 
             let began = Date()
             if !session.isRunning { session.startRunning() }
@@ -504,25 +520,70 @@ final class CameraManager {
         }
     }
 
-    /// Applies the mirroring setting to the preview and to the movie output, so
-    /// the saved file matches what the preview showed.
+    /// Applies the mirroring setting to the preview connections only.
     ///
     /// `nonisolated static` on purpose: every call site is the session queue.
     /// Connection properties take the session lock, and taking that lock on the
     /// main thread is what could freeze the app.
+    ///
+    /// The movie output is skipped here and pinned separately, so a mid-session
+    /// flip cannot touch a connection that is actively writing a file.
     nonisolated private static func applyMirroring(
         session: AVCaptureSession,
+        previewLayer: AVCaptureVideoPreviewLayer,
         movieOutput: AVCaptureMovieFileOutput,
         mirrored: Bool
     ) {
         for connection in session.connections where connection.isVideoMirroringSupported {
+            if connection.output === movieOutput { continue }
             connection.automaticallyAdjustsVideoMirroring = false
             connection.isVideoMirrored = mirrored
         }
-        if let movieConnection = movieOutput.connection(with: .video),
-           movieConnection.isVideoMirroringSupported {
-            movieConnection.automaticallyAdjustsVideoMirroring = false
-            movieConnection.isVideoMirrored = mirrored
+        // Set explicitly as well as through the loop above. The preview layer's
+        // connection is created implicitly by `previewLayer.session = session`,
+        // and relying on it turning up in `session.connections` would make the
+        // whole toggle silently do nothing if it ever did not.
+        if let previewConnection = previewLayer.connection,
+           previewConnection.isVideoMirroringSupported {
+            previewConnection.automaticallyAdjustsVideoMirroring = false
+            previewConnection.isVideoMirrored = mirrored
+        }
+    }
+
+    /// Pins the movie output unmirrored, whatever the preview is doing.
+    ///
+    /// Called at configure time and again just before each recording starts,
+    /// because a session reconfiguration can hand back a fresh connection with
+    /// `automaticallyAdjustsVideoMirroring` switched back on.
+    nonisolated private static func pinMovieOutputUnmirrored(
+        movieOutput: AVCaptureMovieFileOutput
+    ) {
+        guard let movieConnection = movieOutput.connection(with: .video),
+              movieConnection.isVideoMirroringSupported else { return }
+        movieConnection.automaticallyAdjustsVideoMirroring = false
+        movieConnection.isVideoMirrored = false
+    }
+
+    /// Flips the preview, persists the choice, and writes the connection
+    /// property on the session queue.
+    ///
+    /// Safe to call as often as the user likes, recording or not: it never
+    /// touches the movie output's connection, so there is nothing here that
+    /// could disturb a file being written.
+    func setMirrored(_ mirrored: Bool) {
+        guard mirrored != isMirrored else { return }
+        isMirrored = mirrored
+        defaults.set(mirrored, forKey: Keys.mirrored)
+        let session = self.session
+        let previewLayer = self.previewLayer
+        let movieOutput = self.movieOutput
+        sessionQueue.async {
+            Self.applyMirroring(
+                session: session,
+                previewLayer: previewLayer,
+                movieOutput: movieOutput,
+                mirrored: mirrored
+            )
         }
     }
 

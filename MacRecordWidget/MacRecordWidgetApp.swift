@@ -124,6 +124,32 @@ struct MacRecordWidgetApp: App {
                 .accessibilityIdentifier("videoRecordToggle")
                 }
 
+                // Sits immediately right of the video button, but outside the
+                // record group, at full row spacing rather than the group's
+                // half spacing. It acts on the preview, not on a recording, so
+                // filing it inside the mic+timer+video unit would say it shares
+                // that timer, which it does not.
+                //
+                // Preview only: `CameraManager` pins the movie output
+                // unmirrored, so this can never change what lands on disk. That
+                // is why it has no disabled state -- it is free to flip as often
+                // as the user likes, mid-recording included.
+                Toggle(isOn: mirrorBinding) {
+                    // Apple's own Flip Horizontal glyph, the one Preview and
+                    // Photos use for this exact operation. Checked at 11pt: the
+                    // two triangles and the arrow above them stay distinct at
+                    // the small scale.
+                    Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
+                }
+                .toggleStyle(.button)
+                .controlSize(scale.controlSize)
+                .overlay(controlOutline)
+                .help(mirrorHelp)
+                .accessibilityLabel(mirrorHelp)
+                .accessibilityIdentifier("mirrorToggle")
+
                 Spacer(minLength: 12)
 
                 // The preview is permanent now, so these are permanent too.
@@ -309,6 +335,23 @@ struct MacRecordWidgetApp: App {
         if recordingManager.medium == .audio { return "Stop the audio recording first" }
         if let reason = camera.videoUnavailableReason { return reason }
         return "Record video to Photo Booth"
+    }
+
+    /// Names the result rather than the state: the button's fill already says
+    /// which way round the preview is.
+    private var mirrorHelp: String {
+        camera.isMirrored
+            ? "Show the preview as others see it"
+            : "Mirror the preview"
+    }
+
+    /// Drives the mirror control. Recording is never mirrored either way, so
+    /// there is no guard here.
+    private var mirrorBinding: Binding<Bool> {
+        Binding(
+            get: { camera.isMirrored },
+            set: { camera.setMirrored($0) }
+        )
     }
 
     /// Drives the video control: on starts, off stops.

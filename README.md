@@ -3,16 +3,20 @@
 A macOS menu bar app for starting and stopping audio recordings without leaving
 whatever you are working on.
 
-The app records **audio only**, through the Shortcuts app, into Voice Memos.
-There is a live camera preview, but it is display-only: it exists so you can see
-yourself while recording, and it never writes a video file.
+It records two ways, one at a time: **audio** through the Shortcuts app into
+Voice Memos, and **video** captured in-app, written straight into Photo Booth's
+library so it shows up in Photo Booth's filmstrip. A live camera preview is
+always on below the controls.
 
 ## Features
 
 - One-click audio recording from the menu bar, saved to Voice Memos with a
   timestamped name
 - Menu bar icon turns green with a blinking dot while recording
+- Video recording to Photo Booth's library, sharing the same timer
 - Live camera preview inside the panel, with a picker for which camera to show
+- A mirror toggle for the preview, so you can frame yourself in a mirror or
+  read text you hold up to the camera. Recordings are never mirrored either way
 - A pin toggle that keeps the panel open when you click into another app
 - Three panel sizes (S/M/L) that scale the whole UI, not just the preview
 
@@ -22,8 +26,9 @@ yourself while recording, and it never writes a video file.
 - Two Shortcuts named exactly `Start` and `Stop` that begin and end a Voice
   Memos recording. The app does not create these for you.
 
-No Accessibility permission is needed. Turning on the camera preview prompts for
-camera access the first time.
+No Accessibility permission is needed. Opening the panel prompts for camera
+access the first time; the microphone is only asked for on your first video
+recording.
 
 ## Installation
 
@@ -68,9 +73,10 @@ Click the menu bar icon to open the panel. The controls run left to right:
 | **Pin toggle** (pin icon) | Off, the panel closes when you click another app. On, it stays open. The setting persists across launches. |
 | **Audio toggle** (microphone) | Starts and stops the audio recording. One button in two states: plain when idle, filled red with a blinking amber dot while recording. |
 | **Timer** (MM:SS) | Counts up once recording is actually live, not from the click — see below. Counts up while recording. Shows `00:00` at launch, and keeps the last recording's duration on screen after you stop, until you start the next one. |
-| **Size buttons** (S / M / L) | Scale the entire panel: controls, spacing and preview. At L the panel is half your screen wide, so it sits alongside a window tiled to the other half. Only appear while the preview is on. The choice persists across launches. |
-| **Camera toggle** (video icon) | Shows or hides the live preview below the row. It has no effect on what is recorded. |
-| **Camera picker** | Chooses which camera feeds the preview. Only appears while the preview is on. |
+| **Video toggle** (video icon) | Starts and stops a video recording, saved into Photo Booth's library. Same two states as the audio button, and the same timer. Audio and video are mutually exclusive: while one is running the other is disabled. |
+| **Mirror toggle** (flip icon) | Flips the preview left to right. On by default, and the setting persists across launches. It affects the preview only: recordings are always saved unmirrored, so text you hold up to the camera reads correctly in the file. Free to flip at any time, recording or not. |
+| **Camera picker** | Chooses which camera feeds the preview and the video recording. Disabled while a video recording is running, since switching would truncate the file. |
+| **Size buttons** (S / M / L) | Scale the entire panel: controls, spacing and preview. At L the panel is half your screen wide, so it sits alongside a window tiled to the other half. The choice persists across launches. |
 | **Power button** | Stops any recording in progress, then quits. |
 
 The panel stays open after you start or stop a recording, so you can press stop
