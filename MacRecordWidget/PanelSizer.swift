@@ -223,7 +223,12 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// Swift 5.9 (Xcode 15.2, which CI uses) rejects the mix.
     var previewWidth: CGFloat {
         switch self {
-        case .small: return 320
+        // 380, not the 320 it used to be. The row has seven control groups
+        // now, and at 320 the sum of the fixed ones left the camera picker
+        // about 6pt wide: present, but neither readable nor clickable. The
+        // picker is the last thing to get space because it is the only
+        // flexible item, so a new button silently comes out of its width.
+        case .small: return 380
         case .medium: return 480
         case .large:
             // The preview runs the full width of the panel, so this is the
@@ -313,7 +318,8 @@ enum PanelScale: String, CaseIterable, Identifiable {
 
     var rowSpacing: CGFloat {
         switch self {
-        case .small: 10
+        // Six gaps at this scale, so each point here costs the picker six.
+        case .small: 8
         case .medium: 14
         case .large: 18
         }
@@ -345,7 +351,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
 
     var pickerMaxWidth: CGFloat {
         switch self {
-        case .small: 150
+        case .small: 110
         case .medium: 200
         case .large: 260
         }

@@ -219,7 +219,13 @@ the numbers across the views is how they drift apart. The choice persists in
 `UserDefaults` under `panelScale`.
 
 The preview runs the full width of the panel, so `previewWidth` *is* the panel
-width, and `large` is half the screen exactly. It is clamped to at least the
+width, and `large` is half the screen exactly.
+
+**The camera picker is the only flexible item in the row, so every new button
+comes out of its width.** `small` was widened from 320 to 380 (and its
+`rowSpacing` cut to 8) when the mirror toggle was added, because at 320 the
+fixed controls left the picker about 6pt: mounted, but neither readable nor
+clickable. Check this arithmetic before adding an eighth control to the row. It is clamped to at least the
 medium width, so a narrow display cannot put the three sizes out of order.
 
 **Three fonts, not one, and they are not interchangeable:**
