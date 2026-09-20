@@ -21,8 +21,28 @@ cd "$REPO_ROOT"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-run_id="${1:-$(gh run list --workflow "Build macOS App" --branch main \
-    --status success --limit 1 --json databaseId --jq '.[0].databaseId')}"
+# Deliberately NOT `--status success`. That filter is served from an index
+# that lags behind the run itself: a run `gh run watch` has just reported as
+# successful can still be missing from it for a minute or so, and the query
+# then silently returns the *previous* build. That has installed the wrong
+# binary twice, with nothing in the output to say so.
+#
+# So take the newest run whatever its state, and refuse to continue unless it
+# is a finished, successful one. Being told to wait beats being handed a stale
+# app that looks installed.
+if [ $# -ge 1 ]; then
+    run_id="$1"
+else
+    read -r run_id run_status run_conclusion <<<"$(gh run list \
+        --workflow "Build macOS App" --branch main --limit 1 \
+        --json databaseId,status,conclusion \
+        --jq '.[0] | "\(.databaseId) \(.status) \(.conclusion // "-")"')"
+    if [ "$run_status" != "completed" ] || [ "$run_conclusion" != "success" ]; then
+        echo "Latest CI run $run_id is $run_status/$run_conclusion, not installing." >&2
+        echo "Wait for it, or pass a run id: scripts/install-latest.sh <run-id>" >&2
+        exit 1
+    fi
+fi
 
 echo "==> Downloading run $run_id"
 gh run download "$run_id" -D "$tmp"

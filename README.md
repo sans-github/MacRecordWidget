@@ -44,8 +44,10 @@ Then, for this and every later build:
 scripts/install-latest.sh
 ```
 
-That downloads the latest successful CI build, signs it, installs it to
-`/Applications` and launches it.
+That downloads the latest CI build, signs it, installs it to `/Applications`
+and launches it. If the newest build is still running or failed, it stops and
+says so rather than quietly installing the one before it. Pass a run id
+(`scripts/install-latest.sh <run-id>`) to install a specific build.
 
 ### Why the certificate
 
