@@ -82,9 +82,19 @@ Three files implement it:
   The layer is **passed in, not created here**, and the view stays mounted in
   every state (message states draw over it while it sits at `opacity(0)`), for
   the deadlock reason below.
-  `CameraControls` holds the picker, which lives in the button row rather than
-  under the preview; its selected value doubles as the camera-name indicator,
+  `CameraControls` holds the camera menu, which lives in the button row rather
+  than under the preview; its label doubles as the camera-name indicator,
   naming the device actually feeding the layer rather than the stored preference.
+  **It is a `Menu` of `Button`s and must not become a `Picker` again** (changed
+  2026-09-20). A `Picker` needs a two-way binding, and the only honest source of
+  truth for which camera is live is `activeCamera`, which `configure()` updates
+  asynchronously from the session queue. The `NSPopUpButton` underneath read
+  that getter back on its next update pass, still saw the previous device, and
+  wrote it back through the setter as a second `select()`: the camera switched,
+  then switched itself back about two seconds later. Measured from a running
+  build -- the input swap and the first frame from the new device were both in
+  the log, followed by a reconfigure to the old one. Buttons are one-way
+  commands, so there is no getter to read back and nothing to write back.
 - `PanelSizer.swift` - drives the panel's `NSWindow` frame, and defines
   `PanelScale`. See the gotcha below.
 
