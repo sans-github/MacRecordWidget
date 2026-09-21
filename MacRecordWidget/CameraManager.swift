@@ -335,7 +335,11 @@ final class CameraManager {
         // picker is disabled while recording, so this is a backstop.
         guard !isRecordingVideo else { return }
         preferredDeviceID = deviceID
-        guard let device = availableCameras.first(where: { $0.uniqueID == deviceID }) else { return }
+        guard let device = availableCameras.first(where: { $0.uniqueID == deviceID }) else {
+            cameraLog.error("select: no camera matches \(deviceID, privacy: .public)")
+            return
+        }
+        cameraLog.notice("select: user picked \(device.localizedName, privacy: .public)")
         configure(for: device)
     }
 
@@ -623,6 +627,7 @@ final class CameraManager {
             availableCameras.contains { $0.uniqueID == id }
         } ?? false
         if !stillPresent || preferredIsBack, let device = resolveDevice() {
+            cameraLog.notice("device change: reconfiguring to \(device.localizedName, privacy: .public) (still present: \(stillPresent), preferred back: \(preferredIsBack))")
             configure(for: device)
         }
     }

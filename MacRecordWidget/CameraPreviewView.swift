@@ -139,25 +139,40 @@ struct CameraPreviewPanel: View {
 /// the button row beside the video record button, as a toggle.
 @MainActor
 struct CameraControls: View {
-    @Bindable var camera: CameraManager
+    let camera: CameraManager
     let scale: PanelScale
 
     var body: some View {
         HStack(spacing: 8) {
-            // The picker's selected value is also the camera-name indicator: it
-            // names the device actually feeding the layer, which after a
-            // fallback is not the persisted preference.
-            Picker("Camera", selection: cameraSelection) {
-                if camera.availableCameras.isEmpty {
-                    Text("No camera").tag("")
-                }
+            // A Menu of Buttons, deliberately NOT a `Picker`. A Picker needs a
+            // two-way binding, and the only honest source of truth for "which
+            // camera is live" is `activeCamera`, which `configure()` updates
+            // asynchronously from the session queue. SwiftUI's NSPopUpButton
+            // reads that binding back on its next update pass, still sees the
+            // previous device, and writes it back as a second `select()` --
+            // which switched the camera and then silently switched it back
+            // about two seconds later. Buttons are one-way commands: there is
+            // no getter to read back and nothing to write back.
+            //
+            // The label still names the device actually feeding the layer,
+            // which after a fallback is not the persisted preference.
+            Menu {
                 ForEach(camera.availableCameras, id: \.uniqueID) { device in
-                    Text(device.localizedName)
-                        .font(scale.controlFont)
-                        .tag(device.uniqueID)
+                    Button {
+                        camera.select(deviceID: device.uniqueID)
+                    } label: {
+                        if device.uniqueID == camera.activeCamera?.uniqueID {
+                            Label(device.localizedName, systemImage: "checkmark")
+                        } else {
+                            Text(device.localizedName)
+                        }
+                    }
                 }
+            } label: {
+                Text(camera.activeCamera?.localizedName ?? "No camera")
+                    .font(scale.controlFont)
+                    .lineLimit(1)
             }
-            .labelsHidden()
             .font(scale.controlFont)
             .controlSize(scale.controlSize)
             .frame(maxWidth: scale.pickerMaxWidth)
@@ -166,12 +181,5 @@ struct CameraControls: View {
             .accessibilityIdentifier("cameraPicker")
 
         }
-    }
-
-    private var cameraSelection: Binding<String> {
-        Binding(
-            get: { camera.activeCamera?.uniqueID ?? "" },
-            set: { id in if !id.isEmpty { camera.select(deviceID: id) } }
-        )
     }
 }
