@@ -10,7 +10,14 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Six Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` camera toggle. The glyph does **not** swap to `stop.fill` — every toggle in the row keeps its glyph and flips its fill, and this one used to be the exception. While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), a `RecordingTimer` showing MM:SS in a bordered box, grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, three S/M/L preview-size toggles, and a bordered power button. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, `controlSize`, spacing and corner radius from `PanelScale`, plus a constant 1pt outline, so an off toggle and an on toggle read as one control in two states and the whole row scales as a unit. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` camera toggle. The glyph does **not** swap to `stop.fill` — every toggle in the row keeps its glyph and flips its fill, and this one used to be the exception. While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), a `RecordingTimer` showing MM:SS in a bordered box, grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, three S/M/L preview-size toggles, and a bordered power button. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, height, spacing and corner radius from `PanelScale`, and the whole row scales as a unit. Since 2026-09-24 the controls are **semantic capsules**: off is the scale's corner radius plus a 1pt `separatorColor` outline on `controlBackgroundColor`; on is a *fully round* capsule filled with a semantic hue and a white glyph, with no outline (the fill is the edge). Hue says which subsystem, not which control: red `#FF383C` for audio capture, green `#3AD862` for everything camera (video capture, mirror, S/M/L, the camera menu's chevron well), blue `#007AFF` for everything window (pin, quit). The user's accent colour is no longer honoured in the row. The **white glyph on green is a measured 1.88:1 against WCAG's 3:1 and was accepted deliberately** to match the FaceTime look -- see the warning on `RowPalette`, and do not "fix" it. The silhouette therefore changes between off and on, and the one thing holding the row together across that is `PanelScale.controlHeight`, which every control including the timer is pinned to. While a medium is
+genuinely capturing, that control's capsule wears a **Live Ember** in its own
+hue: a gradient drifting on a 3.4s period with a breathing glow, driven by
+`TimelineView(.animation)` rather than a `repeatForever` animation so there is
+nothing to invalidate when the recording stops. 3.4s is deliberately not a
+near-match to `RecordingDot`'s 1.6s blink. It collapses to the flat fill under
+Reduce Motion (the same `accessibilityReduceMotion` the dot already reads) and,
+separately, under Increase Contrast. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `medium` (`.audio` / `.video` / nil), and `isInFlight` state, plus the recording clock: `startedAt` and `lastElapsed`. Elapsed time is **derived from a start `Date`, never accumulated by a ticking counter**, so it stays correct while the panel is closed and cannot drift; `RecordingTimer` renders it with a `TimelineView` and there is no timer to invalidate. The clock resets when a recording *starts*, not when it stops, so the previous duration stays readable until a new one begins. `startRecording()` is `async throws`: quits Voice Memos if it is running (a fallback now, see Gotchas), fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`, then holds `isArming` for `armingDelay` before flipping to `isRecording`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`, cancels any pending arming task, and quits Voice Memos a couple of seconds later. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. `startVideoRecording(camera:)` / `stopVideoRecording(camera:)` drive the in-app movie capture through the *same* arming delay and the *same* clock.
 
 **The two mediums are mutually exclusive.** `medium` is the whole of the mode state: it is claimed on button press, released on any failure path (via the `committed` flag and `defer` -- forget that and the app is stuck in a mode that never started), and each button is disabled while the other holds it. This is not a limitation to be lifted later: one shared timer cannot honestly describe two recordings that began at different moments, and that is exactly why the design is exclusive.
@@ -238,12 +245,34 @@ fixed controls left the picker about 6pt: mounted, but neither readable nor
 clickable. Check this arithmetic before adding an eighth control to the row. It is clamped to at least the
 medium width, so a narrow display cannot put the three sizes out of order.
 
+**Large was re-sized on 2026-09-24 for near-parity with Photo Booth's title
+bar** (1.14x it, down from 1.52x): `controlHeight` 22, `glyphSize` 20→17,
+`glyphFont` 16→14, `controlFont` 15→13, `scaleLabelFont` 15→13, and
+`verticalPadding` split into `verticalPaddingTop` 7 / `verticalPaddingBottom` 6.
+The split is optical, not arithmetic: the bottom gap meets the hard top edge of
+the preview image while the top gap meets empty window chrome, so equal numbers
+read bottom-heavy. **Medium and small were deliberately left alone** and will be
+measured on hardware before they follow, so the three scales do not currently
+step evenly. 22pt is the HIG control minimum and the parity work stops there
+rather than going under it; nine of these are click targets and two start a
+recording.
+
+`controlHeight` also fixed a defect: the pin used to render 6-7px taller than
+its eight siblings despite an identical modifier chain, because
+`.toggleStyle(.button)` sized its own background from the label's intrinsic
+symbol metrics rather than from the `glyphSize` frame. A background drawn
+against an explicit height cannot do that.
+
 **Three fonts, not one, and they are not interchangeable:**
 
 - `glyphFont` sizes the SF Symbols in the icon buttons.
 - `controlFont` sizes text inside AppKit-backed controls, currently the camera
-  name. `ControlSize` does **not** carry text size with it: `.regular` still
-  draws 13pt, which reads as too small beside 20pt glyphs.
+  name. `ControlSize` does **not** carry text size with it. Large is 13pt, the
+  macOS system default; it used to be 15 because 13 beside a *20pt* glyph reads
+  as too small, and that argument was answered by taking the glyph to 17 in the
+  same pass rather than by ignoring it. What actually governs how the row reads
+  is the box-to-text ratio: 17/13 = 1.31, against the 20/15 = 1.33 it replaced.
+  Moving the font alone would have taken it to 1.54.
 - `scaleLabelFont` sizes the S/M/L letters, and is a point smaller than
   `controlFont` at the small scale. A letter fills its box more solidly than a
   glyph does, so equal point sizes do not give equal visual weight. Matching

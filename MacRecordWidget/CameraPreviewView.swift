@@ -169,10 +169,52 @@ struct CameraControls: View {
                     }
                 }
             } label: {
-                Text(camera.activeCamera?.localizedName ?? "No camera")
-                    .font(scale.controlFont)
-                    .lineLimit(1)
+                HStack(spacing: 5) {
+                    Text(camera.activeCamera?.localizedName ?? "No camera")
+                        .font(scale.controlFont)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    // The chevron sits in a green well rather than being drawn
+                    // by the popup button itself. Green because the menu picks
+                    // the camera, which is the same subsystem the video, mirror
+                    // and S/M/L controls belong to.
+                    //
+                    // This is why the native indicator is hidden and the label
+                    // is drawn by hand: an NSPopUpButton's own chevron cannot be
+                    // tinted separately from its content.
+                    Image(systemName: "chevron.down")
+                        .font(scale.chevronFont)
+                        .foregroundStyle(RowPalette.glyphOn)
+                        .frame(width: scale.chevronWellWidth, height: scale.glyphSize)
+                        .background(
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(RowPalette.video)
+                        )
+                }
+                .padding(.leading, 7)
+                .padding(.trailing, 4)
+                .frame(height: scale.controlHeight)
+                // The same off-state chrome as every toggle in the row: the
+                // menu is never "on", so it is always the outlined rounded
+                // rect. Keeping the container matters more here than anywhere
+                // else -- without it a menu stops looking like a menu.
+                .background(
+                    CapsuleControlBackground(
+                        scale: scale,
+                        isOn: false,
+                        tint: RowPalette.video,
+                        ember: nil
+                    )
+                )
+                .contentShape(Rectangle())
             }
+            // `.button` + `.plain` + a hidden indicator, so what is drawn is
+            // exactly the label above and nothing else. It is still a Menu of
+            // Buttons underneath -- see the comment above; it must not become a
+            // Picker.
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
             .font(scale.controlFont)
             .controlSize(scale.controlSize)
             .frame(maxWidth: scale.pickerMaxWidth)

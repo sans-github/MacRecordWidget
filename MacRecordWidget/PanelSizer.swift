@@ -241,11 +241,19 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// 16:9, so the preview matches the aspect of the cameras feeding it.
     var previewHeight: CGFloat { (previewWidth * 9 / 16).rounded() }
 
+    /// The layout box the symbol sits in. `glyphFont` is the symbol's own
+    /// point size and the two track together at every scale (14/11 = 0.79,
+    /// 16/13 = 0.81, 17/14 = 0.82), so moving one without the other leaves a
+    /// symbol rattling in a box that no longer fits it.
+    ///
+    /// Large is 17, down from 20. At large the glyph box *is* the control's
+    /// content -- the bordered style adds almost nothing on top -- so the glyph
+    /// is the lever on the height of the whole bar. See `controlHeight`.
     var glyphSize: CGFloat {
         switch self {
         case .small: 14
         case .medium: 16
-        case .large: 20
+        case .large: 17
         }
     }
 
@@ -253,20 +261,27 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .system(size: 11, weight: .regular)
         case .medium: .system(size: 13, weight: .regular)
-        case .large: .system(size: 16, weight: .regular)
+        case .large: .system(size: 14, weight: .regular)
         }
     }
 
     /// Text in the button row: the camera name and the MM:SS timer.
     ///
-    /// `ControlSize` alone does not carry this. `.regular` still draws 13pt
-    /// text, which next to 20pt glyphs in a taller row reads as too small, so
-    /// large sets the font explicitly.
+    /// `ControlSize` alone does not carry text size, so every scale sets it.
+    ///
+    /// Large is 13pt, which is the macOS system default for a `.regular`
+    /// control. It used to be 15, and the comment here used to argue for 15 on
+    /// the grounds that 13 beside a 20pt glyph reads as too small. That
+    /// argument was correct and is not being ignored -- it is being answered on
+    /// the other side: the glyph came down to 17 in the same pass, so the
+    /// box-to-text ratio is 17/13 = 1.31, near the 20/15 = 1.33 it replaces.
+    /// Moving the font alone would have taken it to 1.54 and made the row
+    /// worse, which is what the old comment was warning about.
     var controlFont: Font {
         switch self {
         case .small: .system(size: 10)
         case .medium: .system(size: 12)
-        case .large: .system(size: 15)
+        case .large: .system(size: 13)
         }
     }
 
@@ -278,10 +293,13 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .system(size: 9)
         case .medium: .system(size: 12)
-        case .large: .system(size: 15)
+        case .large: .system(size: 13)
         }
     }
 
+    /// Only the camera menu reads this now. Every other control in the row is
+    /// drawn by `CapsuleToggleStyle`, which takes its height from
+    /// `controlHeight` rather than from the platform's control metrics.
     var controlSize: ControlSize {
         switch self {
         case .small: .mini
@@ -290,20 +308,13 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Padding inside the timer's box, between the digits and its border.
+    /// Padding inside the timer's box, between the digits and its border. Its
+    /// height comes from `controlHeight` like every other item in the row.
     var timerPaddingH: CGFloat {
         switch self {
         case .small: 5
         case .medium: 6
         case .large: 8
-        }
-    }
-
-    var timerPaddingV: CGFloat {
-        switch self {
-        case .small: 2
-        case .medium: 3
-        case .large: 4
         }
     }
 
@@ -333,11 +344,82 @@ enum PanelScale: String, CaseIterable, Identifiable {
         }
     }
 
-    var verticalPadding: CGFloat {
+    /// Top and bottom are separate numbers, and at large they differ.
+    ///
+    /// The two gaps are not the same kind of gap. The top gap sits between the
+    /// row and the window's own edge, where there is nothing. The bottom gap
+    /// sits between the row and the hard, dark, high-contrast top edge of the
+    /// preview image, which visually pulls. Equal numbers therefore read
+    /// bottom-heavy, so the bottom gets a point less than the top.
+    ///
+    /// Large is 7/6, down from 11/11. That takes the whole bar from roughly
+    /// 43pt to roughly 32pt, about 1.14x the height of Photo Booth's title bar
+    /// rather than 1.52x. Medium and small are unchanged in this pass: the
+    /// large numbers are meant to be looked at on hardware before the other two
+    /// follow, and small in particular has no width left to give.
+    var verticalPaddingTop: CGFloat {
         switch self {
         case .small: 6
         case .medium: 8
-        case .large: 11
+        case .large: 7
+        }
+    }
+
+    var verticalPaddingBottom: CGFloat {
+        switch self {
+        case .small: 6
+        case .medium: 8
+        case .large: 6
+        }
+    }
+
+    /// The height every control in the row holds, in every state.
+    ///
+    /// Stated once here rather than left to each control's own content, and
+    /// that is load-bearing twice over. The semantic capsules change silhouette
+    /// between off and on, so a constant cap height is the only thing keeping
+    /// the row on one horizontal baseline. And the pin used to render 6-7px
+    /// taller than its eight siblings despite carrying an identical modifier
+    /// chain, because the bordered button style sized its own background from
+    /// the label's intrinsic symbol metrics rather than from the glyph frame.
+    /// A background drawn against this number cannot do that.
+    ///
+    /// Large is 22pt, the HIG minimum for a control: nine of these are click
+    /// targets and two of them start a recording, so the Photo Booth parity
+    /// work stops at the floor rather than going under it. Medium and small
+    /// hold the heights they render at today.
+    var controlHeight: CGFloat {
+        switch self {
+        case .small: 17
+        case .medium: 20
+        case .large: 22
+        }
+    }
+
+    /// Horizontal padding inside a control, either side of the glyph box.
+    ///
+    /// An on control is 2pt wider than an off one, because the capsule's round
+    /// ends need that much to clear the glyph. That growth comes out of the
+    /// camera menu, which is the only flexible item in the row -- check
+    /// `previewWidth` before adding anything else here.
+    func controlPaddingH(isOn: Bool) -> CGFloat {
+        isOn ? 6 : 4
+    }
+
+    /// The green well the camera menu's chevron sits in.
+    var chevronWellWidth: CGFloat {
+        switch self {
+        case .small: 11
+        case .medium: 13
+        case .large: 14
+        }
+    }
+
+    var chevronFont: Font {
+        switch self {
+        case .small: .system(size: 7, weight: .semibold)
+        case .medium: .system(size: 8, weight: .semibold)
+        case .large: .system(size: 9, weight: .semibold)
         }
     }
 

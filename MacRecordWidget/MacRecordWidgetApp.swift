@@ -30,9 +30,9 @@ struct MacRecordWidgetApp: App {
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
-                .toggleStyle(.button)
-                .controlSize(scale.controlSize)
-                .overlay(controlOutline)
+                // Blue: the pin acts on the window, not on a recording or on
+                // the camera.
+                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.window))
                 .help(isPinned ? "Let panel close on its own" : "Keep panel open")
                 .accessibilityLabel("Keep panel open")
                 .accessibilityIdentifier("pinToggle")
@@ -63,10 +63,17 @@ struct MacRecordWidgetApp: App {
                         // signal.
                         .opacity(recordingManager.isArming ? 0.35 : 1)
                 }
-                .toggleStyle(.button)
-                .controlSize(scale.controlSize)
-                .tint(.red)
-                .overlay(controlOutline)
+                // Red capsule, and while it is genuinely capturing it wears
+                // the red Live Ember instead of the flat fill. `isRecording`,
+                // not "recording or arming": the ember means "you are being
+                // captured", which during arming is not yet true.
+                .toggleStyle(
+                    CapsuleToggleStyle(
+                        scale: scale,
+                        tint: RowPalette.audio,
+                        ember: recordingManager.isRecording ? .audio : nil
+                    )
+                )
                 // Sits on the button's bottom-right corner, offset outward so
                 // most of it falls on the panel background rather than on the
                 // red fill underneath, where amber on red would barely read.
@@ -97,18 +104,24 @@ struct MacRecordWidgetApp: App {
                 // and grouping it with the picker would file it as a preview
                 // control, which is what it used to be and no longer is.
                 //
-                // Same glyph in both states, same red fill, same corner dot as
-                // the mic. Only the medium differs.
+                // Same glyph in both states and the same corner dot as the
+                // mic. The hue differs because the medium does.
                 Toggle(isOn: videoRecordingBinding) {
                     Image(systemName: "video.fill")
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                         .opacity(isArmingVideo ? 0.35 : 1)
                 }
-                .toggleStyle(.button)
-                .controlSize(scale.controlSize)
-                .tint(.red)
-                .overlay(controlOutline)
+                // Green, not red: green is the camera's hue throughout the
+                // row. Same ember treatment as the mic, same 3.4s period, its
+                // own hue.
+                .toggleStyle(
+                    CapsuleToggleStyle(
+                        scale: scale,
+                        tint: RowPalette.video,
+                        ember: recordingManager.isRecordingVideo ? .video : nil
+                    )
+                )
                 .overlay(alignment: .bottomTrailing) {
                     if recordingManager.isRecordingVideo {
                         RecordingDot(diameter: scale.recordingDotSize)
@@ -143,9 +156,12 @@ struct MacRecordWidgetApp: App {
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
-                .toggleStyle(.button)
-                .controlSize(scale.controlSize)
-                .overlay(controlOutline)
+                // Green, the camera hue, because it acts on the preview. It
+                // therefore looks identical to the video button while both are
+                // on, and the glyph is the only thing separating them -- an
+                // accepted consequence of hue meaning "which subsystem" rather
+                // than "which control".
+                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.video))
                 .help(mirrorHelp)
                 .accessibilityLabel(mirrorHelp)
                 .accessibilityIdentifier("mirrorToggle")
@@ -176,9 +192,8 @@ struct MacRecordWidgetApp: App {
                                 .font(scale.scaleLabelFont)
                                 .frame(width: scale.glyphSize, height: scale.glyphSize)
                         }
-                        .toggleStyle(.button)
-                        .controlSize(scale.controlSize)
-                        .overlay(controlOutline)
+                        // Green: these size the preview.
+                        .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.video))
                         .help("\(option.helpLabel) preview")
                         .accessibilityLabel("\(option.helpLabel) preview size")
                     }
@@ -206,9 +221,17 @@ struct MacRecordWidgetApp: App {
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(scale.controlSize)
-                .overlay(controlOutline)
+                // A permanent blue capsule: quit acts on the window, and
+                // unlike every other control here it has no off state, so it is
+                // always drawn lit.
+                .buttonStyle(
+                    CapsuleControlButtonStyle(
+                        scale: scale,
+                        tint: RowPalette.window,
+                        ember: nil,
+                        isOn: true
+                    )
+                )
                 .help("Quit")
                 .accessibilityLabel("Quit MacRecordWidget")
                 .accessibilityIdentifier("quitButton")
@@ -221,7 +244,11 @@ struct MacRecordWidgetApp: App {
             // Padding is on the row, not on the panel, so the preview below can
             // run flush to the left, right and bottom edges.
             .padding(.horizontal, scale.horizontalPadding)
-            .padding(.vertical, scale.verticalPadding)
+            // Top and bottom separately: the bottom gap meets the hard top
+            // edge of the preview image and the top gap meets empty window
+            // chrome, so equal numbers read bottom-heavy.
+            .padding(.top, scale.verticalPaddingTop)
+            .padding(.bottom, scale.verticalPaddingBottom)
 
             // Always mounted. The preview is the app's resting state now:
             // there is no toggle, and nothing to collapse.
@@ -262,15 +289,6 @@ struct MacRecordWidgetApp: App {
             get: { scale == option },
             set: { isOn in if isOn { scaleRaw = option.rawValue } }
         )
-    }
-
-    /// A constant boundary on every control. Without it a toggle only shows an
-    /// edge when it is on, so an off toggle and an on toggle read as two
-    /// different kinds of object rather than one control in two states.
-    private var controlOutline: some View {
-        RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
-            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-            .allowsHitTesting(false)
     }
 
     /// The preview width for the chosen scale, in both states, so toggling the
@@ -463,7 +481,10 @@ struct RecordingTimer: View {
             .foregroundStyle(manager.isRecording ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
             .opacity(manager.isRecording ? 1 : 0.65)
             .padding(.horizontal, scale.timerPaddingH)
-            .padding(.vertical, scale.timerPaddingV)
+            // The height is the row's, not the text's. Every control holds one
+            // cap height in every state, and the timer is the one item here
+            // that is not a button, so it has to be told.
+            .frame(height: scale.controlHeight)
             // Same 1pt separatorColor border as every control in the row, so
             // the readout reads as part of the same family.
             .overlay(
@@ -526,5 +547,283 @@ private struct MenuBarIcon: View {
                     .offset(x: 2, y: 2)
             }
         }
+    }
+}
+
+// MARK: - Row palette
+
+/// The semantic capsule colours, chosen 2026-09-24 (design option B).
+///
+/// Hue carries meaning here rather than selection: red is audio capture, green
+/// is everything that belongs to the camera (video capture, mirror, the three
+/// preview sizes, the camera menu's chevron), blue is everything that acts on
+/// the window itself (pin, quit). One consequence, accepted: the user's own
+/// accent colour is no longer honoured anywhere in the row.
+///
+/// ⚠️ The white glyph on `video` green is a known, measured, *accepted*
+/// contrast failure. White on #3AD862 is 1.88:1 against the 3:1 that WCAG
+/// 1.4.11 asks of a control's icon, and both ember gradients drop further at
+/// their bright point (green to 1.41:1). The alternatives were a black glyph on
+/// green only (11.18:1, but then the row has two glyph colours and stops
+/// reading as one family) or darkening the green to #10913A (4.09:1, but it is
+/// then no longer the FaceTime green that was being matched). The user was
+/// shown all three with the numbers and chose to keep white, to match the
+/// FaceTime look. **Do not helpfully "fix" this.** If it is ever revisited it
+/// is a design decision, not a bug fix.
+enum RowPalette {
+    /// #FF383C. Audio capture. Sits between systemRed's light (#FF3B30) and
+    /// dark (#FF453A) values, so one number covers both appearances.
+    static let audio = Color(red: 1.0, green: 0.2196, blue: 0.2353)
+
+    /// #3AD862. Everything camera: video capture, mirror, S/M/L, the chevron
+    /// well. Already lighter than systemGreen in either appearance, so it is
+    /// deliberately not darkened for dark mode.
+    static let video = Color(red: 0.2275, green: 0.8471, blue: 0.3843)
+
+    /// #007AFF. Everything window: the pin and the quit button. This is
+    /// systemBlue's *light* value used in both appearances, so the dark panel
+    /// gets a slightly heavier blue than macOS would pick.
+    static let window = Color(red: 0.0, green: 0.4784, blue: 1.0)
+
+    /// The glyph on any lit capsule. See the contrast note above.
+    static let glyphOn = Color.white
+}
+
+// MARK: - Live Ember
+
+/// The drifting gradient a capture control wears while it is actually
+/// recording, in its own hue.
+///
+/// Two channels, both on a 3.4s period: the gradient's axis sweeps across the
+/// capsule, and a coloured glow breathes just outside it. 3.4s is deliberately
+/// not a near-match to `RecordingDot`'s 1.6s blink -- two indicators at almost
+/// the same rhythm read as a rendering fault, while two at obviously different
+/// rhythms read as two indicators.
+enum EmberHue {
+    case audio
+    case video
+
+    /// What the gradient collapses to when it cannot animate.
+    var flat: Color {
+        switch self {
+        case .audio: RowPalette.audio
+        case .video: RowPalette.video
+        }
+    }
+
+    /// Dark end, mid, bright end. The dark mode variants lift the dark stop and
+    /// warm the bright one, because the same gradient on a dark panel reads
+    /// muddier than it does on a light one.
+    func stops(dark: Bool) -> [Color] {
+        switch (self, dark) {
+        case (.audio, false):
+            [Color(red: 0.7216, green: 0.0824, blue: 0.0588), // #B8150F
+             RowPalette.audio,
+             Color(red: 1.0, green: 0.4784, blue: 0.2392)]    // #FF7A3D
+        case (.audio, true):
+            [Color(red: 0.5569, green: 0.1059, blue: 0.0706), // #8E1B12
+             RowPalette.audio,
+             Color(red: 1.0, green: 0.6235, blue: 0.2706)]    // #FF9F45
+        case (.video, false):
+            [Color(red: 0.0549, green: 0.4196, blue: 0.1725), // #0E6B2C
+             RowPalette.video,
+             Color(red: 0.5490, green: 0.9412, blue: 0.4784)] // #8CF07A
+        case (.video, true):
+            [Color(red: 0.0431, green: 0.3451, blue: 0.1412), // #0B5824
+             RowPalette.video,
+             Color(red: 0.6118, green: 0.9608, blue: 0.5412)] // #9CF58A
+        }
+    }
+
+    /// The breathing glow outside the capsule.
+    var glow: Color {
+        switch self {
+        case .audio: Color(red: 1.0, green: 0.3529, blue: 0.2353)
+        case .video: Color(red: 0.4706, green: 0.9412, blue: 0.5098)
+        }
+    }
+}
+
+/// The ember fill itself.
+///
+/// Driven by `TimelineView(.animation)` rather than a `repeatForever`
+/// animation, for the same reason `RecordingTimer` is: there is no animation to
+/// start, own or invalidate, so the phase cannot be left running after the
+/// recording stops, and it recomputes correctly when the panel is reopened.
+///
+/// It falls back to the flat fill under two separate conditions, checked
+/// independently: Reduce Motion (the same `accessibilityReduceMotion` that
+/// `RecordingDot` already reads -- one mechanism, not two) and Increase
+/// Contrast, where a moving gradient is exactly the wrong thing to draw.
+struct EmberCapsule: View {
+    let hue: EmberHue
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Seconds for one full there-and-back sweep.
+    private static let period: Double = 3.4
+
+    var body: some View {
+        if reduceMotion || contrast == .increased {
+            Capsule().fill(hue.flat)
+        } else {
+            TimelineView(.animation) { context in
+                let phase = Self.phase(at: context.date)
+                let ramp = hue.stops(dark: colorScheme == .dark)
+                // Symmetric five-stop ramp -- dark, hue, bright, hue, dark --
+                // so the sweep has no visible seam where it turns around.
+                let colors = [ramp[0], ramp[1], ramp[2], ramp[1], ramp[0]]
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: colors,
+                            startPoint: UnitPoint(x: -0.4 + 1.4 * phase, y: 0),
+                            endPoint: UnitPoint(x: 0.6 + 1.4 * phase, y: 1)
+                        )
+                    )
+                    // The glow is a shadow rather than a stroke, so it sits
+                    // outside the capsule and never eats into the glyph's
+                    // already-marginal contrast against the fill.
+                    .shadow(
+                        color: hue.glow.opacity(0.55 * phase),
+                        radius: 4 + 3 * phase
+                    )
+            }
+        }
+    }
+
+    /// 0 → 1 → 0 across one period, eased, so the sweep and the glow turn
+    /// around smoothly instead of snapping back at the seam.
+    private static func phase(at date: Date) -> Double {
+        let t = date.timeIntervalSinceReferenceDate
+            .truncatingRemainder(dividingBy: period) / period
+        return (1 - cos(2 * .pi * t)) / 2
+    }
+}
+
+// MARK: - Capsule controls
+
+/// The background every control in the row wears, in both states.
+///
+/// Off: the scale's corner radius, `controlBackgroundColor`, and the constant
+/// 1pt `separatorColor` outline, which is what makes the resting row read as
+/// one family of nine identical objects.
+///
+/// On: fully round, filled with the control's semantic hue, and *no* outline --
+/// the fill is the edge. This is a real discontinuity: an on control changes
+/// silhouette as well as colour. The one thing holding the row together across
+/// it is that the height never changes, which is why `PanelScale.controlHeight`
+/// is applied to every control rather than left to its content.
+struct CapsuleControlBackground: View {
+    let scale: PanelScale
+    let isOn: Bool
+    let tint: Color
+    /// Non-nil only while this control is the live capture.
+    let ember: EmberHue?
+
+    var body: some View {
+        if isOn {
+            if let ember {
+                EmberCapsule(hue: ember)
+            } else {
+                Capsule().fill(tint)
+            }
+        } else {
+            RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
+                        .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                )
+        }
+    }
+}
+
+/// The chrome shared by every button and toggle in the row.
+///
+/// A `View` rather than more code inside the `ButtonStyle`, because a
+/// `ButtonStyle` cannot read the environment and the disabled dimming has to
+/// come from `isEnabled` -- the native bordered style used to supply that for
+/// free.
+private struct CapsuleControlChrome<Label: View>: View {
+    let scale: PanelScale
+    let isOn: Bool
+    let tint: Color
+    let ember: EmberHue?
+    let isPressed: Bool
+    let label: Label
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        label
+            .foregroundStyle(isOn ? RowPalette.glyphOn : Color(nsColor: .labelColor))
+            .padding(.horizontal, scale.controlPaddingH(isOn: isOn))
+            .frame(height: scale.controlHeight)
+            .background(
+                CapsuleControlBackground(scale: scale, isOn: isOn, tint: tint, ember: ember)
+            )
+            // The background is a shape, so without this only the drawn pixels
+            // would be clickable in the off state's rounded corners.
+            .contentShape(Rectangle())
+            .opacity(isPressed ? 0.75 : 1)
+            .opacity(isEnabled ? 1 : 0.35)
+    }
+}
+
+/// Used directly by the quit button, which has no off state, and indirectly by
+/// every toggle through `CapsuleToggleStyle`.
+struct CapsuleControlButtonStyle: ButtonStyle {
+    let scale: PanelScale
+    let tint: Color
+    var ember: EmberHue? = nil
+    /// The quit button passes `true`: it is a permanent capsule.
+    var isOn: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        CapsuleControlChrome(
+            scale: scale,
+            isOn: isOn,
+            tint: tint,
+            ember: ember,
+            isPressed: configuration.isPressed,
+            label: configuration.label
+        )
+    }
+}
+
+/// Replaces `.toggleStyle(.button)` on every toggle in the row.
+///
+/// The native bordered style cannot draw a fully round on state, and its
+/// background geometry comes from the label's own symbol metrics rather than
+/// from the glyph frame, which is what made the pin taller than its siblings.
+/// Both problems go away once the background is an explicit shape on an
+/// explicit height.
+struct CapsuleToggleStyle: ToggleStyle {
+    let scale: PanelScale
+    let tint: Color
+    var ember: EmberHue? = nil
+
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            configuration.label
+        }
+        // A custom style means a Button underneath, which does not carry the
+        // toggle's own state to VoiceOver the way `.button` did. `.isSelected`
+        // is the macOS-native way to say "this one is on" and needs no string,
+        // so it cannot drift from the `.help` text the way a second label would.
+        .accessibilityAddTraits(configuration.isOn ? [.isSelected] : [])
+        .buttonStyle(
+            CapsuleControlButtonStyle(
+                scale: scale,
+                tint: tint,
+                ember: ember,
+                isOn: configuration.isOn
+            )
+        )
     }
 }
