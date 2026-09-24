@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Large scale: sizing, spacing and material</title>
+<style>
+:root{
+  --bg-window:#ECECEC; --bg-popover:#F6F6F6; --bg-control:#FFFFFF; --bg-underpage:#E3E3E3;
+  --label-primary:rgba(0,0,0,0.85); --label-secondary:rgba(0,0,0,0.50); --label-tertiary:rgba(0,0,0,0.26);
+  --separator:rgba(0,0,0,0.12); --amber:#FF9E33;
+  --shadow:rgba(0,0,0,0.18); --code-bg:rgba(0,0,0,0.06);
+  --c-video:#3AD862; --c-audio:#FF383C; --c-window:#007AFF;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg-window:#1E1E1E; --bg-popover:#2C2C2E; --bg-control:#3A3A3C; --bg-underpage:#171719;
+    --label-primary:rgba(255,255,255,0.85); --label-secondary:rgba(255,255,255,0.55); --label-tertiary:rgba(255,255,255,0.26);
+    --separator:rgba(255,255,255,0.14);
+    --shadow:rgba(0,0,0,0.55); --code-bg:rgba(255,255,255,0.10);
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-size:13px;background:var(--bg-window);color:var(--label-primary)}
+.wrap{max-width:940px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:19px;font-weight:700;margin-bottom:4px}
+h2{font-size:14px;font-weight:600;margin:40px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--separator)}
+h3{font-size:12.5px;font-weight:600;margin:22px 0 8px}
+p{font-size:12.5px;line-height:1.6;margin-bottom:10px}
+p.sub{color:var(--label-secondary);margin-bottom:22px}
+p.note{color:var(--label-secondary)}
+code{font-family:"SF Mono",Menlo,monospace;font-size:11px;background:var(--code-bg);padding:1px 4px;border-radius:3px}
+ul{font-size:12.5px;line-height:1.6;padding-left:18px;margin-bottom:10px}
+li{margin-bottom:5px}
+.tablewrap{overflow-x:auto;margin:10px 0 4px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th,td{text-align:left;padding:6px 9px;border:.5px solid var(--separator);vertical-align:top;line-height:1.5}
+th{background:var(--code-bg);font-weight:600}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-right:4px}
+.tag.v{background:rgba(52,199,89,.18);color:#1f7a3d}
+.tag.m{background:rgba(255,158,51,.20);color:#8a5500}
+.tag.u{background:rgba(255,56,60,.16);color:#b3201c}
+@media (prefers-color-scheme: dark){.tag.v{color:#7ee2a0}.tag.m{color:#ffc477}.tag.u{color:#ff8079}}
+.callout{border:1px solid var(--separator);border-left:3px solid var(--amber);border-radius:8px;
+  padding:12px 14px;margin:16px 0;background:var(--bg-popover)}
+.callout h3{margin-top:0}
+.callout.blue{border-left-color:var(--c-window)}
+.rec{border-left:3px solid var(--c-video);padding:6px 0 6px 10px;margin:12px 0;font-size:12px}
+
+/* ---------- stages ---------- */
+.stage{border-radius:10px;padding:18px 14px;margin:14px 0;overflow-x:auto;box-shadow:inset 0 0 0 .5px var(--separator)}
+.stage.light{--bg-popover:#F6F6F6;--bg-control:#FFFFFF;--label-primary:rgba(0,0,0,0.85);
+  --label-secondary:rgba(0,0,0,0.50);--label-tertiary:rgba(0,0,0,0.26);--separator:rgba(0,0,0,0.12);
+  --shadow:rgba(0,0,0,0.18);background:#DEDEDE;color:var(--label-primary)}
+.stage.dark{--bg-popover:#2C2C2E;--bg-control:#3A3A3C;--label-primary:rgba(255,255,255,0.85);
+  --label-secondary:rgba(255,255,255,0.55);--label-tertiary:rgba(255,255,255,0.26);--separator:rgba(255,255,255,0.14);
+  --shadow:rgba(0,0,0,0.55);background:#141414;color:var(--label-primary)}
+.stage.desk{background:
+  radial-gradient(120% 140% at 12% 8%, #6E5AA8 0%, #3E3470 42%, #1B1838 100%)}
+.cap{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;margin:0 0 9px;color:var(--label-secondary)}
+.cap b{font-weight:700;color:var(--label-primary)}
+.stage.desk .cap{color:rgba(255,255,255,.72)}
+.stage.desk .cap b{color:#fff}
+.gap{height:22px}
+
+/* ---------- panel + row: LARGE scale tokens, read from PanelSizer ---------- */
+.scaler{width:606px;overflow:hidden}
+/* zoom, not transform: zoom affects layout, so a taller panel actually
+   occupies more vertical space here and the spacing variants differ in
+   rendered geometry rather than only in their captions. */
+.scaler .panel{zoom:.84}
+.panel{width:720px;background:var(--bg-popover);
+  border-radius:0 0 10px 10px;
+  box-shadow:0 8px 26px var(--shadow),0 0 0 .5px var(--separator);overflow:hidden;
+  /* large: rowSpacing 18, hPad 16, vPad 11, radius 6, glyphSize 20, glyphFont 16,
+     controlFont 15, scaleLabelFont 15, pickerMaxWidth 260 */
+  --gap:18px;--px:16px;--pyT:11px;--pyB:11px;--r:6px;--g:20px;--gf:16px;--h:24px;
+  --cf:15px;--lf:15px;--pw:260px}
+.row{display:flex;align-items:center;gap:var(--gap);padding:var(--pyT) var(--px) var(--pyB)}
+.group{display:flex;align-items:center;gap:calc(var(--gap)/2)}
+.spacer{flex:1 1 auto;min-width:12px}
+.strip{height:80px;background:var(--bg-underpage);
+  background-image:linear-gradient(150deg,#4A5A73 0%,#2E3A4C 55%,#1D242F 100%)}
+
+.ctl{position:relative;height:var(--h);padding:0 4px;border-radius:var(--r);
+  border:1px solid var(--separator);background:var(--bg-control);color:var(--label-primary);
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ctl .glyph{width:var(--g);height:var(--g);display:flex;align-items:center;justify-content:center}
+.ctl .glyph svg{width:var(--gf);height:var(--gf)}
+.ctl .lbl{width:var(--g);height:var(--g);display:flex;align-items:center;justify-content:center;font-size:var(--lf);line-height:1}
+.ctl.on{border-radius:999px;border-color:transparent;color:#fff;padding:0 6px}
+.c-pin.on,.c-power{background:var(--c-window)}
+.c-power{border-radius:999px;border-color:transparent;color:#fff;padding:0 6px}
+.c-mirror.on,.c-scale.on{background:var(--c-video)}
+.timer{height:var(--h);border-radius:var(--r);border:1px solid var(--separator);
+  display:inline-flex;align-items:center;padding:0 8px;font-family:"SF Mono",Menlo,monospace;
+  font-size:var(--cf);flex:none;color:var(--label-secondary);opacity:.65}
+.picker{height:var(--h);max-width:var(--pw);border-radius:var(--r);border:1px solid var(--separator);
+  background:var(--bg-control);color:var(--label-primary);display:inline-flex;align-items:center;gap:6px;
+  padding:0 4px 0 8px;font-size:var(--cf);flex:0 1 auto;min-width:0;overflow:hidden}
+.picker .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picker .chev{width:15px;height:var(--g);border-radius:3px;display:flex;align-items:center;
+  justify-content:center;flex:none;font-size:9px;line-height:1;background:var(--c-video);color:#fff}
+.sgroup{display:flex;gap:2px;flex:none}
+
+/* ---- variants ---- */
+.v-font-b{--cf:13px;--lf:13px}                    /* font only */
+.v-font-c{--g:17px;--gf:14px;--cf:13px;--lf:13px;--h:22px}  /* recommended */
+.v-pad-sym{--pyT:15px;--pyB:15px}
+.v-pad-opt{--pyT:15px;--pyB:13px}
+
+/* ---- Photo Booth parity candidates (section 2b) ----
+   Control height and glyph box move together: at large, PanelScale's
+   glyphSize of 20 sits inside a control measured at ~20pt, so the glyph frame
+   IS the control's content. Shrinking the bar means shrinking the glyph. */
+.p-today{--h:20px;--g:16px;--gf:14px;--pyT:11px;--pyB:11px}
+.p-font {--h:17px;--g:14px;--gf:12px;--cf:13px;--lf:13px;--pyT:11px;--pyB:11px}
+.p-exact{--h:20px;--g:16px;--gf:14px;--pyT:4px;--pyB:4px}
+.p-parA {--h:18px;--g:15px;--gf:13px;--cf:12px;--lf:12px;--pyT:5px;--pyB:5px}
+.p-parB {--h:16px;--g:13px;--gf:11px;--cf:11px;--lf:11px;--pyT:6px;--pyB:6px}
+.p-near {--h:18px;--g:15px;--gf:13px;--cf:12px;--lf:12px;--pyT:7px;--pyB:6px}
+
+/* Photo Booth reference title bar, drawn at the same 720pt width and the same
+   zoom as the panels so the two can be compared directly on the page. */
+.pbwrap{width:606px;overflow:hidden}
+.pbbar{zoom:.84;width:720px;height:28px;background:#FFFFFF;border-radius:10px 10px 0 0;
+  display:flex;align-items:center;gap:8px;padding:0 12px;position:relative;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
+.stage.dark .pbbar{background:#3A3A3C;box-shadow:0 0 0 .5px rgba(255,255,255,.18)}
+.tl{width:11px;height:11px;border-radius:50%;flex:none}
+.tl.r{background:#FF5F57}.tl.y{background:#FEBC2E}.tl.g{background:#28C840}
+.pbt{position:absolute;left:0;right:0;text-align:center;font-size:12px;font-weight:600;
+  color:rgba(0,0,0,.85);pointer-events:none}
+.stage.dark .pbt{color:rgba(255,255,255,.85)}
+.v-round-full{border-radius:14px}
+.v-round-bottom{border-radius:0 0 14px 14px}
+/* material */
+.v-glass{background:rgba(246,246,246,.62);backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);box-shadow:0 8px 26px var(--shadow),inset 0 0 0 .5px rgba(255,255,255,.45)}
+.stage.dark .v-glass{background:rgba(44,44,46,.58);box-shadow:0 8px 26px var(--shadow),inset 0 0 0 .5px rgba(255,255,255,.14)}
+.v-glass .row{background:linear-gradient(to bottom, rgba(120,140,170,.16), rgba(120,140,170,0))}
+/* borderless density */
+.v-flat .ctl{border-color:transparent;background:transparent}
+.v-flat .ctl.on,.v-flat .c-power{border-color:transparent}
+.v-flat .timer{border-color:transparent;background:transparent}
+.v-flat .picker{border-color:transparent;background:transparent}
+.v-flat .picker .chev{background:transparent;color:var(--c-video);font-size:11px}
+
+/* Rulers. These tint the button row's OWN vertical padding, which is what
+   `.padding(.vertical, scale.verticalPadding)` on the row produces at
+   MacRecordWidgetApp.swift:224. The top band sits between the panel's top edge
+   and the tops of the buttons; the bottom band sits between the bottoms of the
+   buttons and the TOP of the preview. The bottom of the preview carries no
+   padding at all -- it runs flush to the panel edge -- so nothing is drawn there. */
+.ruler .row{position:relative}
+.ruler .row::before,.ruler .row::after{content:"";position:absolute;left:0;right:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,56,60,.55) 0 4px,transparent 4px 8px)}
+.ruler .row::before{top:0;height:var(--pyT)}
+.ruler .row::after{bottom:0;height:var(--pyB)}
+.legend{font-size:10px;color:var(--label-secondary);margin-top:6px}
+.stage.desk .legend{color:rgba(255,255,255,.7)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Large scale: sizing, spacing, corners and material</h1>
+<p class="sub">macOS Designer, 24 September 2026. Response to three asks after comparing our panel at <strong>L</strong>
+against FaceTime's camera panel, plus one item I raised that was not asked for. Every panel below is drawn at the
+<strong>large</strong> <code>PanelScale</code> numbers read from <code>PanelSizer.swift</code> this session, on a 720pt
+panel scaled to 84&#37; to fit this page. SF Symbols cannot be loaded in a browser, so every glyph is a hand-drawn SVG
+approximation &mdash; judge size relationships and spacing, not glyph shape. <strong>No Swift has been changed and
+nothing here is approved.</strong></p>
+<p class="sub"><strong>Updated 24 September, after the Photo Booth comparison.</strong> Section 2 proposed a roomier
+bar; that request has been superseded by the ask to match Photo Booth's title bar, which needs the opposite. Section 2
+is kept and marked superseded so the reasoning stays auditable, and <strong>section 2b is the live proposal</strong>.</p>
+
+<h2>Verified versus asserted</h2>
+<div class="tablewrap"><table>
+<tr><th>Claim</th><th>Status</th></tr>
+<tr><td><code>large</code>: <code>glyphSize</code> 20, <code>glyphFont</code> 16, <code>controlFont</code> 15, <code>scaleLabelFont</code> 15, <code>controlSize</code> <code>.regular</code></td><td><span class="tag v">Verified</span> read from <code>PanelSizer.swift</code> this session</td></tr>
+<tr><td><code>large</code>: <code>rowSpacing</code> 18, <code>horizontalPadding</code> 16, <code>verticalPadding</code> 11, <code>cornerRadius</code> 6, <code>pickerMaxWidth</code> 260</td><td><span class="tag v">Verified</span> same file</td></tr>
+<tr><td>The in-file comment says 13pt beside 20pt glyphs "reads as too small", which is why large sets 15 explicitly</td><td><span class="tag v">Verified</span> comment above <code>controlFont</code></td></tr>
+<tr><td><code>previewWidth</code> at large is <code>max(480, screenWidth/2 - margin)</code>, and the preview width <em>is</em> the panel width</td><td><span class="tag v">Verified</span> same file</td></tr>
+<tr><td>The preview runs flush to the panel's left, right and bottom edges; only the bottom corners are rounded</td><td><span class="tag v">Verified</span> stated in <code>CLAUDE.md</code> and consistent with the sizing code</td></tr>
+<tr><td>macOS system control default text is 13pt</td><td><span class="tag m">From memory</span>, but corroborated in-repo: the <code>controlFont</code> comment states <code>.regular</code> draws 13pt</td></tr>
+<tr><td>FaceTime's panel is a translucent vibrancy material with the desktop showing through</td><td><span class="tag m">From the screenshot you shared and memory.</span> Not verified in code</td></tr>
+<tr><td>FaceTime draws its rows with no control containers, just coloured glyphs and text</td><td><span class="tag m">From the screenshot.</span> Taken as given</td></tr>
+<tr><td>A <code>MenuBarExtra(.window)</code> panel cannot round its top corners because the top edge meets the menu bar</td><td><span class="tag u">Unverified assumption.</span> I could not confirm this. See the corners section</td></tr>
+<tr><td>Photo Booth title bar measures 50px and our button row band 76px in the supplied 2000&times;144 capture, a ratio of 1.52&times;</td><td><span class="tag v">Measured</span> by decoding the PNG scanlines this session, not by eye</td></tr>
+<tr><td>Our typical control measures 36&ndash;37px and the pin 43px in the same capture</td><td><span class="tag v">Measured</span> same method; the pin is a genuine outlier</td></tr>
+<tr><td>Point values in section 2b (control ~20pt, bar ~43pt, Photo Booth ~28pt)</td><td><span class="tag m">Derived</span> from one calibration anchored on <code>verticalPadding</code> = 11pt. The ratios need no calibration; these do</td></tr>
+<tr><td>A standard macOS title bar is 28pt</td><td><span class="tag u">Unverified.</span> Recalled, not confirmed. It happens to agree with the calibration above, which is why the derived values are usable at all</td></tr>
+<tr><td>A vibrancy material is available to this panel at all</td><td><span class="tag u">Unverified.</span> Plausible via <code>NSVisualEffectView</code>, but the panel's window is created by <code>MenuBarExtra</code>, not by us</td></tr>
+</table></div>
+
+<!-- ==================== 1. FONT ==================== -->
+<h2>1 &middot; Font at Large should match the system default</h2>
+<p>You are right that L is off-standard: <code>controlFont</code> and <code>scaleLabelFont</code> both return
+<strong>15pt</strong> at large, where the macOS control default is 13pt. That 15 was not an accident though &mdash; the
+comment sitting directly above it says 13pt next to 20pt glyphs "reads as too small". So the font is compensating for
+the glyph, and moving the font alone moves the imbalance rather than fixing it.</p>
+<p>The number that actually governs how the row reads is the <strong>glyph-box to text ratio</strong>:</p>
+<div class="tablewrap"><table>
+<tr><th></th><th>glyphSize</th><th>glyphFont</th><th>controlFont</th><th>ratio (box : text)</th><th>Reads as</th></tr>
+<tr><td><b>a. Today</b></td><td>20</td><td>16</td><td>15</td><td>1.33</td><td>balanced, but text is 2pt above system</td></tr>
+<tr><td><b>b. Font only</b></td><td>20</td><td>16</td><td>13</td><td><strong>1.54</strong></td><td>system-correct text, glyphs now oversized beside it</td></tr>
+<tr><td><b>c. Recommended</b></td><td><strong>17</strong></td><td><strong>14</strong></td><td><strong>13</strong></td><td>1.31</td><td>system-correct text, balance preserved</td></tr>
+</table></div>
+<p class="note">Note there are <em>two</em> glyph numbers, not one. <code>glyphSize</code> is the layout box the symbol
+sits in; <code>glyphFont</code> is the symbol's own point size. The two track together at every scale today
+(16/13 at medium = 0.81, 20/16 at large = 0.80), so a box of 17 wants a symbol of 14 to keep that relation. Changing
+only <code>glyphSize</code> would leave a 16pt symbol rattling in a 17pt box.</p>
+<p>Look at the three rows rather than the arithmetic. The imbalance in (b) is the thing the original comment was
+complaining about, and it is easier to see than to argue about.</p>
+
+<div class="stage light">
+  <div class="cap"><b>a. today</b> &nbsp;&middot;&nbsp; glyph box 20, symbol 16, text 15 &nbsp;&middot;&nbsp; ratio 1.33</div>
+  <div class="scaler"><div class="panel" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>b. font only</b> &nbsp;&middot;&nbsp; glyph box 20, symbol 16, text 13 &nbsp;&middot;&nbsp; ratio 1.54 &mdash; glyphs now dominate</div>
+  <div class="scaler"><div class="panel v-font-b" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>c. recommended</b> &nbsp;&middot;&nbsp; glyph box 17, symbol 14, text 13 &nbsp;&middot;&nbsp; ratio 1.31</div>
+  <div class="scaler"><div class="panel v-font-c" data-row></div></div>
+</div>
+
+<div class="stage dark">
+  <div class="cap"><b>a. today</b> &nbsp;&middot;&nbsp; 20 / 16 / 15</div>
+  <div class="scaler"><div class="panel" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>c. recommended</b> &nbsp;&middot;&nbsp; 17 / 14 / 13</div>
+  <div class="scaler"><div class="panel v-font-c" data-row></div></div>
+</div>
+
+<div class="rec"><strong>Recommendation:</strong> take (c). <code>glyphSize</code> 20&rarr;17, <code>glyphFont</code>
+16&rarr;14, <code>controlFont</code> 15&rarr;13, <code>scaleLabelFont</code> 15&rarr;13. Medium and small are untouched.
+One consequence to price in: controls get ~3pt shorter, so the whole row gets shorter, and every control gets slightly
+narrower &mdash; which gives width back to the camera menu rather than taking it. <code>controlSize</code> stays
+<code>.regular</code>; it is what makes 13pt the native size in the first place.</div>
+
+<!-- ==================== 2. SPACING ==================== -->
+<h2>2 &middot; Vertical spacing &mdash; superseded, and reversed</h2>
+
+<div class="callout red">
+<h3>This section's original proposal no longer stands</h3>
+<p>It argued for making the bar <strong>roomier</strong>: vertical padding from 11 up to 15, with the bottom optically
+corrected to 13. You have since asked for the bar to <strong>match Photo Booth's title bar</strong>, and Photo Booth's
+bar is considerably shorter than ours. Parity requires the opposite of what this section proposed.</p>
+<p style="margin-bottom:0">The original is kept below rather than deleted, because the optical argument inside it &mdash;
+that the top and bottom gaps are different kinds of gap &mdash; survives the reversal and still applies at whatever
+height is chosen. Section 2b is the live one.</p>
+</div>
+
+<h3>What the original said, and what still holds</h3>
+<p>At large the padding is <strong>16pt horizontal against 11pt vertical</strong>. The asymmetry was read as pinched,
+and the proposal was 15 vertical, drawn below.</p>
+<div class="callout">
+<h3>Symmetric padding will not look symmetric &mdash; this part still holds</h3>
+<p style="margin-bottom:0">The preview runs <em>flush</em> to the panel's bottom edge, so the two gaps are not the
+same kind of gap. The top gap sits between the row and the window's own edge, which is soft &mdash; there is nothing
+there. The bottom gap sits between the row and a hard, dark, high-contrast image edge, which visually pulls. Equal
+numbers therefore read bottom-heavy, and the fix is optical rather than arithmetic: give the bottom
+<strong>1&ndash;2pt less</strong> than the top. <strong>This remains true at a Photo Booth-matched height</strong>,
+where the padding is smaller but the asymmetry between the two edges is unchanged.</p>
+</div>
+
+<div class="stage light">
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; top 11 / bottom 11, against 16 horizontal</div>
+  <div class="scaler"><div class="panel ruler" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>superseded proposal &mdash; symmetric</b> &nbsp;&middot;&nbsp; top 15 / bottom 15, reads bottom-heavy</div>
+  <div class="scaler"><div class="panel ruler v-pad-sym" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>superseded proposal &mdash; optically corrected</b> &nbsp;&middot;&nbsp; top 15 / bottom 13</div>
+  <div class="scaler"><div class="panel ruler v-pad-opt" data-row></div></div>
+  <div class="legend">Red hatching tints the button row's own vertical padding &mdash; above the buttons, and between the buttons and the top of the preview. There is deliberately no band under the preview: the preview runs flush to the panel's bottom edge and has no padding. The hatch is a tint over real layout, so these three panels genuinely differ in height; it is a measurement aid, not part of the design.</div>
+</div>
+<p class="note">These three panels draw the control at 24pt, which is what I estimated before the screenshot was
+measured. Measurement puts the <em>typical</em> control at about 20pt and only the pin at about 24pt &mdash; see 2b.
+The comparison between the three is still valid, since all three share the same control; their absolute bar height is
+about 4pt too tall.</p>
+
+<!-- ==================== 2b. PHOTO BOOTH PARITY ==================== -->
+<h2>2b &middot; Photo Booth parity &mdash; the live proposal</h2>
+<p>You asked for the L bar to match Photo Booth's title bar, comparing the two in one capture. I re-measured that
+capture by decoding the PNG rather than by eye, and the measurement changes the conclusion I was given, so the numbers
+below are mine and the working is shown.</p>
+
+<h3>What the screenshot actually says</h3>
+<p>Source: a single 2000&times;144 capture holding both windows, so ratios between them are trustworthy even though the
+absolute scale factor is not. Pixel values read from decoded scanlines:</p>
+<div class="tablewrap"><table>
+<tr><th>Measured in image pixels</th><th>Rows</th><th>Height</th><th>Status</th></tr>
+<tr><td>Photo Booth title bar, white band</td><td>y = 11&ndash;60</td><td><strong>50px</strong></td><td><span class="tag v">Measured</span></td></tr>
+<tr><td>Our button row band, panel background between top edge and preview</td><td>y = 14&ndash;89</td><td><strong>76px</strong></td><td><span class="tag v">Measured</span></td></tr>
+<tr><td>Mirror toggle, blue capsule (x = 1390)</td><td>y = 34&ndash;70</td><td><strong>37px</strong></td><td><span class="tag v">Measured</span></td></tr>
+<tr><td>L size toggle, blue capsule (x = 1860)</td><td>y = 34&ndash;70</td><td><strong>37px</strong></td><td><span class="tag v">Measured</span></td></tr>
+<tr><td>Mic toggle and timer box (x = 1300&ndash;1330)</td><td>y = 34&ndash;69</td><td><strong>36px</strong></td><td><span class="tag v">Measured</span></td></tr>
+<tr><td>Pin toggle, blue capsule (x = 1050)</td><td>y = 31&ndash;73</td><td><strong>43px</strong></td><td><span class="tag v">Measured</span> &mdash; an outlier, see below</td></tr>
+</table></div>
+
+<div class="callout red">
+<h3>Correction to the brief I was given: 43px is the pin, not a typical control</h3>
+<p>I was told our control is 43px, which is 86&#37; of Photo Booth's entire title bar, and that therefore parity leaves
+under 2pt of padding. The 43px figure is real but it is the <strong>pin</strong>, which measures 6&ndash;7px taller than
+every other control in the row. Mirror, the L toggle, the mic and the timer all land at 36&ndash;37px.</p>
+<p style="margin-bottom:0">Using the typical control instead: 36 of 50px is <strong>72&#37;</strong>, and exact parity
+leaves (50&nbsp;&minus;&nbsp;36)&nbsp;/&nbsp;2 = 7px of padding per side rather than 3.5px. That is still tight, but it
+is roughly twice as much room as the brief assumed, and it changes "not viable" into "viable but at the floor". <strong>The
+pin being taller than every other toggle is itself a defect</strong> &mdash; the row is meant to read as one control
+family &mdash; and it blocks parity on its own. It is filed to <code>BACKLOG.md</code>.</p>
+</div>
+
+<h3>Turning pixels into points, and why two calibrations disagree</h3>
+<p>The capture's scale factor is not given, so point values have to be derived from an anchor. Anchoring on our own
+<code>verticalPadding</code> of 11pt, measured at 19&ndash;20px above and below the typical control, gives
+<strong>&asymp;1.77 px per pt</strong>. That calibration then independently predicts Photo Booth's 50px title bar at
+<strong>28.2pt</strong>, which lands on the 28pt figure I recall as the macOS standard title bar height. Two
+independent anchors agreeing is the reason I am willing to use these numbers at all.</p>
+<div class="tablewrap"><table>
+<tr><th>Quantity</th><th>Pixels</th><th>Points at 1.77 px/pt</th><th>Confidence</th></tr>
+<tr><td>Photo Booth title bar</td><td>50</td><td>~28pt</td><td><span class="tag m">Derived.</span> Corroborated by the 28pt standard, which is itself <span class="tag u">unverified</span> &mdash; I recall it, I did not confirm it</td></tr>
+<tr><td>Our bar (row + both paddings)</td><td>76</td><td>~43pt</td><td><span class="tag m">Derived</span></td></tr>
+<tr><td>Our typical control</td><td>36&ndash;37</td><td>~20pt</td><td><span class="tag m">Derived</span></td></tr>
+<tr><td>Our pin</td><td>43</td><td>~24pt</td><td><span class="tag m">Derived</span></td></tr>
+<tr><td><code>verticalPadding</code></td><td>19&ndash;20</td><td>11pt</td><td><span class="tag v">Verified</span> from <code>PanelSizer.swift</code> &mdash; this is the anchor</td></tr>
+<tr><td><strong>Our bar &divide; Photo Booth's</strong></td><td>76 / 50</td><td><strong>1.52&times;</strong></td><td><span class="tag v">Solid.</span> A ratio within one capture needs no calibration</td></tr>
+</table></div>
+<p class="note">Treat the ratio column as the real finding and the point column as a working estimate. If the 28pt
+standard is wrong, every point value above moves together and the ratios do not move at all.</p>
+
+<h3>Candidates, each with its multiple of Photo Booth</h3>
+<p>Bar height = control height + top padding + bottom padding. Since our padding is already only 11pt and the target
+bar is ~28pt, most of the reduction has to come from <strong>control height</strong>, exactly as the brief said. The
+lever on control height is <code>glyphSize</code>: at large it is 20pt against a ~20pt control, so the glyph frame
+<em>is</em> the control's content and the bordered style adds almost nothing on top. Shrinking the glyph is therefore
+the same change as shrinking the bar.</p>
+<div class="tablewrap"><table>
+<tr><th>Candidate</th><th>Control</th><th>Padding</th><th>Bar</th><th>&times; Photo Booth</th><th>Verdict</th></tr>
+<tr><td>Photo Booth reference</td><td>&mdash;</td><td>&mdash;</td><td>~28pt</td><td><strong>1.00</strong></td><td>the target</td></tr>
+<tr><td>Today</td><td>20 (pin 24)</td><td>11 / 11</td><td>~43pt</td><td><strong>1.52</strong></td><td>what you are reacting to</td></tr>
+<tr><td>Font recommendation only (&sect;1)</td><td>17</td><td>11 / 11</td><td>~39pt</td><td><strong>1.39</strong></td><td>helps, nowhere near parity</td></tr>
+<tr><td>Exact parity, control untouched</td><td>20 (pin 24)</td><td>4 / 4</td><td>~28pt</td><td><strong>1.00</strong></td><td class="fail">fails &mdash; and the pin would get 2pt</td></tr>
+<tr><td><strong>Parity A</strong></td><td>18</td><td>5 / 5</td><td>~28pt</td><td><strong>1.00</strong></td><td>reaches parity; tightest workable</td></tr>
+<tr><td>Parity B</td><td>16</td><td>6 / 6</td><td>~28pt</td><td><strong>1.00</strong></td><td>parity with breathing room, controls shrink hard</td></tr>
+<tr><td><strong>Near parity</strong></td><td>18</td><td>7 / 7</td><td>~32pt</td><td><strong>1.14</strong></td><td>my pick, see below</td></tr>
+</table></div>
+
+<div class="stage light">
+  <div class="cap"><b>reference</b> &nbsp;&middot;&nbsp; Photo Booth title bar, ~28pt, drawn at this page's scale</div>
+  <div class="pbwrap"><div class="pbbar"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span class="pbt">Photo Booth</span></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; control 20, padding 11/11, bar ~43pt &nbsp;&middot;&nbsp; <b>1.52&times;</b></div>
+  <div class="scaler"><div class="panel p-today" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>font recommendation only</b> &nbsp;&middot;&nbsp; control 17, padding 11/11, bar ~39pt &nbsp;&middot;&nbsp; <b>1.39&times;</b></div>
+  <div class="scaler"><div class="panel p-font" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>exact parity, control untouched</b> &nbsp;&middot;&nbsp; control 20, padding 4/4, bar ~28pt &nbsp;&middot;&nbsp; <b>1.00&times;</b> &mdash; look at how the controls crowd both edges</div>
+  <div class="scaler"><div class="panel p-exact" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>parity A</b> &nbsp;&middot;&nbsp; control 18, padding 5/5, bar ~28pt &nbsp;&middot;&nbsp; <b>1.00&times;</b></div>
+  <div class="scaler"><div class="panel p-parA" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>parity B</b> &nbsp;&middot;&nbsp; control 16, padding 6/6, bar ~28pt &nbsp;&middot;&nbsp; <b>1.00&times;</b></div>
+  <div class="scaler"><div class="panel p-parB" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>near parity</b> &nbsp;&middot;&nbsp; control 18, padding 7/7, bar ~32pt &nbsp;&middot;&nbsp; <b>1.14&times;</b></div>
+  <div class="scaler"><div class="panel p-near" data-row></div></div>
+</div>
+
+<div class="stage dark">
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; <b>1.52&times;</b></div>
+  <div class="scaler"><div class="panel p-today" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>parity A</b> &nbsp;&middot;&nbsp; <b>1.00&times;</b></div>
+  <div class="scaler"><div class="panel p-parA" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>near parity</b> &nbsp;&middot;&nbsp; <b>1.14&times;</b></div>
+  <div class="scaler"><div class="panel p-near" data-row></div></div>
+</div>
+
+<div class="callout">
+<h3>The constraint that decides between them</h3>
+<p style="margin-bottom:0">The macOS HIG gives a minimum control height of <strong>22pt</strong>. Under this
+calibration our L controls are already about 20pt, i.e. <em>already under it</em>, and every parity candidate goes
+further under &mdash; 18pt for A, 16pt for B. These are click targets, not labels: nine of them, several of which
+start and stop a recording. I am not willing to present 16pt as safe. If the calibration is off and our controls are
+really 22&ndash;24pt today, then parity costs less than this says, which is another reason the 28pt title bar figure
+is worth confirming on a real Mac before anyone writes Swift.</p>
+</div>
+
+<h3>Is height parity with a title bar the right goal at all?</h3>
+<p>Said once, then I build what you asked for. Photo Booth's title bar carries a text label and three traffic lights,
+none of which are aimed at. Ours carries nine interactive controls, two of which start a recording. A bar holding
+click targets has a floor that a bar holding a label does not, so a literal height match is not a like-for-like
+comparison. My read is that what reads well in that screenshot is the <em>proportion</em> &mdash; a slim band of chrome
+above a large image, chrome that does not compete with the content &mdash; and near parity at 1.14&times; delivers that
+proportion while keeping the controls clickable. That is why it is my pick. If you want the literal number,
+<strong>parity A</strong> is the one to take, and it is drawn above.</p>
+
+<div class="rec"><strong>Recommendation:</strong> <strong>near parity</strong> &mdash; control 18pt, padding 7 top /
+6 bottom (the optical correction from the superseded section still applies), bar ~32pt, <strong>1.14&times;</strong>
+Photo Booth. It takes the bar down by a quarter, reads as the same kind of slim chrome, and keeps the controls above
+where parity A puts them. Independently of which candidate is chosen: <strong>fix the pin's height</strong> so it
+matches the other eight controls, because at any of these bar heights a control 4pt taller than its neighbours is the
+thing the eye lands on.</div>
+
+<h3>What this implies for M and S</h3>
+<p>You said everything shrinks proportionally, so the honest statement of the consequence is this. Near parity takes
+L's control from ~20pt to 18pt, a factor of <strong>0.9</strong>, and its padding from 11 to 7, a factor of
+<strong>0.64</strong>. Applying the same two factors:</p>
+<div class="tablewrap"><table>
+<tr><th>Scale</th><th>Control today</th><th>Control after</th><th><code>verticalPadding</code> today</th><th>After</th><th>Note</th></tr>
+<tr><td>Large</td><td>~20pt</td><td>18pt</td><td>11</td><td>7 / 6</td><td>the change being proposed</td></tr>
+<tr><td>Medium</td><td>~16pt</td><td>~14pt</td><td>8</td><td>5 / 5</td><td>already well under the 22pt guidance; this widens the gap</td></tr>
+<tr><td>Small</td><td>~13pt</td><td>~12pt</td><td>6</td><td>4 / 4</td><td>at 12pt a control is smaller than the 16pt icon minimum</td></tr>
+</table></div>
+<p><span class="tag m">Proportional arithmetic, not measurement.</span> M and S were not in the screenshot; those rows
+are today's <code>PanelScale</code> values scaled by the same factors, nothing more.</p>
+<p>Two consequences worth deciding before implementation rather than after:</p>
+<ul>
+<li><strong>The scales converge.</strong> If L's control drops to 18pt it sits close to M's, and L then differs from M
+mainly in panel width and preview size rather than in control size. That may be exactly what you want &mdash; one row
+design, three preview sizes &mdash; but it is a change in what S/M/L <em>means</em>, and it should be a decision rather
+than a side effect.</li>
+<li><strong>S may not survive it.</strong> S is already the scale where <code>rowSpacing</code> was cut to 8 and
+<code>previewWidth</code> widened to 380 just to leave the camera menu a usable width. Shrinking its controls further
+without re-checking that arithmetic is how the menu gets squeezed back to nothing. <strong>Apply the factors to L
+first, measure, then decide M and S</strong> rather than changing all three in one pass.</li>
+</ul>
+
+
+<!-- ==================== 3. CORNERS ==================== -->
+<h2>3 &middot; The "nice rounded corner"</h2>
+<p>There are two different rounded things in that FaceTime shot and you did not say which one you meant, so both are
+covered. They are independent decisions and could be taken separately.</p>
+
+<h3>(a) The window corner</h3>
+<p>FaceTime's panel is a floating window with a large continuous radius on <strong>all four</strong> corners. Ours
+rounds only the bottom two, at 10pt, because the top edge is attached to the menu bar &mdash; the panel hangs off the
+status item rather than floating free.</p>
+<div class="stage desk">
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; bottom corners only, ~10pt &mdash; top edge meets the menu bar</div>
+  <div class="scaler"><div class="panel" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>larger bottom radius</b> &nbsp;&middot;&nbsp; 14pt, bottom two only &mdash; achievable today</div>
+  <div class="scaler"><div class="panel v-round-bottom" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>all four corners</b> &nbsp;&middot;&nbsp; 14pt &mdash; the FaceTime look. <span class="tag u">feasibility unverified</span></div>
+  <div class="scaler"><div class="panel v-round-full" data-row></div></div>
+</div>
+<p><span class="tag u">Unverified.</span> I do not know whether the third one is achievable on a
+<code>MenuBarExtra(.window)</code> panel. The window is created by <code>MenuBarExtra</code>, not by us; its top edge
+is flush with the bottom of the menu bar, and rounding it would either cut into the menu bar or leave two small
+wedges of desktop showing above the panel's shoulders. It may also be that the system draws the panel's background
+and our corner radius only ever applies to our own content. <strong>This is a question for the Swift Engineer before
+anyone designs around it</strong>, and I have deliberately not assumed an answer. The second mock &mdash; a larger
+radius on the two corners we already round &mdash; is available regardless and captures most of the softness.</p>
+
+<h3>(b) The control corner</h3>
+<p>The other rounded thing in that shot is FaceTime's controls, which are fully round capsules rather than rounded
+rectangles. <strong>That is already what Option B proposes</strong> and it is drawn in
+<code>option-b-semantic-capsules.html</code>; the active pin, mirror and M capsules in every panel on this page are
+showing it. Nothing further is needed here, but it is worth knowing the two are separable: you can take the capsules
+without touching the window radius, or the reverse.</p>
+
+<div class="rec"><strong>Recommendation:</strong> take the bottom-corner radius from 10pt to 14pt now, which is safe.
+Treat all-four-corners as a question to the Swift Engineer, not a design decision, and do not commit to it in a mock
+until it has an answer.</div>
+
+<!-- ==================== 4. MATERIAL ==================== -->
+<h2>4 &middot; Material and density &mdash; not asked for, but probably the real answer</h2>
+<p>You did not raise this, and I want to be clear it is my addition rather than your ask. But having looked at the two
+screenshots side by side, I think the gap between them is mostly <em>not</em> colour, size or corner radius. It is two
+other things.</p>
+
+<h3>Material: translucent versus flat</h3>
+<p>FaceTime's panel is a vibrancy material &mdash; the desktop blurs through it, and the band behind the camera name
+picks up a warm tint from the video sitting above it. Ours is flat opaque grey that looks the same on every wallpaper.
+Both panels below sit on the same desktop so the difference is visible.</p>
+<div class="stage desk">
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; flat opaque <code>windowBackgroundColor</code></div>
+  <div class="scaler"><div class="panel v-round-bottom" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>vibrancy</b> &nbsp;&middot;&nbsp; translucent material, desktop showing through, faint tint pulled off the preview</div>
+  <div class="scaler"><div class="panel v-round-bottom v-glass" data-row></div></div>
+  <div class="legend">Browser approximation using <code>backdrop-filter</code>. The real thing is <code>NSVisualEffectView</code> with a <code>.popover</code> or <code>.hudWindow</code> material and is not a CSS blur &mdash; it also picks up desaturation and a noise layer that cannot be reproduced here.</div>
+</div>
+<p class="note"><span class="tag u">Feasibility unverified.</span> Whether we can put an
+<code>NSVisualEffectView</code> behind a <code>MenuBarExtra(.window)</code> panel, and whether the system already
+supplies one that our opaque background is painting over, is a Swift Engineer question. It is possible this is a
+one-line change and equally possible it is not available at all.</p>
+
+<h3>Density: nine bordered boxes versus none</h3>
+<p>This is the one I would push hardest. FaceTime's panel draws its rows with <strong>no containers at all</strong> &mdash;
+coloured glyphs and text sitting directly on the material. Our row draws <strong>nine outlined rectangles</strong>, and
+Option B does not change that: it fills the active ones, but every inactive control keeps its own 1pt outline and its
+own <code>controlBackgroundColor</code> fill. The result is that the row reads as a toolbar of buttons rather than as a
+set of controls.</p>
+<p>The variant below removes the outline and the fill from everything inactive. Only an active control carries
+anything, and it carries a solid capsule.</p>
+<div class="stage light">
+  <div class="cap"><b>today</b> &nbsp;&middot;&nbsp; every control outlined and filled, active ones capsuled</div>
+  <div class="scaler"><div class="panel v-round-bottom" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>borderless inactive</b> &nbsp;&middot;&nbsp; outline and fill only on active controls</div>
+  <div class="scaler"><div class="panel v-round-bottom v-flat" data-row></div></div>
+</div>
+<div class="stage dark">
+  <div class="cap"><b>today</b></div>
+  <div class="scaler"><div class="panel v-round-bottom" data-row></div></div>
+  <div class="gap"></div>
+  <div class="cap"><b>borderless inactive</b></div>
+  <div class="scaler"><div class="panel v-round-bottom v-flat" data-row></div></div>
+</div>
+<p><strong>What this costs, honestly.</strong> Three things, and they are not trivial:</p>
+<ul>
+<li>It <strong>contradicts a rule the project has held deliberately</strong>. <code>CLAUDE.md</code> states that every
+control derives a constant 1pt outline from <code>PanelScale</code> "so an off toggle and an on toggle read as one
+control in two states". Removing the outline from the off state removes exactly that. Option B already strained this
+rule by changing the corner radius; this breaks it. It is a real decision, not a tidy-up.</li>
+<li><strong>Hit targets become invisible.</strong> A borderless glyph gives no hint of where it is clickable. The
+mitigation is a hover fill, which macOS toolbars do &mdash; but that is a state the current row does not have and would
+need designing and specifying.</li>
+<li><strong>The camera menu loses its affordance.</strong> Without a border it stops looking like a menu. It probably
+needs to keep its container even when everything else loses one, which makes the row less uniform, not more.</li>
+</ul>
+<div class="rec"><strong>Recommendation:</strong> worth prototyping, not worth committing to from a mock. If you want
+the "Mac-native" feel in one change, this is the candidate with the highest ceiling and the highest cost. My honest
+read is that it will need a hover state designed alongside it to be usable, so it is a larger piece of work than the
+font and padding changes and should be sequenced after them.</div>
+
+<!-- ==================== SUMMARY ==================== -->
+<h2>Summary</h2>
+<div class="tablewrap"><table>
+<tr><th>Change</th><th>At large</th><th>Confidence</th><th>Blocked on</th></tr>
+<tr><td>Text to system default</td><td><code>controlFont</code> 15&rarr;13, <code>scaleLabelFont</code> 15&rarr;13</td><td>high &mdash; it is a documented standard</td><td>nothing</td></tr>
+<tr><td>Glyph rebalance</td><td><code>glyphSize</code> 20&rarr;17, <code>glyphFont</code> 16&rarr;14</td><td>high &mdash; needed or the font change makes the row worse</td><td>nothing</td></tr>
+<tr><td>Bar height, Photo Booth near parity</td><td>control ~20&rarr;18, padding 11&rarr;7 top / 6 bottom, bar ~43&rarr;~32pt (1.14&times; Photo Booth)</td><td>medium &mdash; ratios are measured, point values are derived</td><td>splitting <code>verticalPadding</code> into two values; confirming the 28pt title bar on a real Mac</td></tr>
+<tr><td>Bar height, exact parity</td><td>control ~20&rarr;18, padding 11&rarr;5, bar ~28pt (1.00&times;)</td><td>medium &mdash; reaches the literal target, at the HIG control-height floor</td><td>same, plus accepting 18pt click targets</td></tr>
+<tr><td>Pin height defect</td><td>pin measures 43px against 36&ndash;37px for every other control; make it match</td><td>high &mdash; measured directly from the screenshot</td><td>nothing; filed to <code>BACKLOG.md</code></td></tr>
+<tr><td><s>Vertical padding 11 &rarr; 15/13</s></td><td>superseded by the parity request &mdash; it moved the bar the wrong way</td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>Bottom corner radius</td><td>10 &rarr; 14</td><td>medium &mdash; cosmetic, easily reversed</td><td>nothing</td></tr>
+<tr><td>All four window corners</td><td>&mdash;</td><td><span class="tag u">unknown</span></td><td>Swift Engineer: is it possible on <code>MenuBarExtra(.window)</code>?</td></tr>
+<tr><td>Vibrancy material</td><td>&mdash;</td><td><span class="tag u">unknown</span></td><td>Swift Engineer: can we get an <code>NSVisualEffectView</code> behind this panel?</td></tr>
+<tr><td>Borderless inactive controls</td><td>&mdash;</td><td>low as specified &mdash; needs a hover state first</td><td>a decision to drop the constant-outline rule</td></tr>
+</table></div>
+
+<h2>Open questions for the Swift Engineer</h2>
+<p class="note">Read-only feasibility questions. No design has been changed to accommodate a guessed answer.</p>
+<ul>
+<li>Can a <code>MenuBarExtra(.window)</code> panel round all four corners, or does the top edge meeting the menu bar
+forbid it?</li>
+<li>Can an <code>NSVisualEffectView</code> sit behind this panel's content, and is the system already providing a
+material that our opaque background is covering?</li>
+<li>Is a standard macOS title bar 28pt? Every point value in section 2b leans on it, and I could not confirm it.</li>
+<li>Why does the pin toggle render 6&ndash;7px taller than every other control in the row, when they share a <code>controlSize</code>?</li>
+<li>Does splitting <code>verticalPadding</code> into top and bottom values disturb the <code>PanelSizer</code> frame
+arithmetic, given the panel height is computed rather than intrinsic?</li>
+<li>Does shrinking <code>glyphSize</code> at large change the row's height enough to matter to the frame calculation,
+or does it just give the camera menu more width?</li>
+</ul>
+
+</div><!-- /wrap -->
+
+<template id="rowtpl">
+<div class="row">
+  <span class="ctl c-pin on" title="Pin"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.6 1.4 14.6 6.4l-1.5 1.5-1.1-.4-2.6 2.6.3 2.2-1.2 1.2-3-3-3.3 3.3-.7-.7L4.8 9.8l-3-3L3 5.6l2.2.3L7.8 3.3l-.4-1.1z" fill="currentColor"/></svg></span></span>
+
+  <span class="group">
+    <span class="ctl c-mic" title="Record audio"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+    <span class="timer">00:00</span>
+    <span class="ctl c-video" title="Record video"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+  </span>
+
+  <span class="ctl c-mirror on" title="Mirror preview"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 3.2h10.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.4 1.9 2.6 3.2l1.8 1.3M11.6 1.9l1.8 1.3-1.8 1.3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 6.6v7.5L2.7 14.1z" fill="currentColor"/><path d="M8.8 6.6v7.5l4.5 0z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
+
+  <span class="spacer"></span>
+
+  <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
+
+  <span class="sgroup">
+    <span class="ctl c-scale"><span class="lbl">S</span></span>
+    <span class="ctl c-scale on"><span class="lbl">M</span></span>
+    <span class="ctl c-scale"><span class="lbl">L</span></span>
+  </span>
+
+  <span class="ctl c-power" title="Quit"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+</div>
+</template>
+
+<script>
+(function(){
+  var tpl = document.getElementById('rowtpl');
+  document.querySelectorAll('.panel[data-row]').forEach(function(p){
+    p.appendChild(tpl.content.cloneNode(true));
+    var strip = document.createElement('div');
+    strip.className = 'strip';
+    p.appendChild(strip);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control row colour: four options</title>
+<style>
+:root{
+  --bg-window:#ECECEC; --bg-popover:#F6F6F6; --bg-control:#FFFFFF; --bg-underpage:#E3E3E3;
+  --label-primary:rgba(0,0,0,0.85); --label-secondary:rgba(0,0,0,0.50); --label-tertiary:rgba(0,0,0,0.26);
+  --separator:rgba(0,0,0,0.12); --accent:#007AFF; --record-red:#FF3B30; --sys-green:#34C759;
+  --sys-teal:#30B0C7; --sys-indigo:#5E5CE6; --amber:#FF9E33;
+  --sel-fill:rgba(0,0,0,0.13); --sel-label:rgba(0,0,0,0.88);
+  --hover-fill:rgba(0,0,0,0.07); --shadow:rgba(0,0,0,0.18); --code-bg:rgba(0,0,0,0.06);
+  --on-tint-label:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg-window:#1E1E1E; --bg-popover:#2C2C2E; --bg-control:#3A3A3C; --bg-underpage:#171719;
+    --label-primary:rgba(255,255,255,0.85); --label-secondary:rgba(255,255,255,0.55); --label-tertiary:rgba(255,255,255,0.26);
+    --separator:rgba(255,255,255,0.14); --accent:#0A84FF; --record-red:#FF453A; --sys-green:#30D158;
+    --sys-teal:#40C8E0; --sys-indigo:#7D7AFF;
+    --sel-fill:rgba(255,255,255,0.20); --sel-label:rgba(255,255,255,0.92);
+    --hover-fill:rgba(255,255,255,0.10); --shadow:rgba(0,0,0,0.55); --code-bg:rgba(255,255,255,0.10);
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-size:13px;background:var(--bg-window);color:var(--label-primary)}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:19px;font-weight:700;margin-bottom:4px}
+h2{font-size:14px;font-weight:600;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--separator)}
+h3{font-size:12.5px;font-weight:600;margin:20px 0 8px}
+p{font-size:12.5px;line-height:1.6;margin-bottom:10px;color:var(--label-primary)}
+p.sub{color:var(--label-secondary);margin-bottom:22px}
+p.note{color:var(--label-secondary)}
+code{font-family:"SF Mono",Menlo,monospace;font-size:11px;background:var(--code-bg);padding:1px 4px;border-radius:3px}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px}
+.tag.v{background:rgba(52,199,89,.18);color:#1f7a3d}
+.tag.m{background:rgba(255,158,51,.20);color:#8a5500}
+@media (prefers-color-scheme: dark){.tag.v{color:#7ee2a0}.tag.m{color:#ffc477}}
+.tablewrap{overflow-x:auto;margin:10px 0 4px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th,td{text-align:left;padding:6px 9px;border:.5px solid var(--separator);vertical-align:top;line-height:1.5}
+th{background:var(--code-bg);font-weight:600}
+ul{font-size:12.5px;line-height:1.6;color:var(--label-primary);padding-left:18px;margin-bottom:10px}
+li{margin-bottom:4px}
+.opt{border:1px solid var(--separator);border-radius:12px;padding:18px;margin:18px 0 26px;background:var(--bg-popover)}
+.opt h2{margin-top:0;border-bottom:none;padding-bottom:0;font-size:15px}
+.verdict{font-size:12px;border-left:3px solid var(--label-tertiary);padding:6px 0 6px 10px;margin:10px 0;color:var(--label-secondary)}
+.verdict.win{border-left-color:var(--sys-green);color:var(--label-primary)}
+
+/* ---------- stages ---------- */
+.stages{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media (max-width:720px){.stages{grid-template-columns:1fr}}
+.stage{border-radius:10px;padding:16px 12px;overflow-x:auto;box-shadow:inset 0 0 0 .5px var(--separator)}
+.stage .cap{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;text-align:center;margin-bottom:10px}
+.stage .cap2{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;text-align:center;margin:10px 0}
+.stage.light{--bg-window:#ECECEC;--bg-popover:#F6F6F6;--bg-control:#FFFFFF;--label-primary:rgba(0,0,0,0.85);
+  --label-secondary:rgba(0,0,0,0.50);--label-tertiary:rgba(0,0,0,0.26);--separator:rgba(0,0,0,0.12);
+  --accent:#007AFF;--record-red:#FF3B30;--sys-green:#34C759;--sys-teal:#30B0C7;--sys-indigo:#5E5CE6;
+  --sel-fill:rgba(0,0,0,0.13);--sel-label:rgba(0,0,0,0.88);--shadow:rgba(0,0,0,0.18);
+  background:#DEDEDE;color:var(--label-primary)}
+.stage.dark{--bg-window:#1E1E1E;--bg-popover:#2C2C2E;--bg-control:#3A3A3C;--label-primary:rgba(255,255,255,0.85);
+  --label-secondary:rgba(255,255,255,0.55);--label-tertiary:rgba(255,255,255,0.26);--separator:rgba(255,255,255,0.14);
+  --accent:#0A84FF;--record-red:#FF453A;--sys-green:#30D158;--sys-teal:#40C8E0;--sys-indigo:#7D7AFF;
+  --sel-fill:rgba(255,255,255,0.20);--sel-label:rgba(255,255,255,0.92);--shadow:rgba(0,0,0,0.55);
+  background:#141414;color:var(--label-primary)}
+
+/* ---------- panel + row (medium scale tokens, verified from PanelScale) ---------- */
+.panel{width:480px;background:var(--bg-popover);border-radius:10px;
+  box-shadow:0 6px 22px var(--shadow),0 0 0 .5px var(--separator);overflow:hidden;
+  --gap:14px;--px:12px;--py:8px;--r:5px;--g:16px;--gf:13px;--h:20px;--cf:12px;--lf:12px;--pw:200px}
+.scaler{width:456px;overflow:hidden}
+.scaler .panel{transform:scale(.95);transform-origin:top left}
+.row{display:flex;align-items:center;gap:var(--gap);padding:var(--py) var(--px)}
+.group{display:flex;align-items:center;gap:calc(var(--gap)/2)}
+.spacer{flex:1 1 auto;min-width:12px}
+.strip{height:44px;background:var(--bg-underpage);
+  background-image:linear-gradient(150deg,#4A5A73 0%,#2E3A4C 55%,#1D242F 100%)}
+
+.ctl{position:relative;height:var(--h);padding:0 4px;border-radius:var(--r);
+  border:1px solid var(--separator);background:var(--bg-control);color:var(--label-primary);
+  display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ctl .glyph{width:var(--g);height:var(--g);display:flex;align-items:center;justify-content:center}
+.ctl .glyph svg{width:var(--gf);height:var(--gf)}
+.ctl .lbl{width:var(--g);height:var(--g);display:flex;align-items:center;justify-content:center;font-size:var(--lf);line-height:1}
+.ctl.off{opacity:1}
+.ctl.dis{opacity:.35}
+.dot{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.blink{animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+.timer{height:var(--h);border-radius:var(--r);border:1px solid var(--separator);
+  display:inline-flex;align-items:center;padding:0 6px;font-family:"SF Mono",Menlo,monospace;
+  font-size:var(--cf);flex:none;color:var(--label-secondary);opacity:.65}
+.rec .timer{color:var(--label-primary);opacity:1}
+.picker{height:var(--h);max-width:var(--pw);border-radius:var(--r);border:1px solid var(--separator);
+  background:var(--bg-control);color:var(--label-primary);display:inline-flex;align-items:center;gap:6px;
+  padding:0 4px 0 7px;font-size:var(--cf);flex:0 1 auto;min-width:0;overflow:hidden}
+.picker .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picker .chev{width:13px;height:var(--g);border-radius:3px;display:flex;align-items:center;
+  justify-content:center;flex:none;font-size:8px;line-height:1;background:var(--accent);color:#fff}
+.sgroup{display:flex;gap:2px;flex:none}
+
+/* ---------- OPTION A: system accent, as built ---------- */
+.opt-a .ctl.on{background:var(--accent);color:var(--on-tint-label);border-color:transparent}
+.opt-a .ctl.rec-on{background:var(--record-red);color:#fff;border-color:transparent}
+
+/* ---------- OPTION B: semantic capsules ---------- */
+.opt-b .ctl.on,.opt-b .ctl.rec-on{border-radius:999px;border-color:transparent;color:#fff;padding:0 6px}
+.opt-b .c-pin.on{background:var(--sys-indigo)}
+.opt-b .c-mirror.on{background:var(--sys-green)}
+.opt-b .c-scale.on{background:var(--sys-teal)}
+.opt-b .ctl.rec-on{background:var(--record-red)}
+.opt-b .picker .chev{background:var(--sys-green)}
+
+/* ---------- OPTION C: quiet chrome, loud capture ---------- */
+.opt-c .ctl.on{background:var(--sel-fill);color:var(--sel-label);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.14)}
+.opt-c .ctl.rec-on{background:var(--record-red);color:#fff;border-color:transparent;box-shadow:none}
+.opt-c .picker .chev{background:var(--sel-fill);color:var(--sel-label)}
+
+/* ---------- OPTION D: quiet chrome + live ember ---------- */
+.opt-d .ctl.on{background:var(--sel-fill);color:var(--sel-label);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.14)}
+.opt-d .picker .chev{background:var(--sel-fill);color:var(--sel-label)}
+.opt-d .ctl.rec-on{color:#fff;border-color:transparent;box-shadow:none;
+  background:linear-gradient(135deg,#C81E12 0%,#FF3B30 35%,#FF7A3D 55%,#FF3B30 75%,#C81E12 100%);
+  background-size:280% 280%;
+  animation:ember 3.4s ease-in-out infinite}
+.stage.dark .opt-d .ctl.rec-on{
+  background:linear-gradient(135deg,#8E1B12 0%,#FF453A 35%,#FF9F45 55%,#FF453A 75%,#8E1B12 100%);
+  background-size:280% 280%}
+@keyframes ember{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.opt-d .ctl.rec-on::after{content:"";position:absolute;inset:-2px;border-radius:calc(var(--r) + 2px);
+  pointer-events:none;box-shadow:0 0 0 0 rgba(255,59,48,.55);animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0)}
+  50%{box-shadow:0 0 7px 1px rgba(255,90,60,.55)}
+}
+/* static fallback, both by system setting and by the manual switch below */
+@media (prefers-reduced-motion: reduce){
+  .opt-d .ctl.rec-on{animation:none;background:var(--record-red)}
+  .opt-d .ctl.rec-on::after{animation:none;box-shadow:none}
+  .blink{animation:none;opacity:1}
+}
+#rm:checked ~ .wrap .opt-d .ctl.rec-on{animation:none;background:var(--record-red)}
+#rm:checked ~ .wrap .opt-d .ctl.rec-on::after{animation:none;box-shadow:none}
+#rm:checked ~ .wrap .blink{animation:none;opacity:1}
+#rm{position:fixed;top:14px;right:14px;z-index:5}
+.rmlabel{position:fixed;top:12px;right:34px;z-index:5;font-size:11px;color:var(--label-secondary);
+  background:var(--bg-popover);padding:2px 8px;border-radius:6px;box-shadow:0 0 0 .5px var(--separator);cursor:pointer}
+</style>
+</head>
+<body>
+<input type="checkbox" id="rm">
+<label for="rm" class="rmlabel">Simulate Reduce Motion</label>
+<div class="wrap">
+
+<h1>Control row colour: four options</h1>
+<p class="sub">macOS Designer research note, 24 September 2026. Options only, no code change proposed yet.
+Every panel below is drawn at the <strong>medium</strong> scale using the real
+<code>PanelScale</code> numbers (480pt wide, 20pt controls, 16pt glyph box, 13pt glyph, 5pt radius, 14pt row gap, 7pt inside the mic group).
+SF Symbols cannot be loaded in a browser, so <strong>every glyph here is a hand drawn SVG approximation</strong>
+of the real symbol, not the symbol itself. Judge the colour, the fill and the rhythm; do not judge the glyph shapes.</p>
+
+<h2>First: the premise needs one correction</h2>
+<p>I read <code>MacRecordWidgetApp.swift</code> before writing this. The record controls are <em>already</em> red:
+the mic toggle and the video toggle both carry <code>.tint(.red)</code> (lines 68 and 110), and they already
+carry the blinking amber <code>RecordingDot</code>. Nothing about recording is blue today.</p>
+<p>The blue you are reacting to is on the <strong>other four controls</strong>: the pin toggle, the mirror toggle,
+and the three S/M/L size toggles. Those have no <code>.tint</code>, so SwiftUI's <code>.button</code> toggle style
+fills them with <code>controlAccentColor</code>, which is blue by default and follows System Settings.
+Since mirror defaults to on, the pin is often on, and one size toggle is <em>always</em> on, the resting state
+of the panel is three to five blue rectangles and nothing else. That is the actual problem, and it reframes
+the question: this is not about how recording looks, it is about how <em>settings</em> look.</p>
+<p class="note">That distinction drives the recommendation at the bottom.</p>
+
+<h2>What I verified versus what I am asserting</h2>
+<div class="tablewrap"><table>
+<tr><th>Claim</th><th>Status</th></tr>
+<tr><td>Mic and video toggles are tinted red; pin, mirror and S/M/L are untinted and therefore accent coloured</td><td><span class="tag v">Verified</span> read from <code>MacRecordWidgetApp.swift</code> in this session</td></tr>
+<tr><td>Medium scale is 480pt wide, 20pt control height, 16pt glyph box, 5pt corner radius, 14pt row gap</td><td><span class="tag v">Verified</span> read from <code>PanelSizer.swift</code></td></tr>
+<tr><td>The recording dot already goes static under Reduce Motion</td><td><span class="tag v">Verified</span> <code>RecordingDot</code> checks <code>accessibilityReduceMotion</code></td></tr>
+<tr><td>FaceTime draws its camera control as a white glyph on a green capsule</td><td><span class="tag m">Your observation, taken as given.</span> I cannot open FaceTime from here</td></tr>
+<tr><td>Finder, Mail and Notes draw toolbar toggles in a selected state as a grey fill rather than an accent fill</td><td><span class="tag m">From memory.</span> Not verified in this session. Worth you checking one Finder window before we commit</td></tr>
+<tr><td>Control Center tiles use per function colour on round capsules (blue Wi-Fi, blue Bluetooth, red Do Not Disturb)</td><td><span class="tag m">From memory.</span> Not verified</td></tr>
+<tr><td>QuickTime and Screenshot use red for an active capture indicator</td><td><span class="tag m">From memory.</span> Not verified</td></tr>
+<tr><td>Apple ships no animated gradient on any standard macOS control</td><td><span class="tag m">Assertion from memory.</span> I could not find a counterexample, but absence is hard to prove</td></tr>
+</table></div>
+<p class="note">Do not let me pass recollection off as documentation. Anything in the second colour above should be
+confirmed against a live Mac before it goes into a component spec.</p>
+
+<!-- ============================ OPTION A ============================ -->
+<div class="opt">
+<h2>Option A &middot; Accent Is The User's Choice</h2>
+<p>Change nothing. Every non capture toggle keeps <code>controlAccentColor</code>; the two capture toggles keep red.
+The argument is that accent colour is not a colour <em>we</em> picked, it is a colour the <em>user</em> picked
+in System Settings, and overriding it is the opposite of respecting the platform.</p>
+<div class="stages" data-opt="a"></div>
+<h3>Precedent</h3>
+<ul>
+<li>SwiftUI's own <code>.toggleStyle(.button)</code> default. <span class="tag v">Verified</span> by behaviour in this app: untinted toggles fill with accent.</li>
+<li>Sidebar selection, checkbox fills and focus rings across the system are accent driven. <span class="tag m">From memory.</span></li>
+</ul>
+<h3>Trade offs</h3>
+<ul>
+<li><strong>Accent respect:</strong> perfect, by definition. A graphite user gets a graphite panel; a pink user gets pink.</li>
+<li><strong>Colourblind:</strong> safe. Nothing here encodes meaning in hue that is not also encoded in the glyph.</li>
+<li><strong>Reduce Motion / Increase Contrast:</strong> nothing to do, the system handles it.</li>
+<li><strong>One control, two states:</strong> yes, this is the strongest option on that test. Same geometry, same outline, fill flips.</li>
+<li><strong>The actual complaint:</strong> unaddressed. At rest the panel is a cluster of blue rectangles with no hierarchy, and mirror (a preview preference) shouts exactly as loudly as the pin (a window behaviour). It is platform correct and visually flat.</li>
+</ul>
+<div class="verdict">Honest verdict: correct, and not what you asked for. Keep it on the list because "do nothing" is the option every other option has to beat.</div>
+</div>
+
+<!-- ============================ OPTION B ============================ -->
+<div class="opt">
+<h2>Option B &middot; Semantic Capsules (the FaceTime model)</h2>
+<p>Each function gets its own fixed colour on a fully rounded capsule, white glyph on top.
+Capture is red, camera and preview functions are green, window behaviour is indigo, preview size is teal.
+Accent colour is abandoned inside the row.</p>
+<div class="stages" data-opt="b"></div>
+<h3>Precedent</h3>
+<ul>
+<li>FaceTime's camera control, white glyph on a green capsule. <span class="tag m">Your observation</span>, which is the whole reason this option exists.</li>
+<li>Control Center tiles: per function colour on a round pill. <span class="tag m">From memory, not verified.</span></li>
+<li>Important caveat I am reasonably confident about: both of those are <em>call and system controls with two to five items</em>. This row has nine. The pattern may not survive the scale up, and this mock is the evidence either way.</li>
+</ul>
+<h3>Trade offs</h3>
+<ul>
+<li><strong>Accent respect:</strong> none. A graphite user still gets a four colour row. That is defensible for one capture button, much less so for a size picker.</li>
+<li><strong>Colourblind:</strong> this is where it hurts. Green mirror sits two controls from red mic. Deuteranopia flattens exactly that pair, and here the two colours are the <em>only</em> difference in ON state, since every capsule is identical in shape. The glyphs still differ, which saves it from being unusable, but the colour is then carrying nothing.</li>
+<li><strong>Increase Contrast:</strong> needs four hand tuned high contrast variants, one per semantic colour, in both appearances. Eight values to maintain by hand, none of them semantic.</li>
+<li><strong>One control, two states:</strong> <em>fails</em>. The capsule changes the corner radius from 5pt to fully round, so an ON control is a visibly different shape from an OFF one. It also breaks the constant 1pt outline rule, which every control in the row currently shares.</li>
+<li><strong>Row reading:</strong> nine controls in four colours reads as a toy. This is the ui simplicity rubric's "hierarchy through decoration" failure: colour is doing work that grouping and spacing already do.</li>
+</ul>
+<div class="verdict">Honest verdict: the reference is real, the scale up is not. FaceTime colours one button in a window that has three. Colouring nine is a different design.</div>
+</div>
+
+<!-- ============================ OPTION C ============================ -->
+<div class="opt">
+<h2>Option C &middot; Quiet Chrome, Loud Capture</h2>
+<p>Split the row by <em>kind</em>, not by function. Settings toggles (pin, mirror, S/M/L) drop accent entirely
+and show ON as a recessed neutral fill: <code>Color.primary</code> at low opacity with an inner shadow, exactly
+the pressed in look AppKit gives a push on push off button. Only the two controls that capture something stay red.
+Colour becomes a signal that means one thing: <strong>something is being recorded</strong>.</p>
+<div class="stages" data-opt="c"></div>
+<h3>Precedent</h3>
+<ul>
+<li>Finder's view mode and grouping toolbar toggles, Mail's sidebar toggle, Notes' formatting toggles: selection as a grey recess, not an accent fill. <span class="tag m">From memory, not verified.</span> This is the single claim most worth you checking, because Option C rests on it.</li>
+<li>Red as the capture signal: QuickTime, Screenshot, the system recording indicator. <span class="tag m">From memory.</span> Also already true in this app, which is <span class="tag v">verified</span>.</li>
+<li>macOS HIG guidance that accent marks <em>selection and interactive highlight</em>. A preview size choice arguably is a selection, which is the honest counterargument to this option.</li>
+</ul>
+<h3>Trade offs</h3>
+<ul>
+<li><strong>Accent respect:</strong> mixed, and worth arguing about. It removes accent from four controls. The defence: it does not <em>replace</em> accent with another hue, it replaces it with the label colour, so a graphite user and a pink user get the identical panel, and neither gets a panel that fights their choice. The attack: a user who set their accent to pink did so in order to see pink.</li>
+<li><strong>Colourblind:</strong> best of the four. Exactly one hue in the row, red, and it appears only while capturing. Nothing is distinguished by hue pairs at all. The red vs green problem never arises because green is never used.</li>
+<li><strong>Increase Contrast:</strong> free. The neutral fill is derived from <code>labelColor</code>, so it darkens with the system automatically. One value to tune, not eight.</li>
+<li><strong>One control, two states:</strong> passes cleanly. Same rect, same 5pt radius, same 1pt outline, fill and inner shadow flip. Arguably it passes <em>better</em> than today, since a grey recess reads as "this rectangle, pushed in" while a saturated blue fill reads as a different object.</li>
+<li><strong>Risk:</strong> ON versus OFF is a lower contrast difference than blue versus white. It must be checked on a real panel at the small scale, where the control is 16pt tall. If it is too quiet, the fix is more inner shadow, not more colour.</li>
+</ul>
+<div class="verdict win">Honest verdict: this is the one that actually solves what you complained about, and it solves it by removing colour rather than adding it.</div>
+</div>
+
+<!-- ============================ OPTION D ============================ -->
+<div class="opt">
+<h2>Option D &middot; Live Ember (Option C plus a breathing capture state)</h2>
+<p>Option C's quiet chrome, plus the moving state you asked for. While capturing, the active control's fill is not
+flat red but a red to ember gradient that drifts diagonally on a 3.4s loop, with a soft outer glow breathing on the
+same period. The period is deliberately <em>not</em> the recording dot's 1.6s: two indicators pulsing at close but
+unequal rates look broken, so the gradient runs at slightly over double, and the two read as one slow breath with a
+faster heartbeat on the corner rather than as a stutter.</p>
+<p class="note">The two rows below are animating right now. Flip the <strong>Simulate Reduce Motion</strong> switch at
+the top right to see the static fallback, which is plain <code>Color.red</code>, identical to Option C.</p>
+<div class="stages" data-opt="d"></div>
+<h3>Precedent</h3>
+<ul>
+<li>I know of <strong>no standard macOS control that animates its fill.</strong> <span class="tag m">Assertion from memory</span>, and the weakest claim on this page, but I could not think of a counterexample. Siri's orb and the Screen Sharing / screen recording menu bar indicator are the closest, and both are <em>status indicators</em>, not controls.</li>
+<li>That is the honest framing for this option: it is not a platform pattern, it is a deliberate, scoped departure. Per my own hard constraint I have to justify it rather than just draw it. The justification: this control is simultaneously a button and the app's only persistent "you are live" indicator, and the panel is frequently closed, so the indicator has to survive being glanced at. Motion survives a glance better than hue.</li>
+<li>Counterargument you should weigh: the app <em>already</em> has a motion channel for exactly this, the blinking amber dot. Option D adds a second one. Two moving things on a 20pt control may be one too many.</li>
+</ul>
+<h3>Trade offs</h3>
+<ul>
+<li><strong>Accent respect:</strong> same as C. Unaffected by animation.</li>
+<li><strong>Colourblind:</strong> same as C, and slightly better: motion is a non hue channel, so the recording state now has three independent signals (glyph fill, the dot, the drift).</li>
+<li><strong>Reduce Motion:</strong> mandatory static fallback, shown above. The app already has the pattern to copy: <code>RecordingDot</code> reads <code>accessibilityReduceMotion</code> and holds steady. The gradient must do the same and collapse to flat red, never to nothing.</li>
+<li><strong>Increase Contrast:</strong> the ember highlight at mid cycle is lighter than <code>systemRed</code>, so white glyph contrast dips for part of each loop. Under Increase Contrast the animation should be dropped, not just narrowed. That is a second static fallback and it must be specified, not inferred.</li>
+<li><strong>One control, two states:</strong> passes on geometry (same rect, same radius, same outline) but this is the one place where an ON control is no longer merely "the same control filled". If the row is meant to read as one family in two states, an animating member is a deliberate exception, made for the one control whose state is the app's entire purpose.</li>
+<li><strong>Cost:</strong> a drifting gradient repaints a small layer continuously for the whole recording. On a menu bar panel that is often closed this is near free, but it is not zero, and it should be paused when the panel is not visible.</li>
+</ul>
+<div class="verdict">Honest verdict: the animation earns its place only if it replaces a signal rather than stacking on one. My recommendation below says how.</div>
+</div>
+
+<h2>Side by side</h2>
+<div class="tablewrap"><table>
+<tr><th></th><th>A. Accent</th><th>B. Capsules</th><th>C. Quiet chrome</th><th>D. Live ember</th></tr>
+<tr><td>Solves "too much blue"</td><td>no</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>Respects a graphite or pink accent</td><td>fully</td><td>no</td><td>neutral (removes, does not replace)</td><td>neutral</td></tr>
+<tr><td>Colourblind safe</td><td>yes</td><td>weakest (green beside red)</td><td>strongest (one hue)</td><td>strongest</td></tr>
+<tr><td>Increase Contrast cost</td><td>none</td><td>8 hand tuned values</td><td>1 value</td><td>1 value + a second fallback</td></tr>
+<tr><td>Reduce Motion cost</td><td>none</td><td>none</td><td>none</td><td>required static fallback</td></tr>
+<tr><td>Off and on read as one control</td><td>yes</td><td><strong>no</strong> (shape changes)</td><td>yes</td><td>yes, with a stated exception</td></tr>
+<tr><td>Hues in the row</td><td>2</td><td>4</td><td>1</td><td>1</td></tr>
+<tr><td>Swift change surface</td><td>none</td><td>every toggle + a colour asset set</td><td>one shared <code>ToggleStyle</code></td><td>one <code>ToggleStyle</code> + one animated fill</td></tr>
+</table></div>
+
+<h2>Recommendation</h2>
+<p><strong>Ship Option C, and take exactly one piece of Option D: the breathing gradient on the capture control,
+replacing the blinking amber dot on that control rather than joining it.</strong></p>
+<ul>
+<li><strong>Why C over A:</strong> your complaint is real and A does not answer it. Accent respect is a good principle
+but it is being applied to the wrong controls. Accent means "selected or interactive highlight". A preview mirror
+preference and a window pinning preference are neither; they are persistent modes, and macOS draws persistent
+toolbar modes as a recess, not a flood of colour. C does not take the user's accent away from anything that should
+have had it, because none of those four controls should have had it.</li>
+<li><strong>Why C over B:</strong> B is the option you were pointing at, and I am recommending against it. FaceTime
+colours one button; this row has nine, and B makes four of them coloured capsules. It fails the "one control, two
+states" constraint outright by changing the corner radius, it puts green two controls away from red, and it costs
+eight hand maintained contrast values. The idea you liked in FaceTime is not "colour the buttons", it is <em>"the
+important one is unmistakable"</em>. C delivers that by making it the only coloured thing in the row. B delivers the
+opposite, because when four things are coloured, none of them is the important one.</li>
+<li><strong>Why take D's motion, with a subtraction:</strong> the moving fill is the right instinct. The mistake would be
+adding it on top of the existing blink. Today the recording control carries red fill, a blinking dot and a running
+timer, which is already three signals on a 20pt square; a fourth turns it into a Christmas tree. So on the recording
+control, the gradient <em>replaces</em> the dot. The dot stays where it is genuinely needed and cannot be replaced:
+the menu bar icon, which is 16pt, always visible, and has no room for a gradient.</li>
+<li><strong>What I will not do without evidence:</strong> the Finder / Mail grey recess precedent that C rests on is from
+memory. Before this becomes a component spec, open a Finder window and a Mail window and confirm what their active
+toolbar toggles actually look like under a non blue accent. If they turn out to be accent filled, C loses its
+platform argument and we should talk again.</li>
+</ul>
+
+<h2>If C+D is chosen, what the spec would need to cover</h2>
+<p class="note">Not a spec, a scope note. No Swift is being proposed here and nothing below is approved.</p>
+<div class="tablewrap"><table>
+<tr><th>Element</th><th>Control</th><th>Note</th></tr>
+<tr><td>Pin, mirror, S/M/L</td><td><code>Toggle</code> + <code>.toggleStyle(.button)</code>, replaced by one custom <code>ToggleStyle</code></td><td>One style, applied five times. It must still read <code>PanelScale</code> for radius and control size, and keep the shared 1pt <code>separatorColor</code> outline.</td></tr>
+<tr><td>Mic, video</td><td>Same <code>ToggleStyle</code>, capture variant</td><td>Red fill, or the animated fill while actually recording (not while arming, which stays dimmed as today).</td></tr>
+<tr><td>Animated fill</td><td><code>LinearGradient</code> + <code>.animation(...repeatForever)</code>, or a <code>TimelineView</code> driven phase</td><td><code>TimelineView</code> is likely the better fit: the app already uses one for the timer and it avoids a repeating animation that has to be torn down.</td></tr>
+<tr><td>Reduce Motion</td><td><code>@Environment(\.accessibilityReduceMotion)</code></td><td>Collapse to flat <code>Color.red</code>. Copy the existing <code>RecordingDot</code> pattern exactly.</td></tr>
+<tr><td>Increase Contrast</td><td><code>@Environment(\.colorSchemeContrast)</code></td><td>Also collapse to flat red. Separate check from Reduce Motion, both needed.</td></tr>
+<tr><td>Camera menu chevron</td><td><code>Menu</code> (must stay a <code>Menu</code>, not a <code>Picker</code>)</td><td>Its chevron well is accent filled today. Under C it goes neutral with the rest.</td></tr>
+<tr><td>VoiceOver</td><td>unchanged</td><td>Colour carries no information VoiceOver needs; the existing labels already announce state. No new labels required, and none may be removed.</td></tr>
+<tr><td>Menu bar icon</td><td><code>MenuBarIcon</code></td><td>Out of scope. Keeps green plus the blinking dot.</td></tr>
+</table></div>
+
+</div><!-- /wrap -->
+
+<template id="rowtpl">
+<div class="row">
+  <span class="ctl c-pin on" title="Pin"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.6 1.4 14.6 6.4l-1.5 1.5-1.1-.4-2.6 2.6.3 2.2-1.2 1.2-3-3-3.3 3.3-.7-.7L4.8 9.8l-3-3L3 5.6l2.2.3L7.8 3.3l-.4-1.1z" fill="currentColor"/></svg></span></span>
+
+  <span class="group">
+    <span class="ctl c-mic off" title="Record audio"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
+    <span class="timer">00:00</span>
+    <span class="ctl c-video off" title="Record video"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
+  </span>
+
+  <span class="ctl c-mirror on" title="Mirror preview"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 3.2h10.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.4 1.9 2.6 3.2l1.8 1.3M11.6 1.9l1.8 1.3-1.8 1.3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 6.6v7.5L2.7 14.1z" fill="currentColor"/><path d="M8.8 6.6v7.5l4.5 0z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
+
+  <span class="spacer"></span>
+
+  <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
+
+  <span class="sgroup">
+    <span class="ctl c-scale off"><span class="lbl">S</span></span>
+    <span class="ctl c-scale on"><span class="lbl">M</span></span>
+    <span class="ctl c-scale off"><span class="lbl">L</span></span>
+  </span>
+
+  <span class="ctl c-power" title="Quit"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
+</div>
+</template>
+
+<script>
+(function(){
+  var tpl = document.getElementById('rowtpl');
+
+  function makePanel(opt, recording){
+    var scaler = document.createElement('div');
+    scaler.className = 'scaler';
+    var panel = document.createElement('div');
+    panel.className = 'panel opt-' + opt + (recording ? ' rec' : '');
+    panel.appendChild(tpl.content.cloneNode(true));
+    if (recording){
+      var mic = panel.querySelector('.c-mic');
+      mic.classList.remove('off');
+      mic.classList.add('rec-on');
+      // the amber corner dot, as shipped today. Option D's note explains why
+      // the recommendation drops it from this control only.
+      var dot = document.createElement('span');
+      dot.className = 'dot blink';
+      mic.appendChild(dot);
+      panel.querySelector('.timer').textContent = '00:24';
+      // video is disabled while audio holds the medium (mutually exclusive)
+      panel.querySelector('.c-video').classList.add('dis');
+    }
+    var strip = document.createElement('div');
+    strip.className = 'strip';
+    panel.appendChild(strip);
+    scaler.appendChild(panel);
+    return scaler;
+  }
+
+  document.querySelectorAll('.stages').forEach(function(host){
+    var opt = host.getAttribute('data-opt');
+    ['light','dark'].forEach(function(scheme){
+      var st = document.createElement('div');
+      st.className = 'stage ' + scheme;
+      var c1 = document.createElement('div');
+      c1.className = 'cap';
+      c1.textContent = scheme + ' · idle';
+      var c2 = document.createElement('div');
+      c2.className = 'cap2';
+      c2.textContent = scheme + ' · recording audio';
+      st.appendChild(c1);
+      st.appendChild(makePanel(opt, false));
+      st.appendChild(c2);
+      st.appendChild(makePanel(opt, true));
+      host.appendChild(st);
+    });
+  });
+})();
+</script>
+</body>
+</html>
