@@ -741,7 +741,7 @@ private struct CapsuleControlChrome<Label: View>: View {
     var body: some View {
         label
             .foregroundStyle(isOn ? RowPalette.glyphOn : Color(nsColor: .labelColor))
-            .padding(.horizontal, scale.controlPaddingH(isOn: isOn))
+            .padding(.horizontal, scale.controlPaddingH)
             .frame(height: scale.controlHeight)
             .background(
                 CapsuleControlBackground(scale: scale, isOn: isOn, tint: tint, ember: ember)

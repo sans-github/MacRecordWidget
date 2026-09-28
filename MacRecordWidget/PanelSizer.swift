@@ -398,13 +398,21 @@ enum PanelScale: String, CaseIterable, Identifiable {
 
     /// Horizontal padding inside a control, either side of the glyph box.
     ///
-    /// An on control is 2pt wider than an off one, because the capsule's round
-    /// ends need that much to clear the glyph. That growth comes out of the
-    /// camera menu, which is the only flexible item in the row -- check
-    /// `previewWidth` before adding anything else here.
-    func controlPaddingH(isOn: Bool) -> CGFloat {
-        isOn ? 6 : 4
-    }
+    /// **One number for both states, and it must stay that way.** It used to be
+    /// 6 when on and 4 when off, on the argument that the capsule's round ends
+    /// need the extra 2pt to clear the glyph. The cost was that every control
+    /// grew 4pt the moment it lit: starting a recording pushed the timer, the
+    /// video button, the mirror, the camera menu, S/M/L and quit 4pt to the
+    /// right, and pressing pin or mirror did the same to everything after them.
+    /// A row that moves when you use it is worse than a capsule with tight
+    /// ends, and the ends measure fine: at the large scale the cap's inner edge
+    /// is 4.0pt in at the glyph box's top corner, which the glyph's own ink
+    /// sits inside of.
+    ///
+    /// If this is ever raised, raise it for both states at once and check
+    /// `previewWidth` first -- it comes out of the camera menu, which is the
+    /// only flexible item in the row, and 2pt here is 32pt off the menu.
+    var controlPaddingH: CGFloat { 4 }
 
     /// The green well the camera menu's chevron sits in.
     var chevronWellWidth: CGFloat {

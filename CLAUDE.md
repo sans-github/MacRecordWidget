@@ -240,6 +240,13 @@ the numbers across the views is how they drift apart. The choice persists in
 The preview runs the full width of the panel, so `previewWidth` *is* the panel
 width, and `large` is half the screen exactly.
 
+**A control's width must not depend on whether it is lit.**
+`PanelScale.controlPaddingH` is one number for both states (4pt). It used to be
+6 on and 4 off, so starting a recording widened the capsule by 4pt and shoved
+every control to its right along with it, at all three scales; pin and mirror
+did the same. Raising it again means raising both states together, and 2pt
+costs the camera menu 32pt.
+
 **The camera picker is the only flexible item in the row, so every new button
 comes out of its width.** `small` was widened from 320 to 380 (and its
 `rowSpacing` cut to 8) when the mirror toggle was added, because at 320 the
