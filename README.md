@@ -1,119 +1,56 @@
 # MacRecordWidget
 
-A macOS menu bar app for starting and stopping audio recordings without leaving
+A macOS menu bar app for starting and stopping recordings without leaving
 whatever you are working on.
 
 It records two ways, one at a time: **audio** through the Shortcuts app into
 Voice Memos, and **video** captured in-app, written straight into Photo Booth's
-library so it shows up in Photo Booth's filmstrip. A live camera preview is
-always on below the controls.
+library. A live camera preview is always on below the controls.
 
-## Features
+![The panel at the large size, idle, with the live camera preview below the control row](docs/images/panel-idle.png)
 
-- One-click audio recording from the menu bar, saved to Voice Memos with a
-  timestamped name
-- Menu bar icon turns green with a blinking dot while recording
-- Video recording to Photo Booth's library, sharing the same timer
-- Live camera preview inside the panel, with a picker for which camera to show
-- A mirror toggle for the preview, so you can frame yourself in a mirror or
-  read text you hold up to the camera. Recordings are never mirrored either way
-- A pin toggle that keeps the panel open when you click into another app
-- Three panel sizes (S/M/L) that scale the whole UI, not just the preview
+<!-- TODO screenshots: docs/images/panel-recording.png (mic button red, dot blinking, timer running)
+     and docs/images/menubar-icon.png (menu bar icon green while recording). -->
 
 ## Requirements
 
 - macOS 14.0 or later
-- Two Shortcuts named exactly `Start` and `Stop` that begin and end a Voice
-  Memos recording. The app does not create these for you.
+- **Two Shortcuts named exactly `Start` and `Stop`** that begin and end a Voice
+  Memos recording. The app does not create these for you, and without them the
+  audio button will appear to work while recording nothing.
 
-No Accessibility permission is needed. Opening the panel prompts for camera
-access the first time; the microphone is only asked for on your first video
-recording.
+No Accessibility permission is needed.
 
-## Installation
-
-Run once, to create a local signing certificate:
+## Install
 
 ```bash
-scripts/create-signing-cert.sh
-```
-
-Then, for this and every later build:
-
-```bash
-scripts/install-latest.sh
+scripts/create-signing-cert.sh   # once
+scripts/install-latest.sh        # this build and every later one
 ```
 
 That downloads the latest CI build, signs it, installs it to `/Applications`
-and launches it. If the newest build is still running or failed, it stops and
-says so rather than quietly installing the one before it. Pass a run id
-(`scripts/install-latest.sh <run-id>`) to install a specific build.
+and launches it. The certificate step is what stops macOS re-asking for camera
+access on every build. [docs/INSTALL.md](docs/INSTALL.md) covers why, and the
+manual route.
 
-### Why the certificate
+## Build
 
-CI builds are ad-hoc signed, with no Team ID and no certificate. macOS has
-nothing stable to attach a permission grant to, so it pins your camera approval
-to that one binary's hash. Every new build has a different hash, the grant stops
-matching, and you get asked for camera access again.
-
-Signing each build with the same local certificate gives the app a stable code
-identity, so one grant covers later builds.
-
-### Manual install
-
-If you would rather not use the scripts: download `MacRecordWidget.zip` from the
-[Actions tab](../../actions), unzip it, move `MacRecordWidget.app` to
-`/Applications`, and right-click > **Open** on first launch. You will be
-re-asked for camera access after every build.
+Pushes to `main` build the app in GitHub Actions. There is no supported local
+build path; download the artifact from the [Actions tab](../../actions).
 
 ## Usage
 
-Click the menu bar icon to open the panel. The controls run left to right:
+Click the menu bar icon to open the panel. Left to right: pin, audio record,
+timer, video record, mirror, camera picker, three panel sizes, quit.
 
-| Control | What it does |
-|---|---|
-| **Pin toggle** (pin icon) | Off, the panel closes when you click another app. On, it stays open. The setting persists across launches. |
-| **Audio toggle** (microphone) | Starts and stops the audio recording. One button in two states: plain when idle, filled red with a blinking amber dot while recording. |
-| **Timer** (MM:SS) | Counts up once recording is actually live, not from the click — see below. Counts up while recording. Shows `00:00` at launch, and keeps the last recording's duration on screen after you stop, until you start the next one. |
-| **Video toggle** (video icon) | Starts and stops a video recording, saved into Photo Booth's library. Same two states as the audio button, and the same timer. Audio and video are mutually exclusive: while one is running the other is disabled. |
-| **Mirror toggle** (flip icon) | Flips the preview left to right. On by default, and the setting persists across launches. It affects the preview only: recordings are always saved unmirrored, so text you hold up to the camera reads correctly in the file. Free to flip at any time, recording or not. |
-| **Camera picker** | Chooses which camera feeds the preview and the video recording. Disabled while a video recording is running, since switching would truncate the file. |
-| **Size buttons** (S / M / L) | Scale the entire panel: controls, spacing and preview. At L the panel is half your screen wide, so it sits alongside a window tiled to the other half. The choice persists across launches. |
-| **Power button** | Stops any recording in progress, then quits. |
+**Wait for the mic button to turn red before you speak.** The click fires a
+Shortcut and Voice Memos takes about a second to arm; anything said before the
+button turns red is not captured.
 
-The panel stays open after you start or stop a recording, so you can press stop
-without reopening it. Clicking the menu bar icon closes it either way, pinned or
-not.
+Full control reference, panel sizes, and caveats: [docs/USAGE.md](docs/USAGE.md).
 
-The first recording will prompt you to allow the app to run Shortcuts.
+## More
 
-### Wait for the red button before you speak
-
-Recording does not begin the instant you click. The click fires a Shortcut,
-Shortcuts wakes, Voice Memos launches and arms the microphone — measured at
-about a second, and more if Voice Memos was not already warm. Anything said in
-that window is not captured, which is why first words used to go missing.
-
-So the button stays dimmed and unclickable for a moment after you press it. When
-it turns red, with the blinking dot and the timer running, the microphone is
-live. That is your cue.
-
-The wait is a fixed delay, not a detection: macOS gives no signal for "recording
-has started", so the app cannot know for certain. It is tuned from measurement
-with some margin.
-
-### A caveat about the Shortcuts
-
-The app fires a `shortcuts://` URL and macOS reports success as long as
-something claims that URL scheme, which the Shortcuts app always does. It cannot
-tell whether your `Start` shortcut actually exists or ran. If the shortcut is
-missing or broken, the app will still show itself as recording. Check Voice
-Memos if you are unsure.
-
-## Building
-
-Pushes to `main` build the app in GitHub Actions. There is no supported local
-build path; download the artifact from the Actions tab.
-
-Developer notes, including the AppKit behaviours the panel positioning and pin
-depend on, are in [CLAUDE.md](CLAUDE.md).
+- [docs/USAGE.md](docs/USAGE.md) (every control, in detail)
+- [docs/INSTALL.md](docs/INSTALL.md) (signing, permissions, manual install)
+- [CLAUDE.md](CLAUDE.md) (developer notes, and the AppKit behaviours the panel depends on)
