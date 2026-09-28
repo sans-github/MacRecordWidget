@@ -174,10 +174,10 @@ struct CameraControls: View {
                         .font(scale.controlFont)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    // The chevron sits in a green well rather than being drawn
-                    // by the popup button itself. Green because the menu picks
-                    // the camera, which is the same subsystem the video, mirror
-                    // and S/M/L controls belong to.
+                    // The chevron sits in a blue well rather than being drawn
+                    // by the popup button itself. Blue, the row's colour for a
+                    // lit control that is not a recording -- picking a camera
+                    // captures nothing.
                     //
                     // This is why the native indicator is hidden and the label
                     // is drawn by hand: an NSPopUpButton's own chevron cannot be
@@ -188,7 +188,7 @@ struct CameraControls: View {
                         .frame(width: scale.chevronWellWidth, height: scale.glyphSize)
                         .background(
                             RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(RowPalette.video)
+                                .fill(RowPalette.control)
                         )
                 }
                 .padding(.leading, 7)
@@ -202,7 +202,7 @@ struct CameraControls: View {
                     CapsuleControlBackground(
                         scale: scale,
                         isOn: false,
-                        tint: RowPalette.video,
+                        tint: RowPalette.control,
                         ember: nil
                     )
                 )

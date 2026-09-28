@@ -32,7 +32,7 @@ struct MacRecordWidgetApp: App {
                 }
                 // Blue: the pin acts on the window, not on a recording or on
                 // the camera.
-                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.window))
+                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
                 .help(isPinned ? "Let panel close on its own" : "Keep panel open")
                 .accessibilityLabel("Keep panel open")
                 .accessibilityIdentifier("pinToggle")
@@ -70,8 +70,8 @@ struct MacRecordWidgetApp: App {
                 .toggleStyle(
                     CapsuleToggleStyle(
                         scale: scale,
-                        tint: RowPalette.audio,
-                        ember: recordingManager.isRecording ? .audio : nil
+                        tint: RowPalette.capture,
+                        ember: recordingManager.isRecording ? .capture : nil
                     )
                 )
                 // Sits on the button's bottom-right corner, offset outward so
@@ -112,14 +112,14 @@ struct MacRecordWidgetApp: App {
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                         .opacity(isArmingVideo ? 0.35 : 1)
                 }
-                // Green, not red: green is the camera's hue throughout the
-                // row. Same ember treatment as the mic, same 3.4s period, its
-                // own hue.
+                // Red, the same as the mic: the hue reports a live recording
+                // rather than which subsystem the button belongs to, so both
+                // record controls light and ember identically.
                 .toggleStyle(
                     CapsuleToggleStyle(
                         scale: scale,
-                        tint: RowPalette.video,
-                        ember: recordingManager.isRecordingVideo ? .video : nil
+                        tint: RowPalette.capture,
+                        ember: recordingManager.isRecordingVideo ? .capture : nil
                     )
                 )
                 .overlay(alignment: .bottomTrailing) {
@@ -156,12 +156,10 @@ struct MacRecordWidgetApp: App {
                         .font(scale.glyphFont)
                         .frame(width: scale.glyphSize, height: scale.glyphSize)
                 }
-                // Green, the camera hue, because it acts on the preview. It
-                // therefore looks identical to the video button while both are
-                // on, and the glyph is the only thing separating them -- an
-                // accepted consequence of hue meaning "which subsystem" rather
-                // than "which control".
-                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.video))
+                // Blue, like every lit control that is not a recording. It
+                // acts on the preview, nothing is being captured because of
+                // it, and red here would claim otherwise.
+                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
                 .help(mirrorHelp)
                 .accessibilityLabel(mirrorHelp)
                 .accessibilityIdentifier("mirrorToggle")
@@ -192,8 +190,8 @@ struct MacRecordWidgetApp: App {
                                 .font(scale.scaleLabelFont)
                                 .frame(width: scale.glyphSize, height: scale.glyphSize)
                         }
-                        // Green: these size the preview.
-                        .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.video))
+                        // Blue: these size the preview, they do not record.
+                        .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
                         .help("\(option.helpLabel) preview")
                         .accessibilityLabel("\(option.helpLabel) preview size")
                     }
@@ -227,7 +225,7 @@ struct MacRecordWidgetApp: App {
                 .buttonStyle(
                     CapsuleControlButtonStyle(
                         scale: scale,
-                        tint: RowPalette.window,
+                        tint: RowPalette.control,
                         ember: nil,
                         isOn: true
                     )
@@ -552,38 +550,35 @@ private struct MenuBarIcon: View {
 
 // MARK: - Row palette
 
-/// The semantic capsule colours, chosen 2026-09-24 (design option B).
+/// The semantic capsule colours, chosen 2026-09-24 (design option B) and
+/// narrowed to two hues on 2026-09-28.
 ///
-/// Hue carries meaning here rather than selection: red is audio capture, green
-/// is everything that belongs to the camera (video capture, mirror, the three
-/// preview sizes, the camera menu's chevron), blue is everything that acts on
-/// the window itself (pin, quit). One consequence, accepted: the user's own
-/// accent colour is no longer honoured anywhere in the row.
+/// Hue says whether the app is *capturing*, not which subsystem a control
+/// belongs to. Red is a recording in progress, audio or video alike; blue is
+/// every other lit control in the row -- pin, mirror, S/M/L, the camera menu's
+/// chevron well, quit. The camera green that mirror, S/M/L and the chevron
+/// used to wear is gone: it read as a third, unexplained state sitting beside
+/// the blue controls, and the subsystem it encoded is not something the user
+/// has to act on. One consequence, unchanged: the user's own accent colour is
+/// not honoured anywhere in the row.
 ///
-/// ⚠️ The white glyph on `video` green is a known, measured, *accepted*
-/// contrast failure. White on #3AD862 is 1.88:1 against the 3:1 that WCAG
-/// 1.4.11 asks of a control's icon, and both ember gradients drop further at
-/// their bright point (green to 1.41:1). The alternatives were a black glyph on
-/// green only (11.18:1, but then the row has two glyph colours and stops
-/// reading as one family) or darkening the green to #10913A (4.09:1, but it is
-/// then no longer the FaceTime green that was being matched). The user was
-/// shown all three with the numbers and chose to keep white, to match the
-/// FaceTime look. **Do not helpfully "fix" this.** If it is ever revisited it
-/// is a design decision, not a bug fix.
+/// Contrast, computed rather than eyeballed: white on #FF383C is 3.57:1 and
+/// white on #007AFF is 4.02:1, both clearing the 3:1 that WCAG 1.4.11 asks of
+/// a control's icon. That is a change from the green, which was a known,
+/// accepted 1.88:1 failure. The one place still under 3:1 is the *bright point*
+/// of the ember gradient (#FF7A3D, 2.59:1), which was already true of the audio
+/// ember before this change and lasts a fraction of a second per sweep.
 enum RowPalette {
-    /// #FF383C. Audio capture. Sits between systemRed's light (#FF3B30) and
-    /// dark (#FF453A) values, so one number covers both appearances.
-    static let audio = Color(red: 1.0, green: 0.2196, blue: 0.2353)
+    /// #FF383C. A live recording, audio or video. Sits between systemRed's
+    /// light (#FF3B30) and dark (#FF453A) values, so one number covers both
+    /// appearances.
+    static let capture = Color(red: 1.0, green: 0.2196, blue: 0.2353)
 
-    /// #3AD862. Everything camera: video capture, mirror, S/M/L, the chevron
-    /// well. Already lighter than systemGreen in either appearance, so it is
-    /// deliberately not darkened for dark mode.
-    static let video = Color(red: 0.2275, green: 0.8471, blue: 0.3843)
-
-    /// #007AFF. Everything window: the pin and the quit button. This is
-    /// systemBlue's *light* value used in both appearances, so the dark panel
-    /// gets a slightly heavier blue than macOS would pick.
-    static let window = Color(red: 0.0, green: 0.4784, blue: 1.0)
+    /// #007AFF. Every lit control that is not a recording: pin, mirror, S/M/L,
+    /// the chevron well, quit. This is systemBlue's *light* value used in both
+    /// appearances, so the dark panel gets a slightly heavier blue than macOS
+    /// would pick.
+    static let control = Color(red: 0.0, green: 0.4784, blue: 1.0)
 
     /// The glyph on any lit capsule. See the contrast note above.
     static let glyphOn = Color.white
@@ -592,56 +587,42 @@ enum RowPalette {
 // MARK: - Live Ember
 
 /// The drifting gradient a capture control wears while it is actually
-/// recording, in its own hue.
+/// recording.
 ///
 /// Two channels, both on a 3.4s period: the gradient's axis sweeps across the
 /// capsule, and a coloured glow breathes just outside it. 3.4s is deliberately
 /// not a near-match to `RecordingDot`'s 1.6s blink -- two indicators at almost
 /// the same rhythm read as a rendering fault, while two at obviously different
 /// rhythms read as two indicators.
+///
+/// One case, not two. The mic and the video button wear the *same* ember in the
+/// same red: what the animation reports is "this app is recording you", and the
+/// medium is already said by the glyph, the timer and which capsule is lit.
+/// The two mediums are mutually exclusive, so two embers can never be on screen
+/// at once to be told apart anyway.
 enum EmberHue {
-    case audio
-    case video
+    case capture
 
     /// What the gradient collapses to when it cannot animate.
-    var flat: Color {
-        switch self {
-        case .audio: RowPalette.audio
-        case .video: RowPalette.video
-        }
-    }
+    var flat: Color { RowPalette.capture }
 
-    /// Dark end, mid, bright end. The dark mode variants lift the dark stop and
-    /// warm the bright one, because the same gradient on a dark panel reads
+    /// Dark end, mid, bright end. The dark mode variant lifts the dark stop and
+    /// warms the bright one, because the same gradient on a dark panel reads
     /// muddier than it does on a light one.
     func stops(dark: Bool) -> [Color] {
-        switch (self, dark) {
-        case (.audio, false):
-            [Color(red: 0.7216, green: 0.0824, blue: 0.0588), // #B8150F
-             RowPalette.audio,
-             Color(red: 1.0, green: 0.4784, blue: 0.2392)]    // #FF7A3D
-        case (.audio, true):
-            [Color(red: 0.5569, green: 0.1059, blue: 0.0706), // #8E1B12
-             RowPalette.audio,
-             Color(red: 1.0, green: 0.6235, blue: 0.2706)]    // #FF9F45
-        case (.video, false):
-            [Color(red: 0.0549, green: 0.4196, blue: 0.1725), // #0E6B2C
-             RowPalette.video,
-             Color(red: 0.5490, green: 0.9412, blue: 0.4784)] // #8CF07A
-        case (.video, true):
-            [Color(red: 0.0431, green: 0.3451, blue: 0.1412), // #0B5824
-             RowPalette.video,
-             Color(red: 0.6118, green: 0.9608, blue: 0.5412)] // #9CF58A
+        if dark {
+            return [Color(red: 0.5569, green: 0.1059, blue: 0.0706), // #8E1B12
+                    RowPalette.capture,
+                    Color(red: 1.0, green: 0.6235, blue: 0.2706)]    // #FF9F45
+        } else {
+            return [Color(red: 0.7216, green: 0.0824, blue: 0.0588), // #B8150F
+                    RowPalette.capture,
+                    Color(red: 1.0, green: 0.4784, blue: 0.2392)]    // #FF7A3D
         }
     }
 
     /// The breathing glow outside the capsule.
-    var glow: Color {
-        switch self {
-        case .audio: Color(red: 1.0, green: 0.3529, blue: 0.2353)
-        case .video: Color(red: 0.4706, green: 0.9412, blue: 0.5098)
-        }
-    }
+    var glow: Color { Color(red: 1.0, green: 0.3529, blue: 0.2353) }
 }
 
 /// The ember fill itself.
