@@ -14,6 +14,7 @@ _Last triaged: --_
 **Triage:**
 | ID | Area | Type | Summary | Source | Date |
 |----|------|------|---------|--------|------|
+|  | Swift | bug | Mic toggle lights up during a video recording: `recordingBinding`, its ember, its amber dot overlay and `armingAwareHelp` read `isRecording` (true for either medium) instead of `isRecordingAudio`, so video shows a red, embered, dotted mic with "Stop and save to Voice Memos". Its glyph also dims during video arming (`isArming` not scoped to audio). Also stale comments in `MacRecordWidgetApp.swift`: "The hue differs because the medium does" (both are red) and "pairs with `video.fill` on the camera toggle" | Agent | 2026-10-05 |
 |  | Design | ux | Pin toggle renders taller than every other control in the row. Measured from a screenshot at the large scale: pin 43px against 36-37px for mirror, the L size toggle, the mic and the timer, all sharing the same `controlSize`. Breaks the "one control family" reading and blocks any bar-height parity work | Agent | 2026-09-24 |
 |  | Swift | gap | The app has no video capture at all. Photo Booth was removed so the camera toggle would stop doing two jobs, and nothing replaced it. If video recording is wanted, it needs building on the existing capture session | Agent | 2026-09-04 |
 |  | Swift | gap | Live camera preview shipped with zero test coverage: no unit tests for `CameraManager` permission, fallback or persistence logic, and no QA pass against the PRD acceptance criteria. Stage 5 was skipped | Agent | 2026-09-04 |

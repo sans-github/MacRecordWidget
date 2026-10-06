@@ -48,7 +48,7 @@ struct MacRecordWidgetApp: App {
                     // A microphone, not a record dot: a red disc is the generic
                     // record mark and reads as video as readily as audio. The
                     // mic names the medium, and pairs with `video.fill` on the
-                    // camera toggle beside it. It also survives the 11pt small
+                    // video record toggle beside it. It also survives the 11pt small
                     // scale, which the thinner audio symbols do not.
                     //
                     // One glyph in both states, like the camera toggle: only
@@ -61,24 +61,24 @@ struct MacRecordWidgetApp: App {
                         // fill, the blinking dot and the timer all arrive
                         // together a moment later, which is the "speak now"
                         // signal.
-                        .opacity(recordingManager.isArming ? 0.35 : 1)
+                        .opacity(isArmingAudio ? 0.35 : 1)
                 }
                 // Red capsule, and while it is genuinely capturing it wears
-                // the red Live Ember instead of the flat fill. `isRecording`,
+                // the red Live Ember instead of the flat fill. `isRecordingAudio`,
                 // not "recording or arming": the ember means "you are being
                 // captured", which during arming is not yet true.
                 .toggleStyle(
                     CapsuleToggleStyle(
                         scale: scale,
                         tint: RowPalette.capture,
-                        ember: recordingManager.isRecording ? .capture : nil
+                        ember: recordingManager.isRecordingAudio ? .capture : nil
                     )
                 )
                 // Sits on the button's bottom-right corner, offset outward so
                 // most of it falls on the panel background rather than on the
                 // red fill underneath, where amber on red would barely read.
                 .overlay(alignment: .bottomTrailing) {
-                    if recordingManager.isRecording {
+                    if recordingManager.isRecordingAudio {
                         RecordingDot(diameter: scale.recordingDotSize)
                             .offset(
                                 x: scale.recordingDotSize * 0.45,
@@ -105,7 +105,8 @@ struct MacRecordWidgetApp: App {
                 // control, which is what it used to be and no longer is.
                 //
                 // Same glyph in both states and the same corner dot as the
-                // mic. The hue differs because the medium does.
+                // mic. The hue is the same red: it says "you are being recorded",
+                // and the glyph already names the medium.
                 Toggle(isOn: videoRecordingBinding) {
                     Image(systemName: "video.fill")
                         .font(scale.glyphFont)
@@ -300,26 +301,33 @@ struct MacRecordWidgetApp: App {
     /// VoiceOver gets the same string: "starting" is exactly what a screen
     /// reader user needs to hear before they start talking.
     private var armingAwareHelp: String {
-        if recordingManager.isArming { return "Starting… wait to speak" }
-        return recordingManager.isRecording
+        if isArmingAudio { return "Starting… wait to speak" }
+        return recordingManager.isRecordingAudio
             ? "Stop and save to Voice Memos"
             : "Record audio to Voice Memos"
     }
 
     /// Drives the single audio control: on starts, off stops.
     ///
-    /// Deliberately reads `isRecording`, not "recording or arming": the red
+    /// Deliberately reads `isRecordingAudio`, not "recording or arming", and not
+    /// plain `isRecording`, which is also true during a video recording: the red
     /// fill is the "you are being captured" signal, and showing it while Voice
     /// Memos is still coming up would be the same lie the arming state exists
     /// to remove. The button is disabled during arming, so it cannot be clicked
     /// twice while it looks off.
     private var recordingBinding: Binding<Bool> {
         Binding(
-            get: { recordingManager.isRecording },
+            get: { recordingManager.isRecordingAudio },
             set: { shouldRecord in
                 Task { shouldRecord ? await startOnly() : await stopOnly() }
             }
         )
+    }
+
+    /// True only while the *audio* button is arming, so the mic does not dim
+    /// during a video start.
+    private var isArmingAudio: Bool {
+        recordingManager.isArming && recordingManager.medium == .audio
     }
 
     /// True only while the *video* button is arming, so the mic button does
