@@ -1,233 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recording — MacRecordWidget</title>
-<style>
-:root {
-  --bg-window:       #ECECEC;
-  --bg-popover:      #F6F6F6;
-  --bg-control:      #FFFFFF;
-  --bg-underpage:    #E3E3E3;
-  --bg-menubar:      #E4E4E4;
-  --label-primary:   rgba(0,0,0,0.85);
-  --label-secondary: rgba(0,0,0,0.50);
-  --label-tertiary:  rgba(0,0,0,0.26);
-  --separator:       rgba(0,0,0,0.12);
-  --accent:          #007AFF;
-  --record-red:      #FF3B30;
-  --sys-green:       #34C759;
-  --amber:           #FF9E33;
-  --hover-fill:      rgba(0,0,0,0.07);
-  --pressed-fill:    rgba(0,0,0,0.14);
-  --shadow:          rgba(0,0,0,0.18);
-  --code-bg:         rgba(0,0,0,0.06);
-  --on-tint-label:   #FFFFFF;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-control: #3A3A3C;
-    --bg-underpage: #171719; --bg-menubar: #333335;
-    --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
-    --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.14);
-    --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
-    --hover-fill: rgba(255,255,255,0.10); --pressed-fill: rgba(255,255,255,0.18);
-    --shadow: rgba(0,0,0,0.55); --code-bg: rgba(255,255,255,0.10);
-  }
-}
-#dm:checked ~ .page {
-  --bg-window: #1E1E1E; --bg-popover: #2C2C2E; --bg-control: #3A3A3C;
-  --bg-underpage: #171719; --bg-menubar: #333335;
-  --label-primary: rgba(255,255,255,0.85); --label-secondary: rgba(255,255,255,0.55);
-  --label-tertiary: rgba(255,255,255,0.26); --separator: rgba(255,255,255,0.14);
-  --accent: #0A84FF; --record-red: #FF453A; --sys-green: #30D158;
-  --hover-fill: rgba(255,255,255,0.10); --pressed-fill: rgba(255,255,255,0.18);
-  --shadow: rgba(0,0,0,0.55); --code-bg: rgba(255,255,255,0.10);
-  background: #1E1E1E;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; font-size: 13px; }
-#dm { display: none; }
-/* Scale tokens. The page defaults to medium so a control drawn outside a panel
-   (the state matrices) matches the default build. .panel.s / .panel.l override. */
-.page {
-  background: var(--bg-window); color: var(--label-primary); min-height: 100vh; padding: 32px 24px 48px;
-  --w: 480px; --gap: 14px; --px: 12px; --py: 8px; --r: 5px;
-  --g: 16px; --gf: 13px; --h: 20px; --cf: 12px; --lf: 12px; --pw: 200px;
-}
-.wrap { max-width: 660px; margin: 0 auto; }
-.dm-label { display: block; text-align: right; font-size: 11px; color: var(--label-secondary); cursor: pointer; user-select: none; margin-bottom: 12px; }
-h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
-.sub { font-size: 12px; color: var(--label-secondary); margin-bottom: 24px; line-height: 1.55; }
-h2 { font-size: 13px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); }
-h3.mini { font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
-p.note { font-size: 12px; color: var(--label-secondary); line-height: 1.55; margin-bottom: 10px; }
-code { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
-a { color: var(--accent); }
-.nav { font-size: 11px; color: var(--label-secondary); margin-bottom: 18px; }
-.caption { font-size: 10px; color: var(--label-secondary); letter-spacing: 0.04em; text-transform: uppercase; text-align: center; }
-.stage { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: var(--bg-window); border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--separator); overflow-x: auto; }
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Audio recording, video recording and arming states, light and dark."><title>Panel, Recording</title><style>
+:root{--page:#f5f5f7;--ink:#1d1d1f;--ink2:#6e6e73;--rule:#d2d2d7;--card:#fff;--code:#f0f0f2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#161617;--ink:#f5f5f7;--ink2:#a1a1a6;--rule:#3a3a3c;--card:#1f1f21;--code:#2a2a2c}}
+:root[data-theme="dark"]{--page:#161617;--ink:#f5f5f7;--ink2:#a1a1a6;--rule:#3a3a3c;--card:#1f1f21;--code:#2a2a2c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
+main{max-width:1440px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:26px;margin:0 0 4px} h2{font-size:17px;margin:40px 0 8px} h3{font-size:13px;margin:0 0 8px;color:var(--ink2);font-weight:600}
+p.lede{color:var(--ink2);margin:0 0 24px;max-width:860px}
+nav.crumbs{font-size:13px;margin-bottom:16px} nav.crumbs a{color:#0a66d8}
+.pair{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.stage{padding:20px;border-radius:12px;overflow-x:auto;max-width:100%}
+.stage.light{background:#dfe3ea} .stage.dark{background:#0d0f12}
+.note{font-size:12px;color:var(--ink2);margin:6px 0 0;max-width:720px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px;background:var(--card)}
+th,td{border:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--code)} code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:12px}
+ul.links{padding-left:18px} ul.links li{margin:6px 0} a{color:#0a66d8}
 
-/* ---- menu bar strip ---- */
-.menubar { width: 260px; height: 24px; background: var(--bg-menubar); border-radius: 5px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; box-shadow: inset 0 0 0 0.5px var(--separator); flex: none; }
-.mb-icon { position: relative; width: 16px; height: 16px; color: var(--label-primary); }
-.mb-icon.rec { color: var(--sys-green); }
-.mb-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); right: -2px; bottom: -2px; }
-.blink { animation: blink 1.6s ease-in-out infinite; }
-@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
-@media (prefers-reduced-motion: reduce) { .blink { animation: none; opacity: 1; } }
+/* macOS appearance tokens, scoped per mock so light and dark can sit side by side */
+.mac{--win:#ececec;--ctl:#ffffff;--sep:rgba(0,0,0,.12);--label:rgba(0,0,0,.85);--label2:rgba(0,0,0,.5);
+  --blue:#007AFF;--red:#FF383C;--amber:#FF9E33;--e0:#B8150F;--e2:#FF7A3D;--menubar:rgba(246,246,246,.85)}
+.mac.dark{--win:#2b2b2d;--ctl:#1e1e1e;--sep:rgba(255,255,255,.14);--label:rgba(255,255,255,.88);--label2:rgba(255,255,255,.55);
+  --e0:#8E1B12;--e2:#FF9F45;--menubar:rgba(40,40,42,.85)}
+.mac{color:var(--label);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
 
-/* ---- the panel ----
-   Width is the preview width for the chosen scale, and nothing else: padding
-   lives on the row, so the panel is exactly as wide as the preview.
-   Small 320pt, medium 480pt, large half the screen (shown here as 960pt,
-   i.e. a 1920pt-wide visible frame). */
-.panel { width: var(--w); background: var(--bg-popover); border-radius: 10px; box-shadow: 0 6px 22px var(--shadow), 0 0 0 0.5px var(--separator); display: flex; flex-direction: column; flex: none; overflow: hidden; }
-.panel.s { --w: 320px; --gap: 10px; --px: 10px; --py: 6px; --r: 4px; --g: 14px; --gf: 11px; --h: 16px; --cf: 10px; --lf: 9px; --pw: 150px; }
-.panel.l { --w: 960px; --gap: 18px; --px: 16px; --py: 11px; --r: 6px; --g: 20px; --gf: 16px; --h: 24px; --cf: 15px; --lf: 15px; --pw: 260px; }
-.row { display: flex; align-items: center; gap: var(--gap); padding: var(--py) var(--px); }
-.spacer { flex: 1 1 auto; min-width: 12px; }
-
-/* every control: chrome for the scale's ControlSize, with a constant 1pt
-   separatorColor outline so an off toggle and an on toggle read as one control */
-.ctl { height: var(--h); padding: 0 4px; border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-.ctl .glyph { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; }
-.ctl .glyph svg { width: var(--gf); height: var(--gf); }
-.ctl .lbl { width: var(--g); height: var(--g); display: flex; align-items: center; justify-content: center; font-size: var(--lf); line-height: 1; }
-.ctl.on { background: var(--accent); color: var(--on-tint-label); }
-.ctl.on-red { background: var(--record-red); color: var(--on-tint-label); }
-.ctl .red { color: var(--record-red); }
-.ctl.hover { background: var(--hover-fill); }
-.ctl.pressed { background: var(--pressed-fill); }
-.ctl.focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
-.ctl.disabled { opacity: 0.35; }
-.scalegroup { display: flex; gap: 2px; flex: none; }
-
-/* camera picker: bordered pop-up button, capped at the scale's max width */
-.picker { height: var(--h); max-width: var(--pw); border-radius: var(--r); border: 1px solid var(--separator); background: var(--bg-control); color: var(--label-primary); display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 0 7px; font-size: var(--cf); flex: 0 1 auto; min-width: 0; overflow: hidden; }
-.picker .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.picker .chev { width: 14px; height: var(--g); border-radius: 3px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; font-size: 8px; line-height: 1; }
-.picker.disabled { opacity: 0.35; }
-.menu { width: 200px; background: var(--bg-popover); border-radius: 6px; box-shadow: 0 8px 24px var(--shadow), 0 0 0 0.5px var(--separator); padding: 4px; font-size: 11px; }
-.menu div { padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.menu div.sel { background: var(--accent); color: #fff; }
-
-/* preview: flush to the panel's left, right and bottom edges, 16:9, only the
-   bottom corners rounded so it meets the window's own rounding */
-.preview { width: var(--w); height: calc(var(--w) * 0.5625); border-radius: 0 0 10px 10px; background: var(--bg-underpage); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex: none; }
-.preview.live { background: linear-gradient(150deg, #4A5A73 0%, #2E3A4C 55%, #1D242F 100%); }
-.msg { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-align: center; color: var(--label-secondary); }
-.msg svg { width: 22px; height: 22px; }
-.msg p { font-size: 12px; line-height: 1.4; }
-.msg .lnk { font-size: 12px; color: var(--accent); border: 1px solid var(--separator); background: var(--bg-control); border-radius: 5px; padding: 2px 9px; margin-top: 2px; }
-.preview.half { width: 240px; height: 135px; }
-.preview.half .msg svg { width: 18px; height: 18px; }
-.preview.half .msg p { font-size: 10.5px; }
-.preview.half .msg .lnk { font-size: 10.5px; padding: 1px 7px; }
-
-/* a panel drawn at 50% because it is wider than this page */
-.halfbox { overflow: hidden; flex: none; }
-.halfbox > * { transform: scale(0.5); transform-origin: top left; }
-
-/* matrices and grids */
-.matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
-.cell { background: var(--bg-popover); border-radius: 8px; box-shadow: 0 0 0 0.5px var(--separator); padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.cell small { font-size: 10px; color: var(--label-secondary); text-align: center; line-height: 1.35; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
-.card { background: var(--bg-popover); border-radius: 10px; box-shadow: 0 0 0 0.5px var(--separator), 0 2px 8px var(--shadow); padding: 14px; text-decoration: none; color: inherit; display: block; }
-.card:hover { box-shadow: 0 0 0 0.5px var(--separator), 0 5px 16px var(--shadow); }
-.card h3 { font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
-.card p { font-size: 11.5px; color: var(--label-secondary); line-height: 1.5; }
-
-.tablewrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-th, td { text-align: left; padding: 6px 8px; border: 0.5px solid var(--separator); vertical-align: top; line-height: 1.45; }
-th { background: var(--code-bg); font-weight: 600; }
-ul.ann { list-style: none; font-size: 12px; color: var(--label-secondary); line-height: 1.6; }
-ul.ann li { padding-left: 14px; position: relative; margin-bottom: 4px; }
-ul.ann li::before { content: "\2192"; position: absolute; left: 0; color: var(--label-tertiary); }</style>
-</head>
-<body>
-<input type="checkbox" id="dm">
-<div class="page"><div class="wrap">
-<label for="dm" class="dm-label">Toggle dark mode (page also follows the system appearance)</label>
-<p class="nav"><a href="index.html">&larr; All mocks</a></p>
-<h1>Recording</h1>
-<p class="sub">The audio toggle is on. Same glyph, red fill. It is the same control as in the idle state, in its second state &mdash; there is no separate Stop button to move focus to.</p>
-<div class="stage">
-  <div class="menubar"><span class="mb-icon rec"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="4.2" fill="currentColor" opacity="0.55"/></svg><span class="mb-dot blink"></span></span></div>
-  <div class="panel">
-    <div class="row">
-      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.1 13.9 13.9 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>
-      <span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
-      <span class="spacer"></span>
-      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
-      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
-    </div>
-  </div>
-  <p class="caption">Recording &mdash; icon green, amber dot blinking</p>
-</div>
-
-<h2>What changes</h2>
-<div class="tablewrap"><table>
-<tr><th></th><th>Idle</th><th>Recording</th></tr>
-<tr><td>Audio toggle glyph</td><td colspan="2"><code>mic.fill</code> &mdash; <strong>unchanged</strong>. The glyph does not swap.</td></tr>
-<tr><td>Audio toggle chrome</td><td>standard button fill</td><td>red fill (<code>.tint(.red)</code>)</td></tr>
-<tr><td>VoiceOver label</td><td>Start recording</td><td>Stop recording</td></tr>
-<tr><td>Tooltip</td><td>Record audio to Voice Memos</td><td>Stop and save to Voice Memos</td></tr>
-<tr><td>Menu bar icon</td><td><code>record.circle</code>, primary label colour</td><td><code>record.circle</code>, green, plus a 5pt amber dot bottom-trailing</td></tr>
-<tr><td>Pin, camera toggle, picker, sizes, Quit</td><td colspan="2">unchanged &mdash; recording state does not disable any of them</td></tr>
-<tr><td>Panel size and position</td><td colspan="2">unchanged</td></tr>
-</table></div>
-<p class="note">The menu bar glyph never changes shape either. It stays <code>record.circle</code> in both states, so the icon does not move or resize in the menu bar; only its colour changes and the dot appears.</p>
-
-<h2>Why the glyph stays put</h2>
-<p class="note">Every other toggle in the row keeps its symbol and flips its fill: the camera stays <code>video.fill</code>, a size button stays its letter. The audio toggle used to be the exception, morphing into <code>stop.fill</code> when active, and that made the one control users press most often behave unlike its neighbours &mdash; the thing under the cursor changed identity rather than state. It now follows the same rule as the rest of the row.</p>
-<p class="note"><strong>The cost, recorded honestly.</strong> Inside the panel, idle and recording are now separated by fill alone. That is a luminance change rather than a hue change, so it holds up in greyscale and under Increase Contrast, and it is the same cue the pin and the camera toggle already depend on. Outside the panel the menu bar icon carries the state independently, in colour <em>and</em> in the added dot. But the redundant shape cue is gone, and a user glancing at the panel with the pin and camera also switched on now sees three filled buttons that differ only in tint. The recording one is red and the others are accent, which is the strongest available separation without reintroducing the glyph swap.</p>
-<div class="matrix">
-  <div class="cell"><span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Idle</small></div>
-  <div class="cell"><span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Recording<br>red fill</small></div>
-  <div class="cell"><span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span><small>Camera on<br>accent fill</small></div>
-  <div class="cell"><span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" fill="currentColor"/></svg></span></span><small>Pinned<br>accent fill</small></div>
-</div>
-
-<h2>Recording with the preview open</h2>
-<p class="note">The two are independent. Starting a recording does not touch the capture session, and the preview keeps running.</p>
-<div class="stage">
-  <div class="panel">
-    <div class="row">
-      <span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 1.5h5.6v1.4l-1 .5.9 4.1 1.5 1.4v1.3H8.7l-.7 4.3-.7-4.3H3.8V8.9l1.5-1.4.9-4.1-1-.5z" fill="currentColor"/></svg></span></span>
-      <span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span>
-      <span class="spacer"></span>
-      <span class="ctl on"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3.6" width="9.6" height="8.8" rx="2.2" fill="currentColor"/><path d="M10.6 7 14.3 4.7c.3-.2.7 0 .7.4v5.8c0 .4-.4.6-.7.4L10.6 9z" fill="currentColor"/></svg></span></span>
-      <span class="picker"><span class="name">FaceTime HD Camera</span><span class="chev">&#9662;</span></span>
-      <span class="scalegroup"><span class="ctl"><span class="lbl">S</span></span><span class="ctl on"><span class="lbl">M</span></span><span class="ctl"><span class="lbl">L</span></span></span>
-      <span class="ctl"><span class="glyph"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.4 3.9a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>
-    </div>
-    <div class="preview live"></div>
-  </div>
-  <p class="caption">Recording, pinned, preview open &mdash; only the row changed</p>
-</div>
-<p class="note">The preview is display-only in this state as in every other: nothing writes it to disk, and it is not part of the recording. What lands in Voice Memos is audio.</p>
-
-<h2>Behaviour</h2>
-<ul class="ann">
-  <li>The panel stays open through Start and Stop by design, so Stop is one click away without reopening it. Unpinned it still closes when another app takes focus; pinned it does not.</li>
-  <li><code>isRecording</code> flips only after the Shortcut URL opens successfully. A failed Start leaves the toggle off &mdash; there is no half-recording state.</li>
-  <li>Quit while recording stops the recording first, then terminates.</li>
-  <li>Under Reduce Motion the amber dot is drawn at full opacity and does not blink. The green icon and the dot&rsquo;s presence still distinguish the state.</li>
-</ul>
-
-<h2>In-flight</h2>
-<p class="note">Between the click and the state change, <code>isInFlight</code> disables the toggle. Starting takes at least 1.5s when Voice Memos is running, because it has to be quit first or macOS raises <code>VMAudioServiceErrorDomain</code> error 5. During that window the toggle is dimmed and still shows its previous state; there is no spinner and no progress indicator.</p>
-<div class="matrix">
-  <div class="cell"><span class="ctl disabled"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Starting<br>toggle disabled</small></div>
-  <div class="cell"><span class="ctl on-red"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Recording</small></div>
-  <div class="cell"><span class="ctl on-red disabled"><span class="glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="1.1" width="4.8" height="8.2" rx="2.4" fill="currentColor"/><path d="M3.5 7.3a4.5 4.5 0 0 0 9 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8 11.9v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span><small>Stopping<br>toggle disabled</small></div>
-</div>
-<p class="note">A dimmed control that still reads &ldquo;idle&rdquo; is the only feedback during that 1.5s. It says the click landed, but not that anything is happening &mdash; noted here as a gap in the shipped build, not as intended behaviour.</p>
-</div></div>
-</body>
-</html>
+.panel{background:var(--win);border-radius:10px;box-shadow:0 0 0 .5px rgba(0,0,0,.25),0 12px 32px rgba(0,0,0,.28);overflow:hidden}
+.row{display:flex;align-items:center}
+.grp{display:flex;align-items:center}
+.spacer{flex:1 1 auto}
+.ctl{display:inline-flex;align-items:center;justify-content:center;background:var(--ctl);border:1px solid var(--sep);color:var(--label);position:relative;flex:none}
+.ctl.on{background:var(--blue);border-color:transparent;color:#fff}
+.ctl.on.red{background:var(--red)}
+.ctl.pressed{opacity:.75} .ctl.disabled{opacity:.35}
+.ctl .g.arming{opacity:.35}
+.timer{display:inline-flex;align-items:center;border:1px solid var(--sep);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.timer.idle{color:var(--label2);opacity:.65}
+.menu{display:inline-flex;align-items:center;gap:5px;background:var(--ctl);border:1px solid var(--sep);min-width:0;flex:0 1 auto}
+.menu span.name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu .well{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:#fff;border-radius:3px;flex:none}
+.menu.disabled{opacity:.45}
+.dot{position:absolute;border-radius:50%;background:var(--amber);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.ember{background:linear-gradient(135deg,var(--e0),var(--red),var(--e2),var(--red),var(--e0));background-size:240% 240%;
+  animation:drift 3.4s linear infinite,glow 3.4s ease-in-out infinite}
+@keyframes drift{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+@keyframes glow{0%,100%{box-shadow:0 0 4px rgba(255,90,60,0)}50%{box-shadow:0 0 7px rgba(255,90,60,.55)}}
+@media (prefers-reduced-motion:reduce){.ember{animation:none;background:var(--red)}.dot{animation:none}}
+.preview{position:relative;background:linear-gradient(160deg,#cdb9a8,#9a8f86 45%,#5f6a73);display:flex;align-items:center;justify-content:center}
+.preview.blank{background:#000}
+.preview.dark-bg{background:var(--win)}
+.msg{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--label2);text-align:center;max-width:80%}
+.msg .btn{font-size:12px;color:var(--label);background:var(--ctl);border:1px solid var(--sep);border-radius:5px;padding:2px 10px;box-shadow:0 .5px 1px rgba(0,0,0,.15)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--sep);border-top-color:var(--label2);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.menubar{height:24px;background:var(--menubar);display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 12px;font-size:13px;border-radius:8px 8px 0 0}
+.mbi{position:relative;display:inline-flex;color:var(--label)} .mbi.rec{color:#34C759}
+.alert{width:260px;background:var(--win);border-radius:12px;padding:20px 16px 16px;text-align:center;box-shadow:0 0 0 .5px rgba(0,0,0,.3),0 16px 40px rgba(0,0,0,.35)}
+.alert .ico{width:56px;height:56px;margin:0 auto 10px;border-radius:12px;background:linear-gradient(#ff6b6b,#d92b2b);display:flex;align-items:center;justify-content:center;color:#fff}
+.alert b{display:block;font-size:13px;margin-bottom:6px} .alert p{font-size:11px;margin:0 0 14px;color:var(--label)}
+.alert .ok{display:block;width:100%;background:var(--blue);color:#fff;border-radius:6px;padding:4px 0;font-size:13px}
+</style></head><body><main><nav class="crumbs"><a href="index.html">All mocks</a></nav><h1>Panel, Recording</h1><p class="lede">Audio and video recording are mutually exclusive and look the same on their own button: red capsule wearing the Live Ember, plus a blinking amber dot on the bottom right corner. The glyph never changes. The other record button is disabled, and video recording also disables the camera menu.</p><h2>Recording audio</h2><div class="pair"><div><h3>Light</h3><div class="stage light"><div class="mac light"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl on red ember" role="button" aria-label="Stop and save to Voice Memos" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="dot" style="width:7px;height:7px;right:-3.15px;bottom:-3.15px"></span></span><span class="timer" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">04:17</span><span class="ctl red disabled" role="button" aria-label="Stop the audio recording first" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div><div><h3>Dark</h3><div class="stage dark"><div class="mac dark"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl on red ember" role="button" aria-label="Stop and save to Voice Memos" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="dot" style="width:7px;height:7px;right:-3.15px;bottom:-3.15px"></span></span><span class="timer" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">04:17</span><span class="ctl red disabled" role="button" aria-label="Stop the audio recording first" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div></div><p class="note">mic.fill on a red capsule with the Live Ember (3.4s drift and breathing glow), amber dot blinking on 1.6s. Video button disabled at 0.35 opacity. Timer at full strength.</p><h2>Recording video</h2><div class="pair"><div><h3>Light</h3><div class="stage light"><div class="mac light"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl red disabled" role="button" aria-label="Record audio to Voice Memos" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="timer" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">01:32</span><span class="ctl on red ember" role="button" aria-label="Stop and save to Photo Booth" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span><span class="dot" style="width:7px;height:7px;right:-3.15px;bottom:-3.15px"></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu disabled" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div><div><h3>Dark</h3><div class="stage dark"><div class="mac dark"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl red disabled" role="button" aria-label="Record audio to Voice Memos" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="timer" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">01:32</span><span class="ctl on red ember" role="button" aria-label="Stop and save to Photo Booth" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span><span class="dot" style="width:7px;height:7px;right:-3.15px;bottom:-3.15px"></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu disabled" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div></div><p class="note">Same treatment on video.fill. Mic disabled. Camera menu disabled, because switching the input mid-write would truncate the movie. Mirror stays live: it only affects the preview, never the file.</p><h2>Arming (starting)</h2><div class="pair"><div><h3>Light</h3><div class="stage light"><div class="mac light"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl red disabled" role="button" aria-label="Record audio to Voice Memos" style="width:27px;height:22px;border-radius:6px"><span class="g arming" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="timer idle" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">00:00</span><span class="ctl red" role="button" aria-label="Record video to Photo Booth" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div><div><h3>Dark</h3><div class="stage dark"><div class="mac dark"><div class="panel" style="width:640px"><div class="row" style="gap:18px;padding:7px 16px 6px"><span class="ctl on" role="button" aria-label="Keep panel open" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 1.5h8l-1.2 1.6v5.2l3.4 3.6v1.6H13v6.5L12 22l-1-2V13.5H5.8v-1.6l3.4-3.6V3.1z" fill="currentColor"/></svg></span></span><span class="grp" style="gap:9.0px"><span class="ctl red disabled" role="button" aria-label="Record audio to Voice Memos" style="width:27px;height:22px;border-radius:6px"><span class="g arming" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></span><span class="timer idle" role="timer" aria-label="Recording time" style="height:22px;padding:0 8px;border-radius:6px;font-size:13px">00:00</span><span class="ctl red" role="button" aria-label="Record video to Photo Booth" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="2.5" fill="currentColor"/><path d="M16.5 10.2l5.5-3.2v10l-5.5-3.2z" fill="currentColor"/></svg></span></span></span><span class="ctl on" role="button" aria-label="Show the preview as others see it" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M10 9L3 20h7z M14 9l7 11h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 5h15M4.5 5l2-2M4.5 5l2 2M19.5 5l-2-2M19.5 5l-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></span><span class="spacer" style="min-width:12px"></span><span class="menu" role="button" aria-label="Preview camera" style="height:22px;border-radius:6px;padding:0 4px 0 7px;max-width:260px;font-size:13px"><span class="name">Logitech BRIO</span><span class="well" style="width:14px;height:17px"><svg width="9" height="9" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="grp" style="gap:2px"><span class="ctl" role="button" aria-label="Small preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">S</span></span></span><span class="ctl" role="button" aria-label="Medium preview size" style="width:27px;height:22px;border-radius:6px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">M</span></span></span><span class="ctl on" role="button" aria-label="Large preview size" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><span style="font-size:13px">L</span></span></span></span><span class="ctl on" role="button" aria-label="Quit MacRecordWidget" style="width:27px;height:22px;border-radius:11.0px"><span class="g" style="width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.2 6.2a7.5 7.5 0 1 0 9.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></span></div><div class="preview " style="width:640px;height:360px;border-radius:0 0 10px 10px"></div></div></div></div></div></div><p class="note">Between pressing record and capture actually starting, the button is disabled and its glyph is dimmed to 0.35. Tooltip and VoiceOver: "Starting… wait to speak". Video arming looks the same on the video button.</p><h2>Menu bar icon, recording</h2><div class="pair"><div><h3>Light</h3><div class="stage light"><div class="mac light" style="width:220px"><div class="menubar"><span style="opacity:.6">Wi-Fi</span><span class="mbi rec" aria-label="MacRecordWidget"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><span class="dot" style="width:5px;height:5px;right:-2px;bottom:-2px"></span></span><span>Mon 9:41</span></div></div></div></div><div><h3>Dark</h3><div class="stage dark"><div class="mac dark" style="width:220px"><div class="menubar"><span style="opacity:.6">Wi-Fi</span><span class="mbi rec" aria-label="MacRecordWidget"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><span class="dot" style="width:5px;height:5px;right:-2px;bottom:-2px"></span></span><span>Mon 9:41</span></div></div></div></div></div><p class="note">record.circle turns green while either medium records, with a 5pt blinking amber dot. This green belongs to the menu bar icon only; nothing in the row is green.</p><h2>Motion and contrast</h2><table><tr><th>Setting</th><th>Ember</th><th>Amber dot</th></tr><tr><td>Default</td><td>Gradient drift, 3.4s period, glow breathing</td><td>Blinks 1.0 to 0.15, 0.8s each way</td></tr><tr><td>Reduce Motion</td><td>Flat #FF383C</td><td>Solid, no blink</td></tr><tr><td>Increase Contrast</td><td>Flat #FF383C</td><td>Blinks</td></tr></table><p class="note" style="margin-top:40px">Master baseline, updated 2026-10-05 from the shipped build. Glyphs are SVG stand-ins for the named SF Symbols.</p></main></body></html>

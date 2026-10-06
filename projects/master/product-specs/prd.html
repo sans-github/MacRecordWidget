@@ -184,10 +184,9 @@ class="toc-section-number">1</span> PRD: MacRecordWidget (Master)</a>
 <ul>
 <li><a href="#goals" id="toc-goals"><span
 class="toc-section-number">1.1</span> Goals</a></li>
-<li><a href="#product-gap-no-video-capture"
-id="toc-product-gap-no-video-capture"><span
-class="toc-section-number">1.2</span> Product gap: no video
-capture</a></li>
+<li><a href="#two-mediums-one-timer"
+id="toc-two-mediums-one-timer"><span
+class="toc-section-number">1.2</span> Two mediums, one timer</a></li>
 <li><a href="#elevator-pitch" id="toc-elevator-pitch"><span
 class="toc-section-number">1.3</span> Elevator pitch</a></li>
 <li><a href="#problem" id="toc-problem"><span
@@ -224,9 +223,8 @@ class="toc-section-number">1.16</span> Platform notes</a></li>
 </ul>
 </nav>
 <blockquote>
-<p>Status: Draft — PM, pending human re-approval Last approved:
-2026-09-04 (superseded by the 2026-09-05 revisions below) Updated:
-2026-09-05</p>
+<p>Status: Draft (PM), pending human re-approval Last approved:
+2026-09-04 (superseded by the revisions below) Updated: 2026-10-05</p>
 </blockquote>
 <h1 data-number="1" id="prd-macrecordwidget-master"><span
 class="header-section-number">1</span> PRD: MacRecordWidget
@@ -235,23 +233,23 @@ class="header-section-number">1</span> PRD: MacRecordWidget
 actually ships today</strong>.</p>
 <p><strong>Shipped:</strong> production polish (2026-05-18), popover
 button layout (2026-05-21), live camera preview (2026-09-04), panel
-pinning and scaling (2026-09-05).</p>
+pinning and scaling (2026-09-05), recording timer and arming state
+(2026-09-06), in-app video recording and permanent preview (2026-09-09),
+preview mirror toggle and camera menu (2026-09-20), semantic capsules
+(2026-09-24), two-hue palette (2026-09-28).</p>
 <blockquote>
 <p><strong>Reading this document:</strong> every unmarked statement
-describes current, shipped behaviour. The live camera preview shipped on
-2026-09-04 and then went through several rounds of UI revision with the
-human on the same day, and a further round on 2026-09-05 (pin toggle,
-S/M/L panel scaling, edge-to-edge preview, mic glyph, "Audio" label
-removed). Criteria that the revisions invalidated are kept in
+describes current, shipped behaviour, verified against the Swift sources
+on 2026-10-05. Criteria later revisions invalidated are kept in
 <strong>Superseded acceptance criteria</strong> with the reason and
 date, so the decision trail survives.</p>
 </blockquote>
 <h2 data-number="1.1" id="goals"><span
 class="header-section-number">1.1</span> Goals</h2>
-<p><strong>Product goal:</strong> one-click audio recording from the
-macOS menu bar, with no window, no dock icon, and no context switch. An
-optional in-popover camera preview lets the user check framing before
-recording.</p>
+<p><strong>Product goal:</strong> one-click audio or video recording
+from the macOS menu bar, with no window, no dock icon, and no context
+switch. A live camera preview is always on in the panel, so framing is
+checked before and during a video recording.</p>
 <table>
 <thead>
 <tr>
@@ -262,7 +260,8 @@ recording.</p>
 <tbody>
 <tr>
 <td>Zero-friction recording</td>
-<td>Start or stop a recording in one click from the menu bar.</td>
+<td>Start or stop an audio or video recording in one click from the menu
+bar panel.</td>
 </tr>
 <tr>
 <td>Chained sessions</td>
@@ -270,9 +269,24 @@ recording.</p>
 widget.</td>
 </tr>
 <tr>
+<td>No lost first words</td>
+<td>The UI holds a "starting" state until capture is live, so the user
+is never invited to speak into a mic that is not listening.</td>
+</tr>
+<tr>
+<td>One timer, one meaning</td>
+<td>Audio and video are mutually exclusive, so the single MM:SS timer
+always describes exactly one recording.</td>
+</tr>
+<tr>
 <td>One control per idea</td>
 <td>Each control does exactly one thing. No control silently triggers a
 second effect.</td>
+</tr>
+<tr>
+<td>Colour means one thing</td>
+<td>Red means "you are being recorded". Blue means every other lit
+control. No third hue.</td>
 </tr>
 <tr>
 <td>Fits any display</td>
@@ -286,13 +300,14 @@ away.</td>
 </tr>
 <tr>
 <td>Native macOS feel</td>
-<td>Controls use standard macOS control types and sizing. Correct in
-light and dark mode.</td>
+<td>Semantic system colours, correct in light and dark mode, honouring
+Reduce Motion and Increase Contrast.</td>
 </tr>
 <tr>
 <td>Reliable lifecycle</td>
 <td>Rapid or double taps never fire a duplicate shortcut. Failed
-launches never leave the UI in a false state.</td>
+launches never leave the UI in a false state. Quitting never leaves an
+unplayable movie.</td>
 </tr>
 <tr>
 <td>Idiomatic Swift</td>
@@ -304,45 +319,76 @@ the UI path. No optimistic state divergence.</td>
 <p><strong>Non-goals:</strong></p>
 <ul>
 <li>No backend, web frontend, or infrastructure</li>
-<li>No recording modes beyond the two Shortcuts ("Start", "Stop")</li>
-<li>No video capture of any kind (see <strong>Product gap: no video
-capture</strong> below)</li>
+<li>No audio path other than the two Shortcuts ("Start", "Stop") into
+Voice Memos</li>
+<li>No simultaneous audio and video recording. Exclusivity is a design
+decision, not a limitation to lift later: one timer cannot describe two
+recordings that began at different moments</li>
+<li>No launching, scripting, or UI-automating Photo Booth (it would need
+Accessibility permission the app never asks for)</li>
 <li>No App Store submission prep (icons, metadata, entitlements)</li>
 <li>No XCUITest automation (manual smoke testing only)</li>
 </ul>
 <hr />
-<h2 data-number="1.2" id="product-gap-no-video-capture"><span
-class="header-section-number">1.2</span> Product gap: no video
-capture</h2>
-<p><strong>The product cannot record video at all.</strong> This is a
-real gap, stated here so no reader has to infer it.</p>
+<h2 data-number="1.2" id="two-mediums-one-timer"><span
+class="header-section-number">1.2</span> Two mediums, one timer</h2>
+<p>The app records <strong>audio or video, never both at
+once</strong>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Audio</th>
+<th>Video</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Button</td>
+<td><code>mic.fill</code> (<code>recordToggle</code>)</td>
+<td><code>video.fill</code> (<code>videoRecordToggle</code>)</td>
+</tr>
+<tr>
+<td>Captured by</td>
+<td>Voice Memos, via the "Start" and "Stop" Shortcuts</td>
+<td>This app's own <code>AVCaptureMovieFileOutput</code> (H.264 + AAC
+<code>.mov</code>)</td>
+</tr>
+<tr>
+<td>Lands in</td>
+<td>Voice Memos</td>
+<td><code>~/Pictures/Photo Booth Library/Pictures/</code>, indexed into
+Photo Booth's filmstrip</td>
+</tr>
+<tr>
+<td>Timer</td>
+<td>Shared</td>
+<td>Shared</td>
+</tr>
+<tr>
+<td>Survives the panel closing</td>
+<td>Yes (another process)</td>
+<td>Yes (the session refuses to stop mid-write)</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li>Recording is <strong>audio only</strong>, via the "Start" Shortcut
-into Voice Memos.</li>
-<li>Photo Booth is <strong>never launched</strong>. That code was
-deleted on 2026-09-04.</li>
-<li>The camera toggle and the preview are <strong>display-only</strong>.
-Nothing in the app writes a video file, a frame buffer, or a pasteboard
-image.</li>
+<li>Pressing either button claims the medium. The other button is
+disabled until it is released.</li>
+<li>Any failure releases the medium, so the app is never stuck in a mode
+that never started.</li>
+<li>Photo Booth is never launched. The app writes into its library
+folder only.</li>
 </ul>
-<p><strong>Why:</strong> the video toggle used to do two things at once
-(open the preview <em>and</em> launch Photo Booth). That surprised the
-human, who could not tell which effect a click would produce. The
-decision was to keep the toggle honest (preview only) and drop the Photo
-Booth launch entirely rather than split it into a second control.</p>
-<p><strong>Consequence:</strong> a user who wants video must open a
-capture app themselves. Restoring video capture is an unscoped future
-feature, not a defect against current specs.</p>
 <hr />
 <h2 data-number="1.3" id="elevator-pitch"><span
 class="header-section-number">1.3</span> Elevator pitch</h2>
-<p>MacRecordWidget is a menu bar app that starts and stops an audio
-recording in one click. It fires two user-created Shortcuts ("Start" and
-"Stop") and quits Voice Memos first so macOS does not throw an
-audio-service error. A second toggle opens a live camera preview inside
-the panel, purely so the user can check framing. The whole UI is one row
-of icon controls plus an optional preview below it. The panel has three
-sizes (S/M/L) and can be pinned so it survives losing focus.</p>
+<p>MacRecordWidget is a menu bar app that records audio or video in one
+click. Audio fires two user-created Shortcuts ("Start" and "Stop") into
+Voice Memos. Video is captured in-app and written straight into Photo
+Booth's library. A live camera preview is always on below one row of
+icon controls, with a shared MM:SS timer. The panel has three sizes
+(S/M/L) and can be pinned so it survives losing focus.</p>
 <hr />
 <h2 data-number="1.4" id="problem"><span
 class="header-section-number">1.4</span> Problem</h2>
@@ -354,64 +400,66 @@ Shortcuts audio path if it is already open, which produces a cryptic
 <ul>
 <li>A recording-status dot in the popover flickered and carried no
 actionable information</li>
-<li>Start and Stop were stacked vertically, making the popover taller
-than its content needed</li>
-<li>The popover dismissed itself after Start, so stopping required
-reopening it from the menu bar</li>
 <li>Start and Stop were two separate buttons, one of which was always
 disabled</li>
+<li>The popover dismissed itself after Start, so stopping required
+reopening it</li>
 <li>The video toggle overloaded two effects (preview plus a Photo Booth
 launch) onto one click</li>
-<li>The panel folded away as soon as another app was clicked, so it
-could not be watched while working</li>
-<li>One fixed panel size served every display: too small on a large
-screen, too wide on a laptop</li>
-<li>The audio toggle wore a red record disc, the generic record mark,
-which reads as video as readily as audio</li>
-<li>An "Audio" text label sat beside it, implying a "Video" counterpart
-that does not exist</li>
+<li>The panel folded away as soon as another app was clicked</li>
+<li>One fixed panel size served every display</li>
+<li>The first ~1.5s of every audio recording was lost, because the UI
+said "recording" before Voice Memos was capturing</li>
+<li>There was no way to record video at all after the Photo Booth launch
+was removed</li>
+<li>A third hue (camera green) sat beside blue controls and read as an
+unexplained state</li>
 </ul>
 <hr />
 <h2 data-number="1.5" id="target-audience"><span
 class="header-section-number">1.5</span> Target audience</h2>
 <p><strong>Primary:</strong> the developer and sole author, who uses the
 app daily and maintains it. <strong>Secondary:</strong> anyone who
-installs the build and has the two Shortcuts configured. They get a
-native-looking, non-blocking audio recorder.</p>
+installs the build and has the two Shortcuts configured.</p>
 <hr />
 <h2 data-number="1.6" id="features-shipped"><span
 class="header-section-number">1.6</span> Features (shipped)</h2>
 <p><strong>Menu bar</strong></p>
 <ul>
 <li>Menu bar icon (<code>record.circle</code>) that turns green while
-recording, with a blinking amber badge dot that respects Reduce
-Motion</li>
-<li>The icon never changes glyph (no mic or camera swap)</li>
+either medium is recording, with a blinking amber badge dot that
+respects Reduce Motion</li>
+<li>The icon never changes glyph</li>
 </ul>
 <p><strong>Button row (left to right)</strong></p>
 <ul>
-<li>Pin toggle (<code>pinToggle</code>): <code>pin.slash</code> when
-off, <code>pin.fill</code> when on. Keeps the panel on screen when
+<li>Pin toggle (<code>pinToggle</code>): <code>pin.slash</code> off,
+<code>pin.fill</code> on, blue when on. Keeps the panel on screen when
 another app takes focus. Persisted</li>
-<li><strong>One</strong> audio toggle (<code>recordToggle</code>):
-<code>.toggleStyle(.button)</code>, tinted red, glyph
-<code>mic.fill</code>. Idle it is plain button chrome with the glyph in
-the default label colour; while recording the button fills red. The
-glyph never changes, exactly like every other toggle in the row. Click
-starts, click again stops</li>
+<li><strong>Record group</strong>, packed at half the row spacing:
+<ul>
+<li>Audio toggle (<code>recordToggle</code>): <code>mic.fill</code> in
+both states. Red capsule while recording, with a blinking amber dot on
+its bottom-right corner</li>
+<li>Timer (<code>recordingTimer</code>): MM:SS in a bordered box. Full
+strength while recording, faded (secondary, 65% opacity) while idle,
+still showing the last duration</li>
+<li>Video toggle (<code>videoRecordToggle</code>):
+<code>video.fill</code> in both states. Same red capsule and amber dot
+as the mic</li>
+</ul></li>
+<li>Mirror toggle (<code>mirrorToggle</code>): Flip Horizontal glyph,
+blue when on. At full row spacing, outside the record group, because it
+acts on the preview, not on a recording</li>
 <li>A spacer</li>
-<li>Camera toggle (<code>videoModeToggle</code>):
-<code>.toggleStyle(.button)</code>, glyph <code>video.fill</code>. Shows
-and hides the preview. Never disabled by recording state</li>
-<li>Camera picker (<code>cameraPicker</code>), visible
-<strong>only</strong> while the camera toggle is on</li>
-<li>Three S/M/L panel-size toggles (<code>panelScalePicker</code>),
-visible <strong>only</strong> while the camera toggle is on</li>
-<li>Quit button (<code>quitButton</code>):
-<code>.buttonStyle(.bordered)</code>, glyph <code>power</code>. Stops an
-in-progress recording, then terminates</li>
-<li>There is no text label anywhere in the row. Every control is a glyph
-or a single letter</li>
+<li>Camera menu (<code>cameraPicker</code>): label names the camera
+actually feeding the preview, with a chevron in a blue well</li>
+<li>Three S/M/L size toggles (<code>panelScalePicker</code>), blue when
+selected</li>
+<li>Quit button (<code>quitButton</code>): <code>power</code> glyph, a
+permanent blue capsule. Finishes any recording, then terminates</li>
+<li>No text label anywhere in the row. Every control is a glyph, a
+single letter, the timer, or the camera name</li>
 </ul>
 <p><strong>Tooltips and VoiceOver</strong></p>
 <table>
@@ -425,12 +473,26 @@ or a single letter</li>
 <tbody>
 <tr>
 <td>Audio toggle</td>
-<td>"Record audio to Voice Memos" / "Stop and save to Voice Memos"</td>
-<td>"Start recording" / "Stop recording"</td>
+<td>"Record audio to Voice Memos" / "Starting… wait to speak" / "Stop
+and save to Voice Memos"</td>
+<td>same as tooltip</td>
 </tr>
 <tr>
-<td>Camera toggle</td>
-<td>"Show camera preview" / "Hide camera preview"</td>
+<td>Video toggle</td>
+<td>"Record video to Photo Booth" / "Starting… wait to perform" / "Stop
+and save to Photo Booth" / "Stop the audio recording first" / the
+camera's unavailable reason</td>
+<td>same as tooltip</td>
+</tr>
+<tr>
+<td>Timer</td>
+<td>none</td>
+<td>"Recording time"</td>
+</tr>
+<tr>
+<td>Mirror toggle</td>
+<td>"Mirror the preview" (off) / "Show the preview as others see it"
+(on)</td>
 <td>same as tooltip</td>
 </tr>
 <tr>
@@ -439,9 +501,14 @@ or a single letter</li>
 <td>"Keep panel open"</td>
 </tr>
 <tr>
+<td>Camera menu</td>
+<td>none</td>
+<td>"Preview camera"</td>
+</tr>
+<tr>
 <td>S/M/L</td>
-<td>"Small panel" / "Medium panel" / "Large panel"</td>
-<td>"Small panel size", and so on</td>
+<td>"Small preview" / "Medium preview" / "Large preview"</td>
+<td>"Small preview size", and so on</td>
 </tr>
 <tr>
 <td>Quit</td>
@@ -450,22 +517,41 @@ or a single letter</li>
 </tr>
 </tbody>
 </table>
-<p>The VoiceOver label deliberately differs from the tooltip where the
-tooltip is too terse without the visual context: "Quit" is unambiguous
-next to a power glyph, but not read aloud on its own.</p>
-<p><strong>Control chrome</strong></p>
+<p><strong>Control chrome (semantic capsules)</strong></p>
 <ul>
-<li>Every control's size, glyph size, font, corner radius, and
-<code>ControlSize</code> derive from the chosen panel scale</li>
-<li>Every control carries a constant 1pt separator-coloured outline, so
-an off toggle and an on toggle read as one control in two states rather
-than two different objects</li>
+<li>Off: a rounded rect at the scale's corner radius,
+<code>controlBackgroundColor</code> fill, 1pt
+<code>separatorColor</code> outline, glyph in
+<code>labelColor</code></li>
+<li>On: a fully round capsule filled with a semantic hue, white glyph,
+no outline (the fill is the edge)</li>
+<li>Two hues only: red <code>#FF383C</code> for a live recording (audio
+and video alike); blue <code>#007AFF</code> for every other lit control
+(pin, mirror, S/M/L, camera chevron well, Quit)</li>
+<li>The user's accent colour is not honoured in the row</li>
+<li>Width never changes between off and on: <code>controlPaddingH</code>
+is 4pt in both states</li>
+<li>Every control, including the timer and camera menu, is pinned to
+<code>PanelScale.controlHeight</code></li>
+<li>Every size, font, spacing, and radius derives from the chosen panel
+scale</li>
 <li>No focus ring on any control (<code>focusEffectDisabled</code>)</li>
 </ul>
-<p><strong>Recording</strong></p>
+<p><strong>Live Ember</strong></p>
 <ul>
-<li>Voice Memos is quit before the Start shortcut fires, with a 1.5s
-wait</li>
+<li>A capturing record button wears an animated red gradient instead of
+the flat fill: a 3.4s drift with a breathing outer glow</li>
+<li>Driven by <code>TimelineView(.animation)</code>, so nothing needs
+invalidating when recording stops</li>
+<li>Collapses to the flat red fill under Reduce Motion, and separately
+under Increase Contrast</li>
+<li>Shown only while genuinely capturing, not while arming</li>
+</ul>
+<p><strong>Audio recording</strong></p>
+<ul>
+<li>Voice Memos is quit after Stop (about 2s later), so it is usually
+gone before the next Start. If it is still running at Start, it is quit
+with a 1.5s wait as a fallback</li>
 <li>Start fires <code>shortcuts://run-shortcut?name=Start</code> with a
 timestamped recording name as text input</li>
 <li>Stop fires <code>shortcuts://run-shortcut?name=Stop</code></li>
@@ -473,82 +559,99 @@ timestamped recording name as text input</li>
 <li>A failed shortcut launch throws <code>shortcutLaunchFailed</code>
 and surfaces through an <code>NSAlert</code></li>
 </ul>
+<p><strong>Arming</strong></p>
+<ul>
+<li>After either button is pressed, the UI holds an "arming" state for a
+measured 3s before showing "recording"</li>
+<li>During arming the pressed button's glyph dims to 35%, it is
+disabled, and its tooltip says "Starting… wait to speak" (audio) or
+"Starting… wait to perform" (video)</li>
+<li>The red fill, amber dot, ember, and running timer all arrive
+together when arming ends: that is the "speak now" signal</li>
+</ul>
+<p><strong>Video recording</strong></p>
+<ul>
+<li>Captured by the app's own session into
+<code>~/Pictures/Photo Booth Library/Pictures/</code>, named the way
+Photo Booth names movies</li>
+<li>Added to Photo Booth's filmstrip index only while Photo Booth is not
+running; otherwise the movie is left on disk unindexed</li>
+<li>A name collision within the same minute is suffixed (" 2", " 3"),
+never overwritten</li>
+<li>The recording is never mirrored, whatever the preview shows</li>
+<li>Microphone access is requested on the first video recording, not
+when the panel opens. Denied shows an alert pointing to System
+Settings</li>
+<li>Available only while the preview is running; otherwise the button is
+disabled and its tooltip says why</li>
+<li>The camera menu is disabled while a video recording is in
+progress</li>
+</ul>
 <p><strong>Camera preview</strong></p>
 <ul>
-<li>Live 16:9 preview below the button row, visible only while the
-camera toggle is on. 480x270pt at the medium scale</li>
-<li>Runs flush to the panel's left, right, and bottom edges. No inset,
-no border. Only its bottom corners are rounded, matching the panel's own
-10pt radius</li>
-<li>Display-only: never writes a file, buffer, or pasteboard image</li>
-<li>Mirroring is hardcoded on (selfie orientation); no user-facing
-mirror control</li>
-<li>Camera picker across all connected video devices, persisted across
-launches</li>
+<li>Always on. There is no preview toggle: the panel always opens
+showing the camera</li>
+<li>Live 16:9 preview below the button row, as wide as the panel
+(480x270pt at medium)</li>
+<li>Flush to the panel's left, right, and bottom edges. Only its bottom
+corners are rounded</li>
+<li>Mirror toggle, default on, persisted. Preview only; never
+disabled</li>
+<li>Camera menu across all connected video devices, persisted, with
+fallback when the stored device is missing</li>
+<li>A "Starting camera…" state until the first real frame arrives, with
+a 10s watchdog that fails to a "Try Again" action</li>
 <li>Distinct inline states for permission not determined, denied,
-restricted, no camera, and generic failure</li>
-<li>The audio toggle stays usable in every preview state</li>
+restricted, no camera, and failure</li>
 </ul>
 <p><strong>Panel</strong></p>
 <ul>
 <li>Three sizes, chosen with the S/M/L toggles and persisted: small,
 medium (default), large</li>
-<li>Width is the chosen scale's width (320 / 480 / half the screen's
-visible width, never below 480). It is the same whether the camera is on
-or off, so toggling the camera changes the height only</li>
+<li>Width is the scale's preview width: 380 / 480 / half the screen's
+visible width (never below 480)</li>
 <li>Flush against the right edge of the screen's visible frame (zero
 margin)</li>
 <li>Not draggable, and the resize is not animated</li>
 </ul>
-<p><strong>Panel scale</strong></p>
-<ul>
-<li>One <code>PanelScale</code> enum owns every derived dimension:
-preview size, glyph size and font, <code>ControlSize</code>
-(<code>.mini</code> / <code>.small</code> / <code>.regular</code>), row
-spacing, horizontal and vertical padding, corner radius, picker width,
-and the two text fonts</li>
-<li>Large tracks the display rather than a fixed number, so the panel is
-half the screen on any Mac</li>
-<li>The three sizes are toggle buttons, not a segmented picker:
-<code>NSSegmentedControl</code> ignores SwiftUI's <code>.font()</code>,
-so segmented labels stayed 13pt while everything around them grew</li>
-</ul>
 <p><strong>Panel lifecycle</strong></p>
 <ul>
 <li>The panel stays open through Start and Stop</li>
-<li>Unpinned (default): it closes when the menu bar icon is clicked, or
-when another app takes focus</li>
-<li>Pinned: it stays on screen through focus loss; only a menu bar icon
-click closes it</li>
-<li>The capture session starts when the camera toggle turns on and stops
-when the panel closes</li>
+<li>Unpinned (default): it closes on a menu bar icon click, or when
+another app takes focus</li>
+<li>Pinned: only a menu bar icon click closes it</li>
+<li>Closing the panel pauses the camera (activity light off) but keeps
+the session configured, so reopening is fast. It does not pause during a
+video recording</li>
 </ul>
 <hr />
 <h2 data-number="1.7" id="conceptual-data-model"><span
 class="header-section-number">1.7</span> Conceptual data model</h2>
 <ul>
-<li>The app holds one <strong>Recording session</strong> state, in
-memory only, never persisted.</li>
-<li>A Recording session has three flags: recording or idle, camera
-preview shown or hidden, and in flight or settled.</li>
-<li>A Recording session drives two <strong>Shortcuts</strong> by name:
-"Start" and "Stop". Both must exist in the user's Shortcuts app.</li>
-<li>A Recording session owns <strong>no</strong> capture process.
-Nothing captures video.</li>
-<li>One <strong>Preview session</strong> exists in memory, separate from
-the Recording session, never writing a file.</li>
-<li>A Preview session shows exactly one <strong>Camera device</strong>,
-chosen from the connected video devices. A Camera device has a stable
-unique identifier, a display name, and a connected status.</li>
-<li>Three <strong>Preferences</strong> outlive a launch: the selected
-camera's unique identifier, the pinned flag, and the panel scale.
-Mirroring is a constant, not a preference.</li>
-<li>A <strong>Panel scale</strong> is one of three values (small,
-medium, large) and derives every dimension in the panel. Nothing else
-sets a size directly.</li>
-<li>A Preview session has a <strong>status</strong>: idle, running, or a
-message state (permission not determined, denied, restricted, no camera,
-generic failure).</li>
+<li>One <strong>Recording state</strong> in memory, never persisted:
+idle, arming, or recording; a <strong>medium</strong> (audio, video, or
+none); in flight or settled.</li>
+<li>The medium is the whole of the mode state. At most one medium is
+held at a time.</li>
+<li>A <strong>Recording clock</strong> holds a start time and the last
+elapsed duration. Elapsed time is derived from the start time, never
+counted up. It resets when a recording starts, not when it stops.</li>
+<li>Audio drives two <strong>Shortcuts</strong> by name: "Start" and
+"Stop". Both must exist in the user's Shortcuts app.</li>
+<li>One <strong>Capture session</strong> lives for the app's lifetime.
+It feeds the preview and, while video records, a <strong>Movie
+file</strong>.</li>
+<li>A Movie file is written into the <strong>Photo Booth
+library</strong> and optionally listed in its filmstrip index.</li>
+<li>The session shows exactly one <strong>Camera device</strong>: a
+stable unique identifier, a display name, a connected status.</li>
+<li>The session has a <strong>status</strong>: idle, starting, running,
+or a message state (not determined, denied, restricted, no camera,
+failed).</li>
+<li>Four <strong>Preferences</strong> outlive a launch: selected camera
+identifier, mirror flag, pinned flag, panel scale.</li>
+<li>A <strong>Panel scale</strong> is small, medium, or large, and
+derives every dimension in the panel.</li>
 </ul>
 <hr />
 <h2 data-number="1.8" id="roadmap"><span
@@ -580,24 +683,59 @@ open through Start and Stop</td>
 <tr>
 <td>Live camera preview</td>
 <td>2026-09-04</td>
-<td>Preview surface, fixed 504pt panel driven by
-<code>PanelSizer</code>, camera picker in the button row, hardcoded
-mirroring, permission and failure states, camera-ID persistence</td>
+<td>Preview surface, <code>PanelSizer</code>, camera picker in the row,
+permission and failure states, camera-ID persistence</td>
 </tr>
 <tr>
 <td>Post-ship UI revisions</td>
 <td>2026-09-04</td>
 <td>Record and Stop merged into one toggle, Photo Booth launch deleted,
-mirror toggle removed, control strip removed, uniform control chrome,
-dead <code>accessibilityDenied</code> case removed</td>
+mirror toggle removed, control strip removed</td>
 </tr>
 <tr>
 <td>Pinning and scaling</td>
 <td>2026-09-05</td>
-<td>Pin toggle, S/M/L panel scaling driven by one
-<code>PanelScale</code> enum, edge-to-edge preview, panel flush to the
-screen edge, <code>mic.fill</code> audio glyph, "Audio" label removed,
-state-dependent camera tooltip, self-signed local install</td>
+<td>Pin toggle, S/M/L scaling via <code>PanelScale</code>, edge-to-edge
+preview, panel flush to the screen edge, <code>mic.fill</code> glyph,
+"Audio" label removed</td>
+</tr>
+<tr>
+<td>Timer and arming</td>
+<td>2026-09-06</td>
+<td>MM:SS timer derived from a start date, 3s arming state, Voice Memos
+quit moved to Stop</td>
+</tr>
+<tr>
+<td>In-app video</td>
+<td>2026-09-09</td>
+<td><code>video.fill</code> records video into the Photo Booth library,
+mutual exclusion with audio, preview made permanent, session kept
+configured across panel close</td>
+</tr>
+<tr>
+<td>Deadlock fix</td>
+<td>2026-09-10</td>
+<td>Preview layer owned and never deallocated, session work off the main
+actor, 10s start watchdog</td>
+</tr>
+<tr>
+<td>Mirror and camera menu</td>
+<td>2026-09-20</td>
+<td>Preview-only mirror toggle (default on), movie output pinned
+unmirrored, camera picker rebuilt as a Menu of Buttons, small width 320
+to 380</td>
+</tr>
+<tr>
+<td>Semantic capsules</td>
+<td>2026-09-24</td>
+<td>Off/on capsule chrome, Live Ember, <code>controlHeight</code> on
+every control, large re-sized for Photo Booth parity</td>
+</tr>
+<tr>
+<td>Two-hue palette</td>
+<td>2026-09-28</td>
+<td>Camera green removed; red for capture, blue for everything else;
+constant control width</td>
 </tr>
 </tbody>
 </table>
@@ -612,57 +750,49 @@ class="header-section-number">1.8.2</span> Deferred</h3>
 </thead>
 <tbody>
 <tr>
-<td>Video capture of any kind</td>
-<td>Removed with the Photo Booth launch on 2026-09-04. Restoring it
-needs its own explicit control and its own spec</td>
-</tr>
-<tr>
-<td>Persisting the camera-toggle state</td>
-<td>Low value for a solo user; resets are cheap</td>
-</tr>
-<tr>
-<td>A user-facing mirror control</td>
-<td>Removed after ship. One hardcoded orientation is correct for every
-observed use, and the toggle cost a control slot</td>
-</tr>
-<tr>
 <td>XCUITest automation</td>
-<td>Manual smoke testing covers a five-control UI</td>
+<td>Manual smoke testing covers the row</td>
 </tr>
 <tr>
 <td>App Store submission (icons, metadata, entitlements)</td>
 <td>Distribution is via GitHub Actions artifact</td>
 </tr>
 <tr>
-<td>Additional recording modes or Shortcuts</td>
+<td>Additional audio modes or Shortcuts</td>
 <td>No demand yet; would expand the single-row UI</td>
 </tr>
 <tr>
 <td>Preview snapshot or still capture</td>
-<td>Would be the app's first capture path; out of scope for a framing
-aid</td>
+<td>No demand; video covers capture</td>
 </tr>
 <tr>
 <td>Detached or full-screen preview window</td>
-<td>Contradicts the no-window, menu-bar-only product shape</td>
+<td>Contradicts the menu-bar-only product shape</td>
 </tr>
 <tr>
-<td>Keeping the capture session alive while the popover is closed</td>
-<td>Human accepted the camera activity light cycling instead</td>
+<td>Keeping the camera running while the panel is closed (outside video
+recording)</td>
+<td>The activity light cycling with the panel is the privacy behaviour
+that matters</td>
 </tr>
 <tr>
 <td>Multi-camera simultaneous preview</td>
-<td>No demand; would not fit the panel at any scale</td>
+<td>Would not fit the panel at any scale</td>
 </tr>
 <tr>
 <td>A user-resizable panel (drag handle)</td>
-<td>The S/M/L scales cover the need with three fixed widths. A drag
-handle on a status-item panel fights AppKit's anchoring</td>
+<td>Three fixed scales cover the need; a drag handle fights AppKit's
+anchoring</td>
 </tr>
 <tr>
-<td>Persisting the panel's pinned state per display or per app</td>
-<td>The single <code>panelPinned</code> flag is enough for a solo
-user</td>
+<td>Honouring the user's accent colour in the row</td>
+<td>Blue and red carry fixed meanings; an accent colour could collide
+with red</td>
+</tr>
+<tr>
+<td>Re-sizing small and medium to match large's 2026-09-24 pass</td>
+<td>To be measured on hardware first; the three scales do not currently
+step evenly</td>
 </tr>
 </tbody>
 </table>
@@ -681,24 +811,28 @@ class="header-section-number">1.9.1</span> Site map</h3>
 <tbody>
 <tr>
 <td>Menu bar icon</td>
-<td>Always-visible status. Green while recording. Click toggles the
-popover.</td>
+<td>Always-visible status. Green while either medium records. Click
+toggles the panel.</td>
 </tr>
 <tr>
 <td>Panel, button row</td>
-<td>Pin toggle, audio toggle, camera toggle, camera picker and S/M/L
-sizes (when the camera is on), Quit.</td>
+<td>Pin, record group (mic, timer, video), mirror, camera menu, S/M/L,
+Quit.</td>
 </tr>
 <tr>
 <td>Panel, preview area</td>
-<td>Visible only while the camera toggle is on. Holds the live image or
-an inline state message. Runs flush to the panel's left, right, and
-bottom edges.</td>
+<td>Always present. Live image or an inline state message. Flush to the
+panel's left, right, and bottom edges.</td>
 </tr>
 <tr>
-<td>System Settings → Privacy &amp; Security → Camera</td>
-<td>External. Reached from the denied-permission state's "Open Settings"
-action.</td>
+<td>Photo Booth</td>
+<td>External. Where video recordings appear. Never launched by the
+app.</td>
+</tr>
+<tr>
+<td>System Settings, Privacy &amp; Security, Camera / Microphone</td>
+<td>External. Reached from the denied-camera state or the
+microphone-denied alert.</td>
 </tr>
 </tbody>
 </table>
@@ -722,64 +856,66 @@ class="header-section-number">1.9.2</span> User roles and access</h3>
 class="header-section-number">1.9.3</span> User journeys</h3>
 <p><strong>1. Record audio</strong></p>
 <ol type="1">
-<li>Click the menu bar icon; the popover opens</li>
-<li>Click the red audio toggle; Voice Memos quits and the Start shortcut
-fires</li>
-<li>Click the same toggle again to stop; the popover stays open
-throughout</li>
+<li>Click the menu bar icon; the panel opens with the live preview</li>
+<li>Click the mic; it dims and says "Starting… wait to speak", then
+turns red with an ember, dot, and running timer</li>
+<li>Click it again to stop; the timer freezes faded on the final
+duration and the panel stays open</li>
 </ol>
-<p><strong>2. Check framing (no recording involved)</strong></p>
+<p><strong>2. Record video</strong></p>
 <ol type="1">
-<li>Click the camera toggle; the panel grows downward and the preview
-starts</li>
-<li>Pick a different camera, or a different S/M/L size, from the
-controls beside the toggle</li>
-<li>Click the camera toggle again; the preview collapses and the session
-stops</li>
+<li>With the preview running, click the video button; the mic
+disables</li>
+<li>After arming, the video button turns red with an ember and the timer
+runs; the movie is written in-app</li>
+<li>Click it again to stop; the movie lands in Photo Booth's
+library</li>
 </ol>
-<p><strong>2b. Resize the panel</strong></p>
+<p><strong>3. Frame the shot</strong></p>
 <ol type="1">
-<li>With the preview open, click S, M, or L</li>
-<li>Every dimension changes together: preview, glyphs, fonts, spacing,
-padding, picker width</li>
-<li>The choice persists; the next launch opens at the same size</li>
+<li>Open the panel; the preview starts ("Starting camera…" until the
+first frame)</li>
+<li>Toggle mirror, pick a camera from the menu, or pick S/M/L</li>
+<li>Choices persist across launches</li>
 </ol>
-<p><strong>2c. Keep the panel open while working</strong></p>
+<p><strong>4. Keep the panel open while working</strong></p>
 <ol type="1">
-<li>Click the pin toggle; the glyph changes from <code>pin.slash</code>
-to <code>pin.fill</code></li>
+<li>Click the pin; it turns blue and the glyph becomes
+<code>pin.fill</code></li>
 <li>Click into another app; the panel stays on screen</li>
-<li>Click the menu bar icon to close it, or unpin to restore the default
-close-on-focus-loss behaviour</li>
+<li>Click the menu bar icon to close it, or unpin</li>
 </ol>
-<p><strong>3. Quit while recording</strong></p>
+<p><strong>5. Quit while recording</strong></p>
 <ol type="1">
-<li>Click the Quit (power) button during a recording</li>
-<li>The Stop shortcut fires first</li>
+<li>Click Quit during a recording</li>
+<li>Audio: the Stop shortcut fires. Video: the app waits for the movie
+file to finish writing</li>
 <li>The app terminates</li>
 </ol>
-<p><strong>4. First-ever camera toggle-on (permission)</strong></p>
+<p><strong>6. First-ever panel open (permission)</strong></p>
 <ol type="1">
-<li>Click the camera toggle; the preview area shows a waiting state
-while macOS presents the prompt</li>
-<li>Allow starts the preview; Deny shows an inline message with an "Open
-Settings" action</li>
-<li>The audio toggle stays usable either way</li>
+<li>The preview shows a waiting state while macOS asks for camera
+access</li>
+<li>Allow starts the preview; Deny shows an inline message with "Open
+Settings"</li>
+<li>The mic stays usable either way; the video button stays disabled
+until the preview runs</li>
 </ol>
-<p><strong>5. Camera unplugged mid-session</strong></p>
+<p><strong>7. Camera unplugged mid-session</strong></p>
 <ol type="1">
 <li>The preview is running on an external camera and the user unplugs
 it</li>
-<li>The app falls back to another connected camera without discarding
-the stored preference</li>
-<li>If no camera remains, the no-camera message shows; the audio toggle
-stays usable throughout</li>
+<li>The app falls back to another camera without discarding the stored
+preference</li>
+<li>If none remains, the no-camera message shows; the mic stays
+usable</li>
 </ol>
 <hr />
 <h2 data-number="1.10" id="preview-states"><span
 class="header-section-number">1.10</span> Preview states</h2>
-<p>In <strong>every</strong> state below, the audio toggle, the camera
-toggle, and Quit remain fully usable.</p>
+<p>In <strong>every</strong> state below, the mic, mirror, pin, S/M/L,
+and Quit remain usable. The video button is enabled only in
+<strong>Running</strong>.</p>
 <table>
 <thead>
 <tr>
@@ -791,144 +927,207 @@ toggle, and Quit remain fully usable.</p>
 </thead>
 <tbody>
 <tr>
+<td>Starting</td>
+<td>Session started, no frame yet</td>
+<td>Spinner and "Starting camera…"</td>
+<td>None</td>
+</tr>
+<tr>
 <td>Not determined</td>
-<td>First toggle-on, permission never requested</td>
-<td>"Waiting for camera access…" while the macOS prompt is up</td>
-<td>None (system prompt owns the interaction)</td>
+<td>Permission never requested</td>
+<td>Waiting message while the macOS prompt is up</td>
+<td>None (the system prompt owns it)</td>
 </tr>
 <tr>
 <td>Denied</td>
-<td>User denied camera access, or previously denied</td>
+<td>User denied camera access</td>
 <td>"Camera access is turned off for MacRecordWidget."</td>
-<td>"Open Settings" opens Privacy &amp; Security → Camera</td>
+<td>"Open Settings" opens Privacy &amp; Security, Camera</td>
 </tr>
 <tr>
 <td>Restricted</td>
-<td>Access blocked by policy (MDM, parental controls)</td>
+<td>Blocked by policy (MDM, parental controls)</td>
 <td>"Camera access is restricted on this Mac and cannot be changed
 here."</td>
 <td><strong>None by design.</strong> The Settings pane cannot resolve an
-MDM restriction, so offering it would be a dead end</td>
+MDM restriction</td>
 </tr>
 <tr>
 <td>No camera connected</td>
-<td>Zero video devices discovered</td>
+<td>Zero video devices</td>
 <td>"No camera connected."</td>
 <td>None; clears when a camera appears</td>
 </tr>
 <tr>
 <td>Failed</td>
-<td>Session or device error</td>
-<td>The underlying reason, inline</td>
-<td>Picker remains available</td>
+<td>Session or device error, or 10s with no frame</td>
+<td>The reason, inline</td>
+<td>"Try Again"</td>
 </tr>
 <tr>
 <td>Running</td>
-<td>Permission granted, device available</td>
-<td>Live image, mirrored, with the picker naming the device</td>
-<td>Camera picker</td>
+<td>Permission granted, frames arriving</td>
+<td>Live image, mirrored if the mirror toggle is on</td>
+<td>Camera menu, video recording</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Fallback rule:</strong> if the stored device ID matches no
-connected device, the app selects another connected device. The stored
-ID is <strong>not</strong> overwritten, so reconnecting the preferred
-camera restores it.</p>
-<p><strong>Camera-name indicator:</strong> the picker's selected value
-doubles as the name indicator. There is no separate name label.</p>
+connected device, the app selects another. The stored ID is
+<strong>not</strong> overwritten, so reconnecting the preferred camera
+restores it.</p>
+<p><strong>Camera-name indicator:</strong> the camera menu's label names
+the device actually feeding the preview. There is no separate name
+label.</p>
 <hr />
 <h2 data-number="1.11" id="acceptance-criteria"><span
 class="header-section-number">1.11</span> Acceptance criteria</h2>
-<p>All criteria below describe shipped behaviour. Criteria invalidated
-by the 2026-09-04 revisions are in <strong>Superseded acceptance
+<p>All criteria below describe shipped behaviour as of 2026-10-05.
+Invalidated criteria are in <strong>Superseded acceptance
 criteria</strong>.</p>
 <h3 data-number="1.11.1" id="panel-layout"><span
 class="header-section-number">1.11.1</span> Panel layout</h3>
 <ul>
 <li><strong>AC-L-1:</strong> The panel content is a <code>VStack</code>
-with zero spacing: a single <code>HStack</code> button row, with the
-preview below it when the camera toggle is on.</li>
-<li><strong>AC-L-2:</strong> The button row is ordered: pin toggle,
-audio toggle, spacer, camera toggle, camera picker, S/M/L size toggles,
-Quit. The picker and the size toggles are present only while the camera
-toggle is on.</li>
-<li><strong>AC-L-3:</strong> No recording-status dot appears anywhere in
-the panel, in any state.</li>
-<li><strong>AC-L-4:</strong> Every control is a glyph or a single
-letter, with an <code>accessibilityLabel</code>. There is no text label
-in the row.</li>
+with zero spacing: one <code>HStack</code> button row, with the preview
+always below it.</li>
+<li><strong>AC-L-2:</strong> The row is ordered: pin, record group (mic,
+timer, video), mirror, spacer, camera menu, S/M/L, Quit. Every item is
+always mounted.</li>
+<li><strong>AC-L-2b:</strong> The record group's internal spacing is
+half the row spacing. The mirror toggle sits at full row spacing,
+outside the group.</li>
+<li><strong>AC-L-3:</strong> No recording-status dot appears in the
+panel except the amber dot on a recording button's corner.</li>
+<li><strong>AC-L-4:</strong> Every control is a glyph, a single letter,
+the timer, or the camera name, with an <code>accessibilityLabel</code>.
+There is no text label in the row.</li>
 <li><strong>AC-L-5:</strong> No control shows a focus ring.</li>
-<li><strong>AC-L-6:</strong> Every control's <code>ControlSize</code>,
-glyph size, glyph font, and corner radius come from the current
-<code>PanelScale</code>. No view hardcodes any of them.</li>
-<li><strong>AC-L-7:</strong> Every control carries a constant 1pt
-separator-coloured outline, present whether the control is on or
-off.</li>
+<li><strong>AC-L-6:</strong> Every control's glyph size, glyph font,
+corner radius, height, and <code>ControlSize</code> come from the
+current <code>PanelScale</code>. No view hardcodes them.</li>
+<li><strong>AC-L-7:</strong> An off control is a rounded rect at the
+scale's corner radius, filled <code>controlBackgroundColor</code>, with
+a 1pt <code>separatorColor</code> outline. An on control is a fully
+round capsule filled with its hue, a white glyph, and no outline.</li>
+<li><strong>AC-L-7b:</strong> A control's width is identical off and on.
+Starting a recording or toggling pin or mirror moves no other
+control.</li>
+<li><strong>AC-L-7c:</strong> Every control, the timer, and the camera
+menu are exactly <code>PanelScale.controlHeight</code> tall (17 / 20 /
+22pt).</li>
 <li><strong>AC-L-8:</strong> Padding is applied to the button row, not
-to the panel, so the preview can reach the panel's edges.</li>
+the panel, so the preview reaches the panel's edges. Top and bottom
+padding are set separately.</li>
 <li><strong>AC-L-9:</strong> There is no control strip below the
-preview. The camera picker and the size toggles live in the button
-row.</li>
+preview.</li>
 <li><strong>AC-L-10:</strong> The preview runs flush to the panel's
-left, right, and bottom edges. No inset, no margin, no border.</li>
+left, right, and bottom edges. No inset, no border.</li>
 <li><strong>AC-L-11:</strong> Only the preview's bottom two corners are
-rounded, at 10pt, matching the panel's own radius. Its top corners are
-square.</li>
+rounded, matching the panel. Its top corners are square.</li>
 </ul>
-<h3 data-number="1.11.2" id="controls"><span
-class="header-section-number">1.11.2</span> Controls</h3>
+<h3 data-number="1.11.2" id="colour"><span
+class="header-section-number">1.11.2</span> Colour</h3>
+<ul>
+<li><strong>AC-COL-1:</strong> The row uses exactly two fill hues: red
+<code>#FF383C</code> and blue <code>#007AFF</code>. No green or other
+hue appears on any control.</li>
+<li><strong>AC-COL-2:</strong> Red appears only on a recording button
+(mic or video) while that medium is recording.</li>
+<li><strong>AC-COL-3:</strong> Blue is the lit colour for pin, mirror,
+the selected S/M/L toggle, the camera menu's chevron well, and
+Quit.</li>
+<li><strong>AC-COL-4:</strong> Quit is always drawn lit (blue). It has
+no off state.</li>
+<li><strong>AC-COL-5:</strong> White glyphs on both hues clear 3:1
+contrast (3.57:1 on red, 4.02:1 on blue).</li>
+</ul>
+<h3 data-number="1.11.3" id="controls"><span
+class="header-section-number">1.11.3</span> Controls</h3>
 <ul>
 <li><strong>AC-C-1:</strong> A <strong>single</strong> audio toggle
-(<code>recordToggle</code>) starts and stops recording. There is no
-separate Stop button.</li>
-<li><strong>AC-C-2:</strong> The audio toggle uses
-<code>.toggleStyle(.button)</code>, is tinted red, and shows
-<code>mic.fill</code> in <strong>both</strong> states. Only the button
-fill changes: plain button chrome with the glyph in the default label
-colour when idle, a red fill while recording. The glyph does not swap,
-so the control behaves like every other toggle in the row (pin, camera,
-and S/M/L all keep their glyph and flip their fill). See AC-AX-7 for how
-the state stays distinguishable without hue.</li>
+(<code>recordToggle</code>) starts and stops audio. There is no separate
+Stop button.</li>
+<li><strong>AC-C-2:</strong> The audio toggle shows
+<code>mic.fill</code> in <strong>both</strong> states. Idle it is an off
+capsule; recording it is a red capsule with a white glyph. The glyph
+never swaps.</li>
 <li><strong>AC-C-2b:</strong> <code>stop.fill</code> appears nowhere in
 the app. The idle mic is <strong>not</strong> red.</li>
-<li><strong>AC-C-3:</strong> The audio toggle is disabled only while an
-invocation is in flight.</li>
-<li><strong>AC-C-4:</strong> The camera toggle
-(<code>videoModeToggle</code>) uses <code>.toggleStyle(.button)</code>
-with the <code>video.fill</code> glyph and shows or hides the
-preview.</li>
-<li><strong>AC-C-5:</strong> The camera toggle is <strong>never</strong>
-disabled by recording state. It has no bearing on what is recorded.</li>
-<li><strong>AC-C-6:</strong> Quit (<code>quitButton</code>) uses
-<code>.buttonStyle(.bordered)</code> with the <code>power</code> glyph,
-carries the tooltip "Quit", and is never disabled.</li>
-<li><strong>AC-C-7:</strong> The camera picker is present in the button
-row only while the camera toggle is on, and is capped at the current
-scale's picker width (150 / 200 / 260pt).</li>
+<li><strong>AC-C-3:</strong> The audio toggle is disabled while an
+invocation is in flight, while arming, and while video holds the
+medium.</li>
+<li><strong>AC-C-4:</strong> The video toggle
+(<code>videoRecordToggle</code>) shows <code>video.fill</code> in both
+states and starts and stops an in-app video recording. It is grouped
+with the mic and timer.</li>
+<li><strong>AC-C-5:</strong> The video toggle is disabled while audio
+holds the medium, while in flight or arming, and whenever the preview is
+not running. Its tooltip names the reason.</li>
+<li><strong>AC-C-6:</strong> Quit (<code>quitButton</code>) shows
+<code>power</code>, has the tooltip "Quit", and is never disabled.</li>
+<li><strong>AC-C-7:</strong> The camera menu is always in the row,
+capped at the scale's width (110 / 200 / 260pt).</li>
 <li><strong>AC-C-8:</strong> A pin toggle (<code>pinToggle</code>) is
-the leftmost control in the row. It shows <code>pin.slash</code> when
-off and <code>pin.fill</code> when on, and is never disabled.</li>
-<li><strong>AC-C-9:</strong> The panel sizes are three separate
-<code>.toggleStyle(.button)</code> controls labelled S, M, and L. They
-are <strong>not</strong> a segmented <code>Picker</code>, because
-<code>NSSegmentedControl</code> ignores SwiftUI's <code>.font()</code>
-and would not scale with the rest of the row.</li>
-<li><strong>AC-C-10:</strong> The S/M/L toggles are mounted only while
-the camera toggle is on, immediately after the camera picker.</li>
+the leftmost control. It shows <code>pin.slash</code> off and
+<code>pin.fill</code> on, and is never disabled.</li>
+<li><strong>AC-C-9:</strong> The panel sizes are three separate toggles
+labelled S, M, L. They are <strong>not</strong> a segmented
+<code>Picker</code>, because <code>NSSegmentedControl</code> ignores
+SwiftUI's <code>.font()</code>.</li>
+<li><strong>AC-C-10:</strong> The S/M/L toggles are always mounted,
+immediately after the camera menu.</li>
 <li><strong>AC-C-11:</strong> Turning on a size toggle selects that
-size. Turning off the already-selected one is ignored: exactly one size
-is always selected.</li>
+size. Turning off the selected one is ignored: exactly one size is
+always selected.</li>
 <li><strong>AC-C-12:</strong> Each control's tooltip matches the
-Tooltips and VoiceOver table. The audio and camera tooltips change with
-state; the camera tooltip is never stuck on "Show camera preview" while
-the preview is open.</li>
+Tooltips and VoiceOver table, and changes with state where the table
+lists several values.</li>
+<li><strong>AC-C-13:</strong> The mirror toggle
+(<code>mirrorToggle</code>) uses Apple's Flip Horizontal glyph
+(<code>arrow.left.and.right.righttriangle.left.righttriangle.right</code>)
+and is never disabled, including during a video recording.</li>
+<li><strong>AC-C-14:</strong> While recording, the recording button
+carries a blinking amber dot on its bottom-right corner, offset mostly
+onto the panel background.</li>
 </ul>
-<h3 data-number="1.11.3" id="menu-bar-icon"><span
-class="header-section-number">1.11.3</span> Menu bar icon</h3>
+<h3 data-number="1.11.4" id="timer"><span
+class="header-section-number">1.11.4</span> Timer</h3>
+<ul>
+<li><strong>AC-T-1:</strong> The timer (<code>recordingTimer</code>)
+shows MM:SS in a box with a 1pt <code>separatorColor</code> border at
+the scale's corner radius.</li>
+<li><strong>AC-T-2:</strong> While recording it is full strength; while
+idle it is secondary-coloured at 65% opacity.</li>
+<li><strong>AC-T-3:</strong> Elapsed time is derived from the
+recording's start date, so it stays correct while the panel is
+closed.</li>
+<li><strong>AC-T-4:</strong> The timer resets when a recording starts,
+not when it stops. After Stop it keeps showing the final duration.</li>
+<li><strong>AC-T-5:</strong> The value never wraps onto two lines at any
+scale, and its digits are monospaced so the box does not twitch.</li>
+<li><strong>AC-T-6:</strong> Audio and video share the one timer.</li>
+</ul>
+<h3 data-number="1.11.5" id="live-ember"><span
+class="header-section-number">1.11.5</span> Live Ember</h3>
+<ul>
+<li><strong>AC-E-1:</strong> A recording button wears an animated red
+gradient with a breathing glow on a 3.4s period while its medium is
+capturing.</li>
+<li><strong>AC-E-2:</strong> The ember is not shown during arming.</li>
+<li><strong>AC-E-3:</strong> Under Reduce Motion the ember is replaced
+by the flat red fill.</li>
+<li><strong>AC-E-4:</strong> Under Increase Contrast the ember is
+replaced by the flat red fill.</li>
+<li><strong>AC-E-5:</strong> Both record buttons use the same ember
+hue.</li>
+</ul>
+<h3 data-number="1.11.6" id="menu-bar-icon"><span
+class="header-section-number">1.11.6</span> Menu bar icon</h3>
 <ul>
 <li><strong>AC-M-1:</strong> The icon is <code>record.circle</code>,
 rendered hierarchically, primary-coloured when idle and green while
-recording.</li>
+either medium records.</li>
 <li><strong>AC-M-2:</strong> While recording, an amber badge dot blinks
 at the bottom trailing corner.</li>
 <li><strong>AC-M-3:</strong> With Reduce Motion enabled, the badge dot
@@ -938,8 +1137,8 @@ accessibility.</li>
 <li><strong>AC-M-5:</strong> The icon glyph never changes to a mic or
 camera symbol.</li>
 </ul>
-<h3 data-number="1.11.4" id="panel-lifecycle"><span
-class="header-section-number">1.11.4</span> Panel lifecycle</h3>
+<h3 data-number="1.11.7" id="panel-lifecycle"><span
+class="header-section-number">1.11.7</span> Panel lifecycle</h3>
 <ul>
 <li><strong>AC-P-1:</strong> The panel stays open after starting a
 recording.</li>
@@ -953,284 +1152,299 @@ closes it.</li>
 start or stop.</li>
 <li><strong>AC-P-5:</strong> While pinned, the window is re-shown on
 <code>didResignKeyNotification</code>, twice: once synchronously and
-once on the next runloop pass, because the order in which AppKit's own
-handler runs is not guaranteed.</li>
+once on the next runloop pass.</li>
 <li><strong>AC-P-6:</strong> <code>hidesOnDeactivate</code> is forced
-off on the panel window, since the app is <code>LSUIElement</code> and
-deactivates as soon as another app is clicked.</li>
-<li><strong>AC-P-7:</strong> The pinned state persists in
-<code>UserDefaults</code> under <code>panelPinned</code> and is restored
-on the next launch.</li>
+off on the panel window.</li>
+<li><strong>AC-P-7:</strong> The pinned state persists under
+<code>panelPinned</code> and is restored on launch.</li>
 </ul>
-<h3 data-number="1.11.5" id="recording-behaviour"><span
-class="header-section-number">1.11.5</span> Recording behaviour</h3>
+<h3 data-number="1.11.8" id="recording-behaviour"><span
+class="header-section-number">1.11.8</span> Recording behaviour</h3>
 <ul>
-<li><strong>AC-R-1:</strong> If Voice Memos is running, it is terminated
-and the app waits 1.5s before firing the Start shortcut.</li>
+<li><strong>AC-R-1:</strong> If Voice Memos is running at Start, it is
+terminated and the app waits 1.5s before firing the Start shortcut.</li>
+<li><strong>AC-R-1b:</strong> Stop quits Voice Memos about 2s after
+firing the Stop shortcut.</li>
 <li><strong>AC-R-2:</strong> Start fires
 <code>shortcuts://run-shortcut?name=Start</code> with a timestamped
 recording name as text input.</li>
 <li><strong>AC-R-3:</strong> Stop fires
 <code>shortcuts://run-shortcut?name=Stop</code>.</li>
-<li><strong>AC-R-4:</strong> Recording is audio only. <strong>No code
-path launches Photo Booth or any other capture app</strong>, in any
-state of the camera toggle.</li>
-<li><strong>AC-R-5:</strong> Quit stops an in-progress recording before
+<li><strong>AC-R-4:</strong> <strong>No code path launches, scripts, or
+UI-automates Photo Booth.</strong></li>
+<li><strong>AC-R-5:</strong> Quit stops an in-progress audio recording,
+or waits for an in-progress movie file to finish writing, before
 terminating.</li>
-<li><strong>AC-R-6:</strong> The camera toggle's state has no effect on
-what is recorded.</li>
+<li><strong>AC-R-6:</strong> Audio and video are mutually exclusive.
+Pressing one disables the other until its recording ends or fails.</li>
+<li><strong>AC-R-7:</strong> Any failure to start releases the medium,
+so both buttons return to their idle state.</li>
+<li><strong>AC-R-8:</strong> After a button is pressed, the app shows an
+arming state for 3s before showing "recording". During arming the
+pressed button is disabled, its glyph is at 35% opacity, and its tooltip
+reads "Starting…".</li>
 </ul>
-<h3 data-number="1.11.6" id="swift-and-reliability"><span
-class="header-section-number">1.11.6</span> Swift and reliability</h3>
+<h3 data-number="1.11.9" id="video-recording"><span
+class="header-section-number">1.11.9</span> Video recording</h3>
 <ul>
-<li><strong>AC-SW-1:</strong> <code>RecordingManager</code> is
-<code>@MainActor @Observable</code> and held with <code>@State</code>.
-No <code>ObservableObject</code>, <code>@StateObject</code>, or
+<li><strong>AC-V-1:</strong> Video is written by the app's
+<code>AVCaptureMovieFileOutput</code> as an H.264 + AAC
+<code>.mov</code> into
+<code>~/Pictures/Photo Booth Library/Pictures/</code>.</li>
+<li><strong>AC-V-2:</strong> File names follow Photo Booth's pattern,
+with U+202F before AM/PM. A same-minute collision gets a " 2", " 3"
+suffix; nothing is overwritten.</li>
+<li><strong>AC-V-3:</strong> The movie is added to Photo Booth's
+<code>Recents.plist</code> only when Photo Booth is not running.
+Otherwise it is left on disk unindexed.</li>
+<li><strong>AC-V-4:</strong> The recorded movie is never mirrored,
+whatever the mirror toggle says.</li>
+<li><strong>AC-V-5:</strong> The microphone input is attached on the
+first video recording. Opening the panel never prompts for microphone
+access.</li>
+<li><strong>AC-V-6:</strong> If microphone access is denied, an alert
+titled "Microphone Access Needed" points to System Settings.</li>
+<li><strong>AC-V-7:</strong> The camera menu is disabled during a video
+recording.</li>
+<li><strong>AC-V-8:</strong> Closing the panel during a video recording
+does not stop or truncate it.</li>
+</ul>
+<h3 data-number="1.11.10" id="swift-and-reliability"><span
+class="header-section-number">1.11.10</span> Swift and reliability</h3>
+<ul>
+<li><strong>AC-SW-1:</strong> <code>RecordingManager</code> and
+<code>CameraManager</code> are <code>@MainActor @Observable</code>. No
+<code>ObservableObject</code>, <code>@StateObject</code>, or
 <code>@ObservedObject</code> remain.</li>
 <li><strong>AC-SW-2:</strong> The deployment target is macOS 14.0 in the
 project file and in CI.</li>
 <li><strong>AC-SW-3:</strong> No raw <code>DispatchQueue</code> calls
-remain on the UI path. Background work uses
-<code>async</code>/<code>await</code> inside <code>Task { }</code>.</li>
+remain on the UI path. Capture session work runs on the session queue,
+never the main actor.</li>
 <li><strong>AC-SW-4:</strong> A failed shortcut launch throws
 <code>RecordingError.shortcutLaunchFailed</code> and surfaces as an
 <code>NSAlert</code>.</li>
-<li><strong>AC-SW-5:</strong> Tapping the audio toggle while an
-invocation is in flight produces no second shortcut invocation.</li>
+<li><strong>AC-SW-5:</strong> Tapping a record button while an
+invocation is in flight produces no second invocation.</li>
 <li><strong>AC-SW-6:</strong> <code>isRecording</code> changes only
-after the shortcut URL opens successfully. A failed open leaves it
-unchanged.</li>
+after the start succeeds (the shortcut URL opens, or the movie output
+starts). A failure leaves it unchanged.</li>
 <li><strong>AC-SW-7:</strong> <code>RecordingError</code> has exactly
-one case, <code>shortcutLaunchFailed</code>. There is no
-<code>accessibilityDenied</code> case and no alert branch for it.</li>
+one case, <code>shortcutLaunchFailed</code>. Video errors live in a
+separate <code>VideoRecordingError</code>.</li>
 <li><strong>AC-SW-8:</strong> <code>MacRecordWidgetApp</code>,
 <code>MenuBarIcon</code>, <code>CameraPreviewPanel</code>, and
 <code>CameraPreviewLayerView</code> carry explicit
-<code>@MainActor</code> annotations, because Xcode 15.2 (Swift 5.9, used
-by CI) does not infer it.</li>
+<code>@MainActor</code> annotations (Swift 5.9 in CI does not infer
+it).</li>
+<li><strong>AC-SW-9:</strong> The preview layer is created once by
+<code>CameraManager</code> and never deallocated.</li>
 </ul>
-<h3 data-number="1.11.7" id="preview-surface"><span
-class="header-section-number">1.11.7</span> Preview surface</h3>
+<h3 data-number="1.11.11" id="preview-surface"><span
+class="header-section-number">1.11.11</span> Preview surface</h3>
 <ul>
-<li><strong>AC-PV-1:</strong> The preview area sits
-<strong>below</strong> the button row, never above it and never beside
-it.</li>
-<li><strong>AC-PV-2:</strong> The preview is 16:9 at every scale, and
-its width is the panel's width. At medium that is 480x270pt.</li>
-<li><strong>AC-PV-3:</strong> The preview area is visible only while the
-camera toggle is on, and is fully removed from the layout when it is
-off.</li>
-<li><strong>AC-PV-4:</strong> The preview is display-only: no code path
-writes the preview stream to a file, a buffer on disk, or the
-pasteboard.</li>
-<li><strong>AC-PV-5:</strong> The preview keeps rendering while
-<code>isRecording</code> is true. Starting or stopping a recording does
-not stop, pause, or restart the session.</li>
-<li><strong>AC-PV-6:</strong> The camera picker's selected value names
-the device being shown. There is no separate name label.</li>
-<li><strong>AC-PV-7:</strong> The picker uses neutral styling only: no
+<li><strong>AC-PV-1:</strong> The preview sits <strong>below</strong>
+the button row.</li>
+<li><strong>AC-PV-2:</strong> The preview is 16:9 at every scale, as
+wide as the panel. At medium that is 480x270pt.</li>
+<li><strong>AC-PV-3:</strong> The preview is always mounted. There is no
+control that hides it.</li>
+<li><strong>AC-PV-4:</strong> The preview stream is never written
+anywhere. Only the movie output writes a file, and only during a video
+recording.</li>
+<li><strong>AC-PV-5:</strong> Starting or stopping a recording does not
+stop, pause, or restart the preview.</li>
+<li><strong>AC-PV-6:</strong> The camera menu's label names the device
+being shown. There is no separate name label.</li>
+<li><strong>AC-PV-7:</strong> The camera menu uses neutral styling: no
 warning colour, no caution icon, no error copy.</li>
-<li><strong>AC-PV-8:</strong> The preview area renders correctly in both
+<li><strong>AC-PV-8:</strong> The preview area renders correctly in
 light and dark mode.</li>
 </ul>
-<h3 data-number="1.11.8" id="panel-sizing"><span
-class="header-section-number">1.11.8</span> Panel sizing</h3>
+<h3 data-number="1.11.12" id="panel-sizing"><span
+class="header-section-number">1.11.12</span> Panel sizing</h3>
 <ul>
-<li><strong>AC-PNL-1:</strong> For a given scale the panel width is the
-same whether the camera is on or off. Toggling the camera changes the
-height only.</li>
+<li><strong>AC-PNL-1:</strong> The panel width is the current scale's
+preview width. It changes only when the scale changes.</li>
 <li><strong>AC-PNL-2:</strong> The panel's trailing edge sits flush
-against the right of the screen's visible frame (zero margin), imposed
-by <code>PanelSizer</code>.</li>
+against the right of the screen's visible frame (zero margin).</li>
 <li><strong>AC-PNL-3:</strong> The resize is <strong>not</strong>
-animated. No <code>animator().setFrame</code> or
-<code>NSAnimationContext</code> drives the panel frame.</li>
+animated.</li>
 <li><strong>AC-PNL-4:</strong> The panel is not draggable:
 <code>isMovable</code> and <code>isMovableByWindowBackground</code> are
 both false.</li>
-<li><strong>AC-PNL-5:</strong> No panel size change causes the button
-row controls to reflow, reorder, or change size.</li>
-<li><strong>AC-PNL-6:</strong> The anchored intermediate position is
-never painted. Size and corrected origin are applied under
-<code>disableScreenUpdatesUntilFlush()</code> and flushed once.</li>
-<li><strong>AC-PNL-7:</strong> Closing the preview shrinks the panel
-back. No empty full-height panel is left stranded.</li>
-<li><strong>AC-PNL-8:</strong> Changing the scale changes the width.
-Because the panel is right-anchored, only the left edge moves, and the
-anchored intermediate frame is never painted.</li>
+<li><strong>AC-PNL-5:</strong> No panel size change causes row controls
+to reorder.</li>
+<li><strong>AC-PNL-6:</strong> Size and corrected origin are applied
+under <code>disableScreenUpdatesUntilFlush()</code> and flushed once, so
+the anchored intermediate frame is never painted.</li>
+<li><strong>AC-PNL-8:</strong> Changing the scale moves only the left
+edge.</li>
 </ul>
-<h3 data-number="1.11.9" id="panel-scale"><span
-class="header-section-number">1.11.9</span> Panel scale</h3>
+<h3 data-number="1.11.13" id="panel-scale"><span
+class="header-section-number">1.11.13</span> Panel scale</h3>
 <ul>
-<li><strong>AC-SC-1:</strong> Three sizes exist: small, medium, large.
-Medium is the default on a first launch.</li>
-<li><strong>AC-SC-2:</strong> A single <code>PanelScale</code> enum owns
-every derived dimension: preview width and height, glyph size, glyph
-font, control font, size-label font, <code>ControlSize</code>, row
-spacing, horizontal and vertical padding, corner radius, and picker
-width. No view computes any of them independently.</li>
+<li><strong>AC-SC-1:</strong> Three sizes: small, medium, large. Medium
+is the default on first launch.</li>
+<li><strong>AC-SC-2:</strong> One <code>PanelScale</code> enum owns
+every derived dimension: preview size, glyph size and font, control
+font, size-label font, <code>ControlSize</code>, control height, control
+horizontal padding, row spacing, horizontal and top/bottom padding,
+corner radius, timer padding, recording-dot size, chevron well, and
+camera menu width.</li>
 <li><strong>AC-SC-3:</strong> <code>ControlSize</code> maps to
 <code>.mini</code> at small, <code>.small</code> at medium,
 <code>.regular</code> at large.</li>
-<li><strong>AC-SC-4:</strong> Small is 320pt wide and medium is 480pt
+<li><strong>AC-SC-4:</strong> Small is 380pt wide and medium is 480pt
 wide.</li>
-<li><strong>AC-SC-5:</strong> Large is exactly half the screen's visible
-width, rounded down, clamped to no less than the medium width so the
-three sizes never fall out of order.</li>
+<li><strong>AC-SC-5:</strong> Large is half the screen's visible width,
+rounded down, never below 480.</li>
 <li><strong>AC-SC-6:</strong> Large measures the <strong>panel</strong>,
-not the preview inside it, so a panel at large never laps over a window
-tiled to the left half of the screen.</li>
-<li><strong>AC-SC-7:</strong> The preview height is the preview width
-times 9/16, rounded.</li>
-<li><strong>AC-SC-8:</strong> The chosen scale persists in
-<code>UserDefaults</code> under <code>panelScale</code> and is restored
-on the next launch. An unrecognised stored value falls back to
-medium.</li>
+so it never laps a window tiled to the left half.</li>
+<li><strong>AC-SC-7:</strong> Preview height is preview width times
+9/16, rounded.</li>
+<li><strong>AC-SC-8:</strong> The scale persists under
+<code>panelScale</code> as the enum's raw string. An unrecognised value
+falls back to medium.</li>
 <li><strong>AC-SC-9:</strong> Changing the scale resizes the row and the
-preview together. Neither changes without the other.</li>
+preview together.</li>
+<li><strong>AC-SC-10:</strong> Large uses control height 22pt, glyph
+17pt in a 14pt font, control and size-label fonts 13pt, top padding 7pt,
+bottom padding 6pt.</li>
 </ul>
-<h3 data-number="1.11.10" id="camera-picker"><span
-class="header-section-number">1.11.10</span> Camera picker</h3>
+<h3 data-number="1.11.14" id="camera-menu"><span
+class="header-section-number">1.11.14</span> Camera menu</h3>
 <ul>
-<li><strong>AC-CAM-1:</strong> The picker lists every connected video
-device discovered on the system, by display name.</li>
-<li><strong>AC-CAM-2:</strong> Selecting a device switches the preview
-to it.</li>
-<li><strong>AC-CAM-3:</strong> The selected device's unique identifier
-is persisted in <code>UserDefaults</code> and restored on the next
-launch.</li>
+<li><strong>AC-CAM-1:</strong> The menu lists every connected video
+device by display name, with a checkmark on the active one.</li>
+<li><strong>AC-CAM-2:</strong> Choosing a device switches the preview to
+it.</li>
+<li><strong>AC-CAM-3:</strong> The chosen device's identifier persists
+under <code>preview.cameraDeviceID</code>.</li>
 <li><strong>AC-CAM-4:</strong> If the stored identifier matches no
-connected device, the app falls back to another connected device and the
-stored identifier is left unchanged.</li>
-<li><strong>AC-CAM-5:</strong> Reconnecting the stored device after a
-fallback restores it as the previewed camera.</li>
-<li><strong>AC-CAM-6:</strong> The picker changes the preview only. No
-code path attempts to drive any other app's camera.</li>
-<li><strong>AC-CAM-7:</strong> The picker remains usable in every
-non-running preview state where a device exists.</li>
-<li><strong>AC-CAM-8:</strong> A long device name does not push any
-control out of the panel at any scale; the picker is capped at the
-scale's picker width and truncates.</li>
+device, the app falls back to another and leaves the stored identifier
+unchanged.</li>
+<li><strong>AC-CAM-5:</strong> Reconnecting the stored device restores
+it.</li>
+<li><strong>AC-CAM-6:</strong> It is a <code>Menu</code> of
+<code>Button</code>s, <strong>not</strong> a <code>Picker</code>.
+Choosing a camera never switches back on its own a moment later.</li>
+<li><strong>AC-CAM-7:</strong> The menu is usable in every non-running
+state where a device exists, and disabled when no device exists.</li>
+<li><strong>AC-CAM-8:</strong> A long device name truncates within the
+scale's menu width and pushes no control out of the panel.</li>
 </ul>
-<h3 data-number="1.11.11" id="mirroring"><span
-class="header-section-number">1.11.11</span> Mirroring</h3>
+<h3 data-number="1.11.15" id="mirroring"><span
+class="header-section-number">1.11.15</span> Mirroring</h3>
 <ul>
-<li><strong>AC-MIR-1:</strong> Mirroring is hardcoded on.
-<code>isMirrored</code> is a constant, not a stored or user-settable
-value.</li>
-<li><strong>AC-MIR-2:</strong> No mirror control appears anywhere in the
-UI.</li>
-<li><strong>AC-MIR-3:</strong> Any previously stored mirror preference
-is <strong>deliberately not read</strong>, so an earlier saved
-<code>false</code> cannot strand the preview unmirrored.</li>
-<li><strong>AC-MIR-4:</strong> Mirroring is applied by setting
-<code>isVideoMirrored</code> on the preview connection with
-<code>automaticallyAdjustsVideoMirroring</code> off.</li>
+<li><strong>AC-MIR-1:</strong> A mirror toggle controls whether the
+preview is mirrored. It defaults to <strong>on</strong>.</li>
+<li><strong>AC-MIR-2:</strong> The choice persists under
+<code>preview.mirrored</code>.</li>
+<li><strong>AC-MIR-3:</strong> Mirroring never affects the movie output.
+The movie connection is pinned unmirrored at configure time and again
+before each recording.</li>
+<li><strong>AC-MIR-4:</strong> Flipping the toggle during a video
+recording changes the preview only and cannot disturb the file being
+written.</li>
 </ul>
-<h3 data-number="1.11.12" id="session-lifecycle"><span
-class="header-section-number">1.11.12</span> Session lifecycle</h3>
+<h3 data-number="1.11.16" id="session-lifecycle"><span
+class="header-section-number">1.11.16</span> Session lifecycle</h3>
 <ul>
-<li><strong>AC-LC-1:</strong> The capture session starts when the camera
-toggle is turned on while the popover is open.</li>
-<li><strong>AC-LC-2:</strong> The capture session stops when the popover
-closes.</li>
-<li><strong>AC-LC-3:</strong> The capture session resumes when the
-popover reopens with the camera toggle still on.</li>
-<li><strong>AC-LC-4:</strong> No capture session is running while the
-camera toggle is off.</li>
-<li><strong>AC-LC-5:</strong> Rapidly toggling the camera on and off
-leaves at most one capture session running and no orphaned session.</li>
+<li><strong>AC-LC-1:</strong> The capture session starts when the panel
+opens.</li>
+<li><strong>AC-LC-2:</strong> Closing the panel stops the session
+running (camera light off) but keeps inputs, outputs, and format
+configured.</li>
+<li><strong>AC-LC-3:</strong> Reopening resumes without rediscovering
+devices.</li>
+<li><strong>AC-LC-4:</strong> Closing the panel during a video recording
+does not stop the session.</li>
+<li><strong>AC-LC-5:</strong> If no frame arrives within 10s of
+starting, the state becomes Failed with "Try Again".</li>
+<li><strong>AC-LC-6:</strong> The preview shows "Starting camera…" until
+the first real frame arrives, never a black layer.</li>
 </ul>
-<h3 data-number="1.11.13" id="permission-and-failure-states"><span
-class="header-section-number">1.11.13</span> Permission and failure
+<h3 data-number="1.11.17" id="permission-and-failure-states"><span
+class="header-section-number">1.11.17</span> Permission and failure
 states</h3>
 <ul>
-<li><strong>AC-ST-1:</strong> On the first toggle-on with permission not
-determined, the app requests camera access and the preview area shows a
-neutral waiting state.</li>
-<li><strong>AC-ST-2:</strong> When access is denied, the preview area
-shows an inline message plus an "Open Settings" action that opens the
-macOS camera privacy pane.</li>
-<li><strong>AC-ST-3:</strong> When access is restricted by system
-policy, the preview area shows an inline message and <strong>offers no
-settings action</strong>, because that pane cannot resolve an MDM or
-parental-controls restriction.</li>
-<li><strong>AC-ST-4:</strong> When no video device is connected, the
-preview area shows an inline no-camera message.</li>
-<li><strong>AC-ST-5:</strong> When the previewed camera disconnects
-mid-session, the app falls back to another connected device if one
-exists, and shows the no-camera message if none does.</li>
-<li><strong>AC-ST-6:</strong> <code>denied</code>,
-<code>restricted</code>, <code>notDetermined</code>,
-<code>noCamera</code>, and <code>failed</code> are distinct states with
-distinct copy and distinct symbols. None collapses into a generic
-error.</li>
-<li><strong>AC-ST-7:</strong> In <strong>every</strong> state in this
-group, the audio toggle keeps its normal behaviour. A preview failure
-never disables it.</li>
-<li><strong>AC-ST-8:</strong> In <strong>every</strong> state in this
-group, the camera toggle keeps its normal behaviour. A preview failure
-never disables it.</li>
-<li><strong>AC-ST-9:</strong> No preview failure presents a modal alert.
-All preview state messaging is inline in the preview area.</li>
-<li><strong>AC-ST-10:</strong> All state messages follow the product's
-voice: clear, non-blaming, sentence case, no exclamation marks.</li>
+<li><strong>AC-ST-1:</strong> On the first panel open with permission
+not determined, the app requests camera access and shows a neutral
+waiting state.</li>
+<li><strong>AC-ST-2:</strong> Denied shows an inline message plus "Open
+Settings".</li>
+<li><strong>AC-ST-3:</strong> Restricted shows an inline message and
+<strong>no</strong> settings action.</li>
+<li><strong>AC-ST-4:</strong> No device shows an inline no-camera
+message.</li>
+<li><strong>AC-ST-5:</strong> On disconnect, the app falls back to
+another device if one exists, else shows the no-camera message.</li>
+<li><strong>AC-ST-6:</strong> <code>starting</code>,
+<code>denied</code>, <code>restricted</code>,
+<code>notDetermined</code>, <code>noCamera</code>, and
+<code>failed</code> are distinct states with distinct copy.</li>
+<li><strong>AC-ST-7:</strong> In every state, the mic keeps its normal
+behaviour.</li>
+<li><strong>AC-ST-8:</strong> In every state, mirror, pin, S/M/L, and
+Quit keep their normal behaviour. The video button is disabled outside
+Running, with the state's reason as its tooltip.</li>
+<li><strong>AC-ST-9:</strong> No preview failure presents a modal
+alert.</li>
+<li><strong>AC-ST-10:</strong> State messages are clear, non-blaming,
+sentence case, no exclamation marks.</li>
 </ul>
-<h3 data-number="1.11.14" id="accessibility"><span
-class="header-section-number">1.11.14</span> Accessibility</h3>
+<h3 data-number="1.11.18" id="accessibility"><span
+class="header-section-number">1.11.18</span> Accessibility</h3>
 <ul>
-<li><strong>AC-AX-1:</strong> The pin toggle, audio toggle, camera
-toggle, camera picker, and Quit each carry an
-<code>accessibilityLabel</code> and a stable
+<li><strong>AC-AX-1:</strong> Pin, mic, timer, video, mirror, camera
+menu, and Quit carry an <code>accessibilityLabel</code> and a stable
 <code>accessibilityIdentifier</code> (<code>pinToggle</code>,
-<code>recordToggle</code>, <code>videoModeToggle</code>,
+<code>recordToggle</code>, <code>recordingTimer</code>,
+<code>videoRecordToggle</code>, <code>mirrorToggle</code>,
 <code>cameraPicker</code>, <code>quitButton</code>).</li>
-<li><strong>AC-AX-1b:</strong> The three S/M/L toggles each carry a
-spelled-out <code>accessibilityLabel</code> ("Small panel size", and so
-on). The identifier <code>panelScalePicker</code> is on their container,
-not on the individual toggles.</li>
-<li><strong>AC-AX-2:</strong> The audio toggle's label and tooltip
-reflect its current state ("Start recording" / "Stop recording").</li>
-<li><strong>AC-AX-3:</strong> The preview area carries an accessibility
-label describing what it is (<code>cameraPreview</code>).</li>
+<li><strong>AC-AX-1b:</strong> The S/M/L toggles carry spelled-out
+labels ("Small preview size", and so on). <code>panelScalePicker</code>
+is on their container.</li>
+<li><strong>AC-AX-2:</strong> The mic and video labels reflect their
+current state, including "Starting…" during arming.</li>
+<li><strong>AC-AX-3:</strong> The preview carries the label "Camera
+preview" and identifier <code>cameraPreview</code>.</li>
 <li><strong>AC-AX-4:</strong> Every inline state message is readable by
 VoiceOver.</li>
-<li><strong>AC-AX-5:</strong> The preview area and its controls
-introduce no focus ring, consistent with the button row.</li>
-<li><strong>AC-AX-6:</strong> Where a tooltip is too terse to stand
-alone in speech, the <code>accessibilityLabel</code> is written out in
-full: Quit reads "Quit MacRecordWidget", and the audio toggle reads
-"Start recording" / "Stop recording".</li>
+<li><strong>AC-AX-5:</strong> The preview area introduces no focus
+ring.</li>
+<li><strong>AC-AX-6:</strong> Where a tooltip is too terse for speech,
+the label is written out: Quit reads "Quit MacRecordWidget".</li>
 <li><strong>AC-AX-7:</strong> Recording state is distinguishable
-<strong>without relying on hue</strong>. The audio toggle's two states
-differ by button fill, which is a large luminance change and therefore
-survives greyscale and Increase Contrast. It does <strong>not</strong>
-rely on a glyph swap: the glyph is <code>mic.fill</code> in both
-states.</li>
-<li><strong>AC-AX-8:</strong> Recording state is also carried by three
-non-visual or out-of-panel channels: the tooltip, the VoiceOver label,
-and the menu bar icon (green plus a blinking amber dot). At least one of
-these is available when the panel is closed.</li>
+<strong>without hue</strong>: the button's silhouette changes (rounded
+rect to full capsule), its fill changes luminance, and an amber dot
+appears on its corner.</li>
+<li><strong>AC-AX-8:</strong> Recording state is also carried by the
+tooltip, the VoiceOver label, the running timer, and the menu bar icon
+(green plus a blinking dot), which is visible with the panel
+closed.</li>
+<li><strong>AC-AX-9:</strong> All motion (ember, both amber dots) stops
+under Reduce Motion.</li>
 </ul>
-<h3 data-number="1.11.15" id="persistence"><span
-class="header-section-number">1.11.15</span> Persistence</h3>
+<h3 data-number="1.11.19" id="persistence"><span
+class="header-section-number">1.11.19</span> Persistence</h3>
 <ul>
-<li><strong>AC-PS-1:</strong> Exactly <strong>three</strong> values
-persist: the selected camera's unique identifier under
-<code>preview.cameraDeviceID</code>, the pinned flag under
-<code>panelPinned</code>, and the panel scale under
+<li><strong>AC-PS-1:</strong> Exactly <strong>four</strong> values
+persist: <code>preview.cameraDeviceID</code>,
+<code>preview.mirrored</code>, <code>panelPinned</code>,
 <code>panelScale</code>.</li>
 <li><strong>AC-PS-2:</strong> Persistence uses
-<code>UserDefaults</code>. No SwiftData model container is introduced.
-This is a recorded deviation from <code>tech-config.md</code>, which
-lists SwiftData for the macOS layer.</li>
-<li><strong>AC-PS-3:</strong> A first launch with no stored value uses a
-connected default camera.</li>
-<li><strong>AC-PS-4:</strong> No other UI state persists. The camera
-toggle and the recording state both reset on each launch.</li>
+<code>UserDefaults</code>. No SwiftData model container (a recorded
+deviation from <code>tech-config.md</code>).</li>
+<li><strong>AC-PS-3:</strong> A first launch with no stored camera uses
+a connected default camera.</li>
+<li><strong>AC-PS-4:</strong> No other state persists. Recording state
+and the timer reset on each launch.</li>
 <li><strong>AC-PS-5:</strong> The panel scale is stored as the enum's
-raw string, because <code>@AppStorage</code> cannot hold an enum
-directly.</li>
+raw string.</li>
+<li><strong>AC-PS-6:</strong> A missing mirror value reads as on (the
+default), not as off.</li>
 </ul>
 <hr />
 <h2 data-number="1.12" id="superseded-acceptance-criteria"><span
@@ -1561,6 +1775,262 @@ panel is right-anchored and painting is suppressed until the corrected
 frame lands. Only the left edge moves</td>
 <td>2026-09-05</td>
 </tr>
+<tr>
+<td>AC-L-1 (2026-09-05)</td>
+<td>The preview sits below the row <strong>when the camera toggle is
+on</strong></td>
+<td>AC-L-1, AC-PV-3</td>
+<td>The preview toggle was removed; the preview is permanent</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-L-2 (2026-09-05)</td>
+<td>Order: pin, audio, spacer, camera toggle, picker, S/M/L, Quit;
+picker and S/M/L only while the camera is on</td>
+<td>AC-L-2, AC-L-2b</td>
+<td><code>video.fill</code> became a record button grouped with the mic
+and a new timer; mirror joined; everything is always mounted</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-L-7 (2026-09-05)</td>
+<td>Every control carries a constant 1pt outline, on or off</td>
+<td>AC-L-7, AC-L-7b, AC-L-7c</td>
+<td>Semantic capsules: the outline is the off state only; on is a filled
+full capsule</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-C-2 (2026-09-05)</td>
+<td><code>.toggleStyle(.button)</code>, tinted red; plain chrome idle,
+red fill recording</td>
+<td>AC-C-2, AC-L-7</td>
+<td>Replaced by the capsule toggle style</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-C-3 (2026-09-05)</td>
+<td>The audio toggle is disabled only while in flight</td>
+<td>AC-C-3, AC-R-6, AC-R-8</td>
+<td>Arming and mutual exclusion with video added two more disabled
+conditions</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-C-4 (2026-09-05)</td>
+<td>The camera toggle (<code>videoModeToggle</code>) shows or hides the
+preview</td>
+<td>AC-C-4, AC-V-1</td>
+<td><code>video.fill</code> now records video in-app; the preview has no
+toggle</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-C-5 (2026-09-05)</td>
+<td>The camera toggle is never disabled by recording state</td>
+<td>AC-C-5</td>
+<td>The video button is a record control and follows the medium</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-C-6 (2026-09-05)</td>
+<td>Quit uses <code>.buttonStyle(.bordered)</code></td>
+<td>AC-C-6, AC-COL-4</td>
+<td>Quit is a permanent blue capsule</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-C-7 (2026-09-05)</td>
+<td>The picker is present only while the camera is on; capped at 150 /
+200 / 260pt</td>
+<td>AC-C-7</td>
+<td>Always mounted; small cap is 110pt after the row gained the timer,
+video, and mirror</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-C-9 (2026-09-05)</td>
+<td>S/M/L are <code>.toggleStyle(.button)</code> controls</td>
+<td>AC-C-9</td>
+<td>Same rule (no segmented Picker), now drawn with the capsule
+style</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-C-10 (2026-09-05)</td>
+<td>S/M/L are mounted only while the camera is on</td>
+<td>AC-C-10</td>
+<td>The preview is permanent, so they are too. Fixes the stranded
+oversized row at large</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-C-12 (2026-09-05)</td>
+<td>Camera tooltip toggles "Show / Hide camera preview"; S/M/L read
+"Small panel"</td>
+<td>AC-C-12</td>
+<td>No camera toggle exists; S/M/L now say "preview"</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-R-4 (2026-09-04)</td>
+<td>Recording is audio only; no code path launches a capture app</td>
+<td>AC-R-4, AC-V-1</td>
+<td>Video is captured in-app. The "never launch Photo Booth" half
+survives as AC-R-4</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-R-6 (2026-09-04)</td>
+<td>The camera toggle's state has no effect on what is recorded</td>
+<td>AC-R-6, AC-MIR-3</td>
+<td>No camera toggle exists. The surviving idea (preview settings never
+change the file) is AC-MIR-3</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-PV-3 (2026-09-05)</td>
+<td>The preview is visible only while the camera toggle is on</td>
+<td>AC-PV-3</td>
+<td>The preview is permanent</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-PV-4 (2026-09-04)</td>
+<td>The preview is display-only; nothing writes a file</td>
+<td>AC-PV-4, AC-V-1</td>
+<td>The movie output writes files during a video recording</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-PV-6 (2026-09-04)</td>
+<td>The picker's selected value names the device</td>
+<td>AC-PV-6, AC-CAM-6</td>
+<td>The Picker became a Menu of Buttons; its label names the active
+device</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-PNL-1 (2026-09-05)</td>
+<td>Width is the same whether the camera is on or off</td>
+<td>AC-PNL-1</td>
+<td>No camera toggle exists</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-PNL-7 (2026-09-04)</td>
+<td>Closing the preview shrinks the panel back</td>
+<td>n/a</td>
+<td>The preview cannot be closed</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-SC-2 (2026-09-05)</td>
+<td><code>PanelScale</code> owns preview, glyph, fonts,
+<code>ControlSize</code>, spacing, padding, radius, picker width</td>
+<td>AC-SC-2</td>
+<td>Gained control height, control padding, split vertical padding,
+timer padding, dot size, chevron well</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-SC-4 (2026-09-05)</td>
+<td>Small is 320pt wide</td>
+<td>AC-SC-4</td>
+<td>At 320 the camera picker was left about 6pt wide after the mirror
+toggle joined. Widened to 380</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-CAM-1 to AC-CAM-8 (2026-09-05)</td>
+<td>A camera <strong>picker</strong> (<code>Picker</code>)</td>
+<td>AC-CAM-1 to AC-CAM-8</td>
+<td>The <code>Picker</code> read its binding back before the async
+switch landed and switched the camera back about 2s later. Rebuilt as a
+Menu of Buttons</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-MIR-1 to AC-MIR-4 (2026-09-04)</td>
+<td>Mirroring hardcoded on; no mirror control; stored preference not
+read</td>
+<td>AC-MIR-1 to AC-MIR-4</td>
+<td>A mirrored recording has backwards text, so the movie was pinned
+unmirrored and mirroring became a preview-only toggle, default on</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-LC-1 to AC-LC-5 (2026-09-04)</td>
+<td>The session starts with the camera toggle, stops with the panel,
+none runs while the toggle is off</td>
+<td>AC-LC-1 to AC-LC-6</td>
+<td>No toggle; the session starts with the panel, stays configured, and
+survives close during video</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-ST-1 (2026-09-04)</td>
+<td>Permission is requested on the first camera
+<strong>toggle-on</strong></td>
+<td>AC-ST-1</td>
+<td>No toggle; requested on first panel open</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-ST-8 (2026-09-04)</td>
+<td>The camera toggle keeps its behaviour in every state</td>
+<td>AC-ST-8</td>
+<td>No camera toggle; the video button is deliberately disabled outside
+Running</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>AC-AX-1 (2026-09-05)</td>
+<td>Identifiers include <code>videoModeToggle</code>; no timer, video,
+or mirror identifiers</td>
+<td>AC-AX-1</td>
+<td><code>videoRecordToggle</code>, <code>mirrorToggle</code>,
+<code>recordingTimer</code> added</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-AX-7 (2026-09-05)</td>
+<td>Recording state differs by button fill alone</td>
+<td>AC-AX-7</td>
+<td>The capsule adds a silhouette change, and the amber corner dot adds
+a non-hue channel</td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>AC-PS-1 (2026-09-05)</td>
+<td>Exactly three values persist</td>
+<td>AC-PS-1</td>
+<td><code>preview.mirrored</code> joined</td>
+<td>2026-09-20</td>
+</tr>
+<tr>
+<td>AC-PS-4 (2026-09-05)</td>
+<td>The camera toggle resets on each launch</td>
+<td>AC-PS-4</td>
+<td>No camera toggle exists</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>"Product gap: no video capture" section</td>
+<td>The app cannot record video; Photo Booth never launched</td>
+<td>Two mediums, one timer</td>
+<td>Video is captured in-app into Photo Booth's library</td>
+<td>2026-09-09</td>
+</tr>
+<tr>
+<td>Any mention of camera green <code>#3AD862</code> on mirror, S/M/L,
+or the chevron</td>
+<td>A third hue for camera controls</td>
+<td>AC-COL-1 to AC-COL-3</td>
+<td>It read as an unexplained third state and carried the row's one
+contrast failure</td>
+<td>2026-09-28</td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -1580,123 +2050,115 @@ class="header-section-number">1.13</span> Risks and mitigations</h2>
 <td>The two Shortcuts are missing or renamed</td>
 <td>Medium</td>
 <td>High</td>
-<td><code>NSWorkspace.open</code> failure throws a typed error and the
-alert names the required Shortcut</td>
+<td><code>NSWorkspace.open</code> returns true whenever Shortcuts claims
+the scheme, so a missing Shortcut cannot be detected. The alert names
+the required Shortcuts on any launch failure</td>
 </tr>
 <tr>
-<td>Voice Memos takes longer than 1.5s to exit</td>
+<td>The 3s arming delay is wrong on another Mac</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>It is a measured constant (no "now capturing" signal exists).
+Lengthen if first words are lost</td>
+</tr>
+<tr>
+<td>Voice Memos takes longer than 1.5s to exit at Start</td>
 <td>Low</td>
 <td>Medium</td>
-<td><code>VMAudioServiceErrorDomain</code> error 5 surfaces in
-Shortcuts; the wait is documented in CLAUDE.md and can be
-lengthened</td>
+<td>It is normally quit at Stop already; the Start check is a
+fallback</td>
 </tr>
 <tr>
-<td>A user expects the camera toggle to record video</td>
+<td>Writing Photo Booth's <code>Recents.plist</code> badly trashes the
+user's library</td>
+<td>Low</td>
 <td><strong>High</strong></td>
-<td>Medium</td>
-<td>The toggle's label and tooltip both say "Show camera preview". The
-gap is stated at the top of this PRD. Accepted, not solved</td>
+<td>Never written while Photo Booth runs; a measured external edit once
+moved every listed file to the Trash</td>
 </tr>
 <tr>
-<td>One toggle for start and stop hides the "stop" affordance</td>
+<td>Video recordings show a blank 00:00 filmstrip thumbnail</td>
+<td>Unknown</td>
 <td>Medium</td>
-<td>Medium</td>
-<td>The button fills red while recording, the tooltip changes to "Stop
-and save to Voice Memos", the VoiceOver label changes to "Stop
-recording", and the menu bar icon turns green with a blinking dot.
-<strong>The glyph itself does not change</strong>, so fill is the only
-in-row visual cue. Accepted in exchange for the control behaving like
-every other toggle in the row</td>
+<td>Unverified for native writes. Check xattrs and Spotlight metadata
+first if seen</td>
+</tr>
+<tr>
+<td>Quitting mid-video leaves an unplayable <code>.mov</code></td>
+<td>Low</td>
+<td>High</td>
+<td>Quit awaits <code>didFinishRecordingTo</code> before
+terminating</td>
+</tr>
+<tr>
+<td>Microphone usage description missing</td>
+<td>Low</td>
+<td>High</td>
+<td>macOS kills the app when the audio input is added. The key is set in
+both build configurations</td>
 </tr>
 <tr>
 <td>Icon-only controls are unlearnable for a new user</td>
 <td><strong>High</strong></td>
 <td>Medium</td>
-<td>Every control carries an accessibility label and a tooltip. The last
-visible text label was removed on 2026-09-05, so tooltips are now the
-only in-app affordance. Accepted for a solo-use app</td>
+<td>Every control has a tooltip and VoiceOver label. Accepted for a
+solo-use app</td>
 </tr>
 <tr>
-<td>Popover staying open is mistaken for a hung UI</td>
+<td>Red ember gradient's bright point is under 3:1
+(<code>#FF7A3D</code>, 2.59:1)</td>
+<td>Certain</td>
 <td>Low</td>
-<td>Low</td>
-<td>The menu bar icon turns green and the badge blinks, so recording
-state is visible outside the popover</td>
+<td>Lasts a fraction of each 3.4s sweep; flat fill under Increase
+Contrast</td>
 </tr>
 <tr>
-<td>macOS 14 minimum excludes macOS 13 users</td>
+<td>Small and medium scales do not step evenly with large</td>
+<td>Certain</td>
 <td>Low</td>
-<td>High</td>
-<td>Documented minimum; solo-use app</td>
+<td>Deliberate until measured on hardware</td>
 </tr>
 <tr>
-<td>The panel feels oversized at rest, even with the preview closed</td>
+<td>A new button starves the camera menu at small</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>The menu is the only flexible item; check the arithmetic before
+adding a row control</td>
+</tr>
+<tr>
+<td>Camera activity light cycling with the panel confuses the user</td>
 <td>Medium</td>
 <td>Low</td>
-<td>The S/M/L scales let the user pick a narrower resting width. The
-width still does not shrink when the camera closes, because that would
-move the left edge on every toggle</td>
-</tr>
-<tr>
-<td>Large scale on an ultrawide display produces a very large panel</td>
-<td>Medium</td>
-<td>Low</td>
-<td>Large is half the <em>visible</em> width by definition, so it never
-covers more than half the screen and never laps a left-tiled window
-(AC-SC-6)</td>
-</tr>
-<tr>
-<td>The S/M/L toggles are unreachable while the camera is off</td>
-<td>Medium</td>
-<td>Low</td>
-<td>Deliberate: at rest the scale mostly governs the preview. Accepted;
-revisit if a user wants to resize the bare row</td>
-</tr>
-<tr>
-<td>A pinned panel is forgotten and left on screen</td>
-<td>Low</td>
-<td>Low</td>
-<td>The glyph flips to <code>pin.fill</code>, and the state persists so
-it is at least consistent between launches</td>
-</tr>
-<tr>
-<td>Camera activity light cycling with the popover confuses the
-user</td>
-<td>Medium</td>
-<td>Low</td>
-<td>Accepted trade-off; the alternative is holding the camera open in
-the background</td>
+<td>Accepted; it is the privacy behaviour that matters</td>
 </tr>
 <tr>
 <td>A preview failure blocks a recording the user needed</td>
 <td>Low</td>
 <td>High</td>
-<td>AC-ST-7 and AC-ST-8 make non-blocking behaviour testable in every
-failure state; AC-ST-9 forbids modal alerts</td>
+<td>The mic works in every state (AC-ST-7); no modal alerts
+(AC-ST-9)</td>
 </tr>
 <tr>
 <td>An ad-hoc CI build re-prompts for camera permission on every
 rebuild</td>
 <td>High</td>
 <td>Low</td>
-<td>Solved, not just documented: <code>scripts/install-latest.sh</code>
-re-signs the downloaded build with a stable self-signed certificate, so
-the TCC grant survives rebuilds</td>
-</tr>
-<tr>
-<td>Long external camera names overflow the picker</td>
-<td>Medium</td>
-<td>Low</td>
-<td>AC-CAM-8 caps the picker at 200pt and requires truncation</td>
+<td><code>scripts/install-latest.sh</code> re-signs with a stable
+self-signed certificate</td>
 </tr>
 <tr>
 <td>Removing <code>@MainActor</code> annotations builds locally but
 fails in CI</td>
 <td>Medium</td>
 <td>Medium</td>
-<td>AC-SW-8 makes the annotations a testable requirement; the reason is
-recorded in CLAUDE.md</td>
+<td>AC-SW-8 makes them testable</td>
+</tr>
+<tr>
+<td>The capture-session deadlock returns</td>
+<td>Low</td>
+<td>High</td>
+<td>AC-SW-9 and AC-SW-3 encode the three rules from the 2026-09-10
+fix</td>
 </tr>
 </tbody>
 </table>
@@ -1704,27 +2166,25 @@ recorded in CLAUDE.md</td>
 <h2 data-number="1.14" id="known-limitations"><span
 class="header-section-number">1.14</span> Known limitations</h2>
 <ul>
-<li><strong>No video capture.</strong> See the dedicated section above.
-This is the largest single gap in the product.</li>
-<li><strong>Mirroring is not user-adjustable.</strong> It is hardcoded
-on. A user who wants an unmirrored view has no way to get one.</li>
-<li><strong>The camera activity light cycles with the popover.</strong>
-The session stops on close and resumes on open. Accepted by the human in
-exchange for not holding the camera open in the background.</li>
-<li><strong>The panel width does not shrink when the preview
-closes.</strong> It stays at the chosen scale's width so that toggling
-the camera moves only the bottom edge.</li>
+<li><strong>Known defect: the mic lights up during a video
+recording.</strong> The mic toggle reads <code>isRecording</code>, which
+is true for either medium, so during video it shows the red fill, ember,
+amber dot, and "Stop and save to Voice Memos" tooltip (while disabled).
+It also dims during video arming. Violates AC-C-2 and AC-COL-2. Filed to
+<code>BACKLOG.md</code> triage.</li>
+<li><strong>No simultaneous audio and video.</strong> By design.</li>
+<li><strong>Video depends on the preview.</strong> If the camera is not
+running, video cannot start.</li>
+<li><strong>Filmstrip indexing is skipped while Photo Booth is
+open.</strong> The movie is on disk but not in the filmstrip.</li>
+<li><strong>The camera activity light cycles with the panel</strong>
+outside video recording.</li>
 <li><strong>The panel cannot be moved.</strong> It is fixed flush
-against the right of the screen's visible frame.</li>
-<li><strong>The S/M/L controls only exist while the camera is
-on.</strong> There is no way to change the scale from the bare button
+against the right of the screen.</li>
+<li><strong>The record buttons' glyphs never change.</strong> Shape,
+fill, dot, timer, tooltip, and menu bar icon carry the state.</li>
+<li><strong>The user's accent colour is ignored</strong> in the
 row.</li>
-<li><strong>The audio toggle's glyph does not change while
-recording.</strong> Only the fill does, plus the tooltip and the menu
-bar icon.</li>
-<li><strong>Only three values persist:</strong> the camera ID, the
-pinned flag, and the panel scale. The camera toggle still resets on
-every launch.</li>
 </ul>
 <hr />
 <h2 data-number="1.15" id="assumptions-resolved"><span
@@ -1753,19 +2213,17 @@ Right-alignment is imposed by <code>PanelSizer</code> via a
 <tr>
 <td>U-2</td>
 <td>The width change can be animated</td>
-<td><strong>Moot.</strong> The panel no longer changes width. Animating
-the frame is also actively harmful: <code>animator().setFrame</code>
-animates the reverted origin, sliding the panel across the screen
-(AC-PNL-3)</td>
+<td><strong>No.</strong> Animating the frame animates the reverted
+origin too, sliding the panel across the screen (AC-PNL-3). Width
+changes with the scale are applied unanimated under suppressed screen
+updates</td>
 </tr>
 <tr>
 <td>U-3</td>
 <td>This app and Photo Booth can hold the same camera at once</td>
-<td><strong>MOOT. Photo Booth is never launched</strong>, so no second
-process contends for the camera. The question cannot arise in the
-shipped product. The related "camera busy" state was dropped as
-unreachable. If video capture is ever restored, this becomes an open
-question again</td>
+<td><strong>Moot.</strong> Photo Booth is still never launched. Video is
+captured by this app's own session, so the preview and the recording
+cannot disagree about which camera is in use</td>
 </tr>
 </tbody>
 </table>
@@ -1773,9 +2231,9 @@ question again</td>
 implementation:</strong></p>
 <ul>
 <li>AppKit grows the panel to fit content but never shrinks it back,
-stranding a full-size empty panel when the preview closes. Fixed by
-driving the window frame explicitly in <code>PanelSizer</code>
-(AC-PNL-7).</li>
+stranding a full-size panel when content shrinks (for example a smaller
+scale). Fixed by driving the window frame explicitly in
+<code>PanelSizer</code> (AC-PNL-6).</li>
 <li>Xcode 15.2 (Swift 5.9, used by CI) does not infer
 <code>@MainActor</code> on <code>App</code> or on view bodies, so
 explicit annotations are required (AC-SW-8).</li>
@@ -1785,6 +2243,7 @@ explicit annotations are required (AC-SW-8).</li>
 class="header-section-number">1.16</span> Platform notes</h2>
 <p><strong>Framework note:</strong> <code>AVFoundation</code>
 (<code>AVCaptureSession</code>, <code>AVCaptureVideoPreviewLayer</code>,
+<code>AVCaptureMovieFileOutput</code>,
 <code>AVCaptureDevice.DiscoverySession</code>) is a first-party platform
 framework, not a third-party dependency. No library or SPM package is
 introduced.</p>
@@ -1811,5 +2270,9 @@ as a deliberate exception, not drift.</p>
 <code>NSCameraUsageDescription</code>. Without it the first
 <code>AVCaptureDevice.requestAccess(for: .video)</code> call crashes
 rather than producing a denial.</p>
+<p><strong>Microphone prerequisite (done):</strong>
+<code>INFOPLIST_KEY_NSMicrophoneUsageDescription</code> is set in
+<strong>both</strong> build configurations. Without it macOS terminates
+the app the moment the session adds an audio input.</p>
 </body>
 </html>
