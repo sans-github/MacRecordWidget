@@ -382,3 +382,7 @@ also rewritten, because it used to promise the preview "is never saved".
 Adding a source file requires four `project.pbxproj` edits by hand
 (`PBXBuildFile`, `PBXFileReference`, the group's `children`, and the sources
 build phase). The project uses classic file references, not synchronized groups.
+
+## starter/
+
+Templated gold-standard setup that `~/.claude/skills/my-mac-app-create` fetches live from GitHub main into new Mac app projects: CI workflow, signing/install scripts, `.gitignore`, a CLAUDE.md skeleton, and the `macos-design-system` skill (with `reference.swift`, extracted verbatim from this app). `__APP__` and `__BUNDLE_ID__` are substituted on copy. When the palette, capsule controls, `PanelScale`, the build workflow or the scripts change here, update `starter/` in the same commit, or new apps inherit the old version.

@@ -1,0 +1,36 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          xcodebuild -project __APP__.xcodeproj \
+            -scheme __APP__ \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES
+
+      - name: Create artifact
+        run: |
+          cd build/Build/Products/Release
+          zip -r __APP__.zip __APP__.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: __APP__
+          path: build/Build/Products/Release/__APP__.zip
