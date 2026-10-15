@@ -338,12 +338,13 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// Swift 5.9 (Xcode 15.2, which CI uses) rejects the mix.
     var previewWidth: CGFloat {
         switch self {
-        // 380, not the 320 it used to be. The row has seven control groups
-        // now, and at 320 the sum of the fixed ones left the camera picker
-        // about 6pt wide: present, but neither readable nor clickable. The
-        // picker is the last thing to get space because it is the only
-        // flexible item, so a new button silently comes out of its width.
-        case .small: return 380
+        // 400, not the 320 it started at. At 320 the sum of the fixed controls
+        // left the camera picker about 6pt wide: present, but neither readable
+        // nor clickable, so it went to 380 with the mirror toggle and to 400
+        // when the play glyph joined the timer (2026-10-15). The picker is the
+        // last thing to get space because it is the only flexible item, so a
+        // new button silently comes out of its width.
+        case .small: return 400
         case .medium: return 480
         case .large:
             // The preview runs the full width of the panel, so this is the

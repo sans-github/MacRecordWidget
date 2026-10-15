@@ -13,6 +13,7 @@
 		A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A238F1E8900000001 /* CameraPreviewView.swift */; };
 		A100000B238F1E8900000001 /* PanelSizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000C238F1E8900000001 /* PanelSizer.swift */; };
 		A100000D238F1E8900000001 /* PhotoBoothLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000E238F1E8900000001 /* PhotoBoothLibrary.swift */; };
+		A1000064238F1E8900000001 /* PlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000065238F1E8900000001 /* PlaybackManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		A100000A238F1E8900000001 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		A100000C238F1E8900000001 /* PanelSizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelSizer.swift; sourceTree = "<group>"; };
 		A100000E238F1E8900000001 /* PhotoBoothLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoBoothLibrary.swift; sourceTree = "<group>"; };
+		A1000065238F1E8900000001 /* PlaybackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +56,7 @@
 				A100000A238F1E8900000001 /* CameraPreviewView.swift */,
 				A100000C238F1E8900000001 /* PanelSizer.swift */,
 				A100000E238F1E8900000001 /* PhotoBoothLibrary.swift */,
+				A1000065238F1E8900000001 /* PlaybackManager.swift */,
 				A1000006238F1E8900000001 /* Info.plist */,
 			);
 			path = MacRecordWidget;
@@ -123,6 +126,7 @@
 				A1000003238F1E8900000001 /* RecordingManager.swift in Sources */,
 				A100000B238F1E8900000001 /* PanelSizer.swift in Sources */,
 				A100000D238F1E8900000001 /* PhotoBoothLibrary.swift in Sources */,
+				A1000064238F1E8900000001 /* PlaybackManager.swift in Sources */,
 				A1000009238F1E8900000001 /* CameraPreviewView.swift in Sources */,
 				A1000007238F1E8900000001 /* CameraManager.swift in Sources */,
 			);

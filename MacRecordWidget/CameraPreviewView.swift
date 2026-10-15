@@ -29,6 +29,7 @@ struct CameraPreviewLayerView: NSViewRepresentable {
 @MainActor
 struct CameraPreviewPanel: View {
     @Bindable var camera: CameraManager
+    let playback: PlaybackManager
     let scale: PanelScale
 
     /// Matches the rounding of the `MenuBarExtra` panel itself. The preview runs
@@ -53,6 +54,12 @@ struct CameraPreviewPanel: View {
                     messageView
                         .padding(.horizontal, 16)
                 }
+            }
+            // The last video plays over the surface. The camera layer above
+            // stays mounted and the session keeps running underneath, so
+            // "Live Camera" is instant and the deadlock rules are untouched.
+            if playback.isVideoOnSurface {
+                VideoPlaybackSurface(playback: playback, scale: scale)
             }
         }
         .frame(width: scale.previewWidth, height: scale.previewHeight)
@@ -133,6 +140,191 @@ struct CameraPreviewPanel: View {
 
 }
 
+// MARK: - Video playback
+
+/// Hosts `PlaybackManager.playerLayer`. Like the camera preview, the layer is
+/// passed in rather than created here, so mounting and unmounting this view
+/// never rebuilds it.
+@MainActor
+struct PlayerLayerView: NSViewRepresentable {
+    let playerLayer: AVPlayerLayer
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.wantsLayer = true
+        playerLayer.frame = view.bounds
+        playerLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        view.layer = playerLayer
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+/// The last video on the preview surface: opening, playing/paused, or missing.
+/// Overlay controls sit on a dark material so they read the same in light and
+/// dark appearance. The file is unmirrored and the mirror setting is ignored.
+@MainActor
+struct VideoPlaybackSurface: View {
+    let playback: PlaybackManager
+    let scale: PanelScale
+
+    var body: some View {
+        ZStack {
+            switch playback.phase {
+            case .playing:
+                Rectangle().fill(Color.black)
+                PlayerLayerView(playerLayer: playback.playerLayer)
+                VStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 8) {
+                        badge
+                        Spacer(minLength: 0)
+                        Button("Live Camera") { playback.stop() }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11, weight: .medium))
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 3)
+                            .modifier(PlaybackOverlayChrome(cornerRadius: 999))
+                            .help("Back to the live camera")
+                            .accessibilityLabel("Back to live camera")
+                            .accessibilityIdentifier("liveCameraButton")
+                    }
+                    Spacer(minLength: 0)
+                    VideoTransport(playback: playback)
+                }
+                .padding(10)
+                .foregroundStyle(Color.white)
+                .environment(\.colorScheme, .dark)
+            case .videoMissing:
+                Rectangle().fill(Color(nsColor: .underPageBackgroundColor))
+                VStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.secondary)
+                    Text("The last video is no longer in Photo Booth's library. It may have been deleted there.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Back to Live Camera") { playback.stop() }
+                        .font(.system(size: 12))
+                        .accessibilityIdentifier("backToLiveButton")
+                }
+                .padding(.horizontal, 16)
+                .accessibilityElement(children: .combine)
+            default:
+                // Opening. Usually too brief to see.
+                Rectangle().fill(Color(nsColor: .underPageBackgroundColor))
+                VStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Opening the last video…")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityIdentifier("videoPlaybackSurface")
+    }
+
+    /// "Last video · as others see it". The secondary text reuses the mirror
+    /// toggle's wording to explain why the image is flipped relative to the
+    /// live preview. Dropped at the small scale, where it would collide with
+    /// Live Camera.
+    private var badge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "play.rectangle.fill")
+            Text("Last video")
+            if scale != .small {
+                Text("· as others see it")
+                    .font(.system(size: 10))
+                    .opacity(0.75)
+            }
+        }
+        .font(.system(size: 11))
+        .lineLimit(1)
+        .padding(.leading, 7)
+        .padding(.trailing, 9)
+        .padding(.vertical, 3)
+        .modifier(PlaybackOverlayChrome(cornerRadius: 999))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Playing your last video, shown as others see it")
+    }
+}
+
+/// Play/pause, elapsed, scrubber, duration. Click-only: the app defines no
+/// keyboard shortcuts.
+@MainActor
+struct VideoTransport: View {
+    let playback: PlaybackManager
+
+    /// Held while the user drags, so the periodic refresh does not yank the
+    /// knob back to the player's position mid-drag.
+    @State private var scrubbing: Double?
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+            let total = max(playback.duration, 0.1)
+            let position = min(scrubbing ?? playback.currentTime(), total)
+            HStack(spacing: 9) {
+                Button { playback.togglePause() } label: {
+                    // Swaps glyph, unlike the row: QuickTime's convention
+                    // applies inside the video.
+                    Image(systemName: playback.isPaused ? "play.fill" : "pause.fill")
+                        .frame(width: 14)
+                }
+                .buttonStyle(.plain)
+                .help(playback.isPaused ? "Play" : "Pause")
+                .accessibilityLabel(playback.isPaused ? "Play" : "Pause")
+                .accessibilityIdentifier("playPauseButton")
+                Text(RecordingManager.formatElapsed(position))
+                    .monospacedDigit()
+                Slider(
+                    value: Binding(
+                        get: { position },
+                        set: { value in
+                            scrubbing = value
+                            playback.seek(to: value)
+                        }
+                    ),
+                    in: 0...total,
+                    onEditingChanged: { editing in
+                        if !editing { scrubbing = nil }
+                    }
+                )
+                .controlSize(.mini)
+                .tint(.white)
+                .accessibilityLabel("Playback position")
+                .accessibilityIdentifier("playbackScrubber")
+                Text(RecordingManager.formatElapsed(total))
+                    .monospacedDigit()
+            }
+            .font(.system(size: 11))
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .modifier(PlaybackOverlayChrome(cornerRadius: 10))
+        }
+    }
+}
+
+/// Dark material behind every overlay control, plus a 1pt white stroke under
+/// Increase Contrast.
+struct PlaybackOverlayChrome: ViewModifier {
+    let cornerRadius: CGFloat
+
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        content
+            .background(.regularMaterial, in: shape)
+            .overlay(
+                shape
+                    .stroke(Color.white.opacity(contrast == .increased ? 0.5 : 0.18), lineWidth: contrast == .increased ? 1 : 0.5)
+                    .allowsHitTesting(false)
+            )
+            .contentShape(shape)
+    }
+}
 
 /// The camera picker, mounted in the button row next to the camera toggle so
 /// the two camera controls sit together. Mirroring is not here: it lives in

@@ -8,6 +8,7 @@ import AppKit
 struct MacRecordWidgetApp: App {
     @State private var recordingManager = RecordingManager()
     @State private var camera = CameraManager()
+    @State private var playback = PlaybackManager()
     @State private var measuredSize: CGSize = .zero
 
     /// Whether the panel stays on screen when another app is clicked.
@@ -97,7 +98,43 @@ struct MacRecordWidgetApp: App {
                 .accessibilityLabel(armingAwareHelp)
                 .accessibilityIdentifier("recordToggle")
 
-                RecordingTimer(manager: recordingManager, scale: scale)
+                // Play last, merged into the timer box: the box already shows
+                // the last recording's length, so pressing it plays that
+                // recording. The glyph names the medium it will play. Like the
+                // record toggles it keeps its glyph and flips its fill (blue,
+                // nothing is being captured); it never swaps to a stop glyph.
+                Button {
+                    if playback.isActive { playback.stop() } else { playback.play() }
+                } label: {
+                    PlayLastLabel(
+                        manager: recordingManager,
+                        playback: playback,
+                        scale: scale,
+                        glyph: playGlyph
+                    )
+                }
+                .buttonStyle(PlayLastButtonStyle(scale: scale, isOn: playback.isPlaying))
+                .overlay {
+                    if playback.isPlaying {
+                        PlaybackProgressLine(playback: playback)
+                            .clipShape(Capsule())
+                            .allowsHitTesting(false)
+                    }
+                }
+                // Disabled while either medium arms or records: recording and
+                // playback never run together. Record during playback is the
+                // other direction, handled in the record bindings.
+                .disabled(
+                    playback.lastRecording == nil
+                    || recordingManager.isBusy
+                    || recordingManager.isInFlight
+                )
+                .help(playHelp)
+                .accessibilityLabel(playAccessibilityLabel)
+                .accessibilityAddTraits(
+                    recordingManager.isRecording || playback.isPlaying ? .updatesFrequently : []
+                )
+                .accessibilityIdentifier("playLastButton")
 
                 // Video sits inside the mic+timer group, not out with the
                 // camera settings: it is a record button sharing that timer,
@@ -161,6 +198,10 @@ struct MacRecordWidgetApp: App {
                 // acts on the preview, nothing is being captured because of
                 // it, and red here would claim otherwise.
                 .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
+                // Disabled while a recorded video owns the surface: the file
+                // is pinned unmirrored, and a lit mirror would suggest it can
+                // flip the recording.
+                .disabled(playback.isVideoOnSurface)
                 .help(mirrorHelp)
                 .accessibilityLabel(mirrorHelp)
                 .accessibilityIdentifier("mirrorToggle")
@@ -251,7 +292,7 @@ struct MacRecordWidgetApp: App {
 
             // Always mounted. The preview is the app's resting state now:
             // there is no toggle, and nothing to collapse.
-            CameraPreviewPanel(camera: camera, scale: scale)
+            CameraPreviewPanel(camera: camera, playback: playback, scale: scale)
             }
             .frame(width: contentWidth)
             .fixedSize()
@@ -264,13 +305,22 @@ struct MacRecordWidgetApp: App {
             .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
             .task {
                 recordingManager.onError = { error in presentAlert(for: error) }
+                let playback = self.playback
+                recordingManager.onFinished = { finished in playback.recordingFinished(finished) }
+                playback.onAudioUnavailable = { presentPlaybackAlert() }
                 await camera.start()
             }
             // `pause()`, not a teardown: the session stays configured so the
             // next open skips device discovery and format negotiation. It also
             // refuses to stop while a movie is being written, which is what
             // lets a video recording survive the panel closing.
-            .onDisappear { camera.pause() }
+            //
+            // Playback stops with the panel: unlike a video recording, nothing
+            // is lost, and the next open should show the live camera.
+            .onDisappear {
+                playback.stop()
+                camera.pause()
+            }
         } label: {
             MenuBarIcon(isRecording: recordingManager.isRecording)
         }
@@ -319,7 +369,15 @@ struct MacRecordWidgetApp: App {
         Binding(
             get: { recordingManager.isRecordingAudio },
             set: { shouldRecord in
-                Task { shouldRecord ? await startOnly() : await stopOnly() }
+                Task {
+                    if shouldRecord {
+                        // Record wins over playback: stop it, then arm.
+                        playback.stop()
+                        await startOnly()
+                    } else {
+                        await stopOnly()
+                    }
+                }
             }
         )
     }
@@ -364,7 +422,8 @@ struct MacRecordWidgetApp: App {
     /// Names the result rather than the state: the button's fill already says
     /// which way round the preview is.
     private var mirrorHelp: String {
-        camera.isMirrored
+        if playback.isVideoOnSurface { return "Mirroring applies to the live camera" }
+        return camera.isMirrored
             ? "Show the preview as others see it"
             : "Mirror the preview"
     }
@@ -389,6 +448,9 @@ struct MacRecordWidgetApp: App {
             set: { shouldRecord in
                 Task {
                     if shouldRecord {
+                        // Stopping first returns the surface to the live
+                        // camera, so arming is never drawn over the old video.
+                        playback.stop()
                         do {
                             try await recordingManager.startVideoRecording(camera: camera)
                         } catch {
@@ -420,6 +482,65 @@ struct MacRecordWidgetApp: App {
         }
     }
 
+    // MARK: - Play last
+
+    /// Names the medium the press will play. `play.fill` (disabled) before
+    /// anything has been recorded.
+    private var playGlyph: String {
+        switch playback.lastRecording?.medium {
+        case .audio: "waveform"
+        case .video: "play.rectangle.fill"
+        case nil: "play.fill"
+        }
+    }
+
+    private var playHelp: String {
+        guard let last = playback.lastRecording else { return "No recording yet" }
+        if recordingManager.isBusy { return "Recording time" }
+        if playback.isOpening { return "Opening the last recording…" }
+        if playback.isActive {
+            return last.medium == .video ? "Back to the live camera" : "Stop playing"
+        }
+        let length = RecordingManager.formatElapsed(last.duration)
+        return last.medium == .audio
+            ? "Play last voice recording (\(length))"
+            : "Play last video recording (\(length))"
+    }
+
+    /// Spoken form names the medium, so VoiceOver users are not left guessing
+    /// what the waveform means.
+    private var playAccessibilityLabel: String {
+        guard let last = playback.lastRecording else { return "No recording yet" }
+        if recordingManager.isBusy { return "Recording time" }
+        let medium = last.medium == .audio ? "audio" : "video"
+        if playback.isActive { return "Stop playing the last \(medium)" }
+        return "Play your last recording, \(medium), \(Self.spokenDuration(last.duration))"
+    }
+
+    private static func spokenDuration(_ seconds: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .full
+        formatter.allowedUnits = [.hour, .minute, .second]
+        return formatter.string(from: seconds.rounded(.down)) ?? RecordingManager.formatElapsed(seconds)
+    }
+
+    /// The audio file could not be found or opened. Informational, not
+    /// critical: nothing failed to capture.
+    @MainActor
+    private func presentPlaybackAlert() {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "Can't Play the Last Recording"
+        alert.informativeText = "MacRecordWidget couldn't open the recording in Voice Memos. It may still be saving, it may have been deleted, or macOS may be blocking access to Voice Memos' files."
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Open Voice Memos")
+        guard alert.runModal() == .alertSecondButtonReturn,
+              let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.VoiceMemos")
+        else { return }
+        // Leaves Voice Memos running; the next Start quits it first anyway.
+        NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
     @MainActor
     private func presentAlert(for error: Error) {
         let alert = NSAlert()
@@ -443,18 +564,21 @@ struct MacRecordWidgetApp: App {
     }
 }
 
-// MARK: - RecordingTimer
+// MARK: - Play last
 
-/// MM:SS beside the audio button. 00:00 at launch, counting while recording,
-/// and holding the last duration after stop until the next recording starts.
+/// MM:SS inside the play-last control. 00:00 at launch with nothing recorded,
+/// the live clock while recording, the playback position while playing, and
+/// otherwise the last recording's length, faded.
 ///
 /// While recording the value comes from a `TimelineView` driven off the start
 /// date, so there is no timer to invalidate and nothing ticking while the panel
 /// is closed. Reopening the panel recomputes from the wall clock, which is also
-/// why a long recording cannot drift.
+/// why a long recording cannot drift. The box itself is drawn by
+/// `PlayLastButtonStyle`.
 @MainActor
 struct RecordingTimer: View {
     let manager: RecordingManager
+    let playback: PlaybackManager
     let scale: PanelScale
 
     var body: some View {
@@ -463,12 +587,27 @@ struct RecordingTimer: View {
                 TimelineView(.periodic(from: startedAt, by: 1)) { context in
                     label(manager.elapsed(asOf: context.date))
                 }
+            } else if playback.isPlaying {
+                TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+                    label(playback.currentTime())
+                }
             } else {
-                label(manager.lastElapsed)
+                // The persisted recording's length when there is one, so a
+                // relaunch does not show 00:00 beside an enabled play control.
+                label(playback.lastRecording?.duration ?? manager.lastElapsed)
             }
         }
-        .accessibilityLabel("Recording time")
         .accessibilityIdentifier("recordingTimer")
+    }
+
+    /// Full strength while the number means "now" (recording or playing),
+    /// faded once it is history.
+    private var isLive: Bool { manager.isRecording || playback.isPlaying }
+
+    private var foreground: AnyShapeStyle {
+        if playback.isPlaying { return AnyShapeStyle(RowPalette.glyphOn) }
+        if manager.isRecording { return AnyShapeStyle(.primary) }
+        return AnyShapeStyle(.secondary)
     }
 
     private func label(_ interval: TimeInterval) -> some View {
@@ -482,22 +621,80 @@ struct RecordingTimer: View {
             // lines mid-value, which is what "00:0 / 1" was.
             .lineLimit(1)
             .fixedSize()
-            // Semantic styles, so both light and dark mode are handled: full
-            // strength while the number means "now", faded once it is history.
-            .foregroundStyle(manager.isRecording ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
-            .opacity(manager.isRecording ? 1 : 0.65)
+            // Semantic styles while off, so light and dark are both handled;
+            // white on the blue capsule while playing.
+            .foregroundStyle(foreground)
+            .opacity(isLive ? 1 : 0.65)
+    }
+}
+
+/// Medium glyph + timer. A separate view so it can read `isEnabled`: when the
+/// control is disabled only the glyph dims, and the digits keep reading as the
+/// recording clock.
+@MainActor
+struct PlayLastLabel: View {
+    let manager: RecordingManager
+    let playback: PlaybackManager
+    let scale: PanelScale
+    let glyph: String
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        // The glyph sits as far from the digits as from the capsule's edge.
+        HStack(spacing: scale.controlPaddingH) {
+            Image(systemName: glyph)
+                .font(scale.glyphFont)
+                .frame(width: scale.glyphSize, height: scale.glyphSize)
+                // Dimmed while opening, the same treatment as arming.
+                .opacity(!isEnabled || playback.isOpening ? 0.35 : 1)
+            RecordingTimer(manager: manager, playback: playback, scale: scale)
+        }
+    }
+}
+
+/// The play-last control's box. Like `CapsuleControlChrome`, except that it
+/// does not dim as a whole when disabled (see `PlayLastLabel`), and it uses
+/// the timer's padding, because it *is* the timer box.
+struct PlayLastButtonStyle: ButtonStyle {
+    let scale: PanelScale
+    let isOn: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isOn ? RowPalette.glyphOn : Color(nsColor: .labelColor))
             .padding(.horizontal, scale.timerPaddingH)
-            // The height is the row's, not the text's. Every control holds one
-            // cap height in every state, and the timer is the one item here
-            // that is not a button, so it has to be told.
+            // The height is the row's, so this control holds one cap height in
+            // every state, like every other control.
             .frame(height: scale.controlHeight)
-            // Same 1pt separatorColor border as every control in the row, so
-            // the readout reads as part of the same family.
-            .overlay(
-                RoundedRectangle(cornerRadius: scale.cornerRadius, style: .continuous)
-                    .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                    .allowsHitTesting(false)
+            .background(
+                CapsuleControlBackground(scale: scale, isOn: isOn, tint: RowPalette.control, ember: nil)
             )
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.75 : 1)
+    }
+}
+
+/// 2pt progress line along the bottom of the lit play control. It moves with
+/// time and carries information, so it stays under Reduce Motion.
+@MainActor
+struct PlaybackProgressLine: View {
+    let playback: PlaybackManager
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+            let total = playback.duration
+            let fraction = total > 0 ? min(1, playback.currentTime() / total) : 0
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Color.white.opacity(0.3))
+                Rectangle()
+                    .fill(Color.white.opacity(0.9))
+                    .scaleEffect(x: fraction, y: 1, anchor: .leading)
+            }
+            .frame(height: 2)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .accessibilityHidden(true)
     }
 }
 

@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Idle panel with the control row and live preview, light and dark."><title>Last Recording Playback: Mocks</title><style>
+:root{--page:#f5f5f7;--ink:#1d1d1f;--ink2:#6e6e73;--rule:#d2d2d7;--card:#fff;--code:#f0f0f2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#161617;--ink:#f5f5f7;--ink2:#a1a1a6;--rule:#3a3a3c;--card:#1f1f21;--code:#2a2a2c}}
+:root[data-theme="dark"]{--page:#161617;--ink:#f5f5f7;--ink2:#a1a1a6;--rule:#3a3a3c;--card:#1f1f21;--code:#2a2a2c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
+main{max-width:1440px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:26px;margin:0 0 4px} h2{font-size:17px;margin:40px 0 8px} h3{font-size:13px;margin:0 0 8px;color:var(--ink2);font-weight:600}
+p.lede{color:var(--ink2);margin:0 0 24px;max-width:860px}
+nav.crumbs{font-size:13px;margin-bottom:16px} nav.crumbs a{color:#0a66d8}
+.pair{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.stage{padding:20px;border-radius:12px;overflow-x:auto;max-width:100%}
+.stage.light{background:#dfe3ea} .stage.dark{background:#0d0f12}
+.note{font-size:12px;color:var(--ink2);margin:6px 0 0;max-width:720px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px;background:var(--card)}
+th,td{border:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--code)} code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:12px}
+ul.links{padding-left:18px} ul.links li{margin:6px 0} a{color:#0a66d8}
+
+/* macOS appearance tokens, scoped per mock so light and dark can sit side by side */
+.mac{--win:#ececec;--ctl:#ffffff;--sep:rgba(0,0,0,.12);--label:rgba(0,0,0,.85);--label2:rgba(0,0,0,.5);
+  --blue:#007AFF;--red:#FF383C;--amber:#FF9E33;--e0:#B8150F;--e2:#FF7A3D;--menubar:rgba(246,246,246,.85)}
+.mac.dark{--win:#2b2b2d;--ctl:#1e1e1e;--sep:rgba(255,255,255,.14);--label:rgba(255,255,255,.88);--label2:rgba(255,255,255,.55);
+  --e0:#8E1B12;--e2:#FF9F45;--menubar:rgba(40,40,42,.85)}
+.mac{color:var(--label);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
+
+.panel{background:var(--win);border-radius:10px;box-shadow:0 0 0 .5px rgba(0,0,0,.25),0 12px 32px rgba(0,0,0,.28);overflow:hidden}
+.row{display:flex;align-items:center}
+.grp{display:flex;align-items:center}
+.spacer{flex:1 1 auto}
+.ctl{display:inline-flex;align-items:center;justify-content:center;background:var(--ctl);border:1px solid var(--sep);color:var(--label);position:relative;flex:none}
+.ctl.on{background:var(--blue);border-color:transparent;color:#fff}
+.ctl.on.red{background:var(--red)}
+.ctl.pressed{opacity:.75} .ctl.disabled{opacity:.35}
+.ctl .g.arming{opacity:.35}
+.timer{display:inline-flex;align-items:center;border:1px solid var(--sep);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.timer.idle{color:var(--label2);opacity:.65}
+.menu{display:inline-flex;align-items:center;gap:5px;background:var(--ctl);border:1px solid var(--sep);min-width:0;flex:0 1 auto}
+.menu span.name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu .well{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:#fff;border-radius:3px;flex:none}
+.menu.disabled{opacity:.45}
+.dot{position:absolute;border-radius:50%;background:var(--amber);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.ember{background:linear-gradient(135deg,var(--e0),var(--red),var(--e2),var(--red),var(--e0));background-size:240% 240%;
+  animation:drift 3.4s linear infinite,glow 3.4s ease-in-out infinite}
+@keyframes drift{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+@keyframes glow{0%,100%{box-shadow:0 0 4px rgba(255,90,60,0)}50%{box-shadow:0 0 7px rgba(255,90,60,.55)}}
+@media (prefers-reduced-motion:reduce){.ember{animation:none;background:var(--red)}.dot{animation:none}}
+.preview{position:relative;background:linear-gradient(160deg,#cdb9a8,#9a8f86 45%,#5f6a73);display:flex;align-items:center;justify-content:center}
+.preview.blank{background:#000}
+.preview.dark-bg{background:var(--win)}
+.msg{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--label2);text-align:center;max-width:80%}
+.msg .btn{font-size:12px;color:var(--label);background:var(--ctl);border:1px solid var(--sep);border-radius:5px;padding:2px 10px;box-shadow:0 .5px 1px rgba(0,0,0,.15)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--sep);border-top-color:var(--label2);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.menubar{height:24px;background:var(--menubar);display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 12px;font-size:13px;border-radius:8px 8px 0 0}
+.mbi{position:relative;display:inline-flex;color:var(--label)} .mbi.rec{color:#34C759}
+.alert{width:260px;background:var(--win);border-radius:12px;padding:20px 16px 16px;text-align:center;box-shadow:0 0 0 .5px rgba(0,0,0,.3),0 16px 40px rgba(0,0,0,.35)}
+.alert .ico{width:56px;height:56px;margin:0 auto 10px;border-radius:12px;background:linear-gradient(#ff6b6b,#d92b2b);display:flex;align-items:center;justify-content:center;color:#fff}
+.alert b{display:block;font-size:13px;margin-bottom:6px} .alert p{font-size:11px;margin:0 0 14px;color:var(--label)}
+.alert .ok{display:block;width:100%;background:var(--blue);color:#fff;border-radius:6px;padding:4px 0;font-size:13px}
+</style><style>
+.ctl.on .g, .tbtn.on{color:#fff}
+.timer{position:relative;overflow:hidden}
+.timer .prog{position:absolute;left:0;bottom:0;height:2px;background:var(--blue)}
+.tbtn{display:inline-flex;align-items:center;gap:3px;background:var(--ctl);border:1px solid var(--sep);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;position:relative;overflow:hidden;color:var(--label)}
+.tbtn.idle .t{color:var(--label2)}
+.tbtn.on{background:var(--blue);border-color:transparent}
+.tbtn.on .prog{position:absolute;left:0;bottom:0;height:2px;background:rgba(255,255,255,.9)}
+.tbtn.on .track{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.3)}
+.tbtn .pg{display:inline-flex}.tbtn .pg.dim{opacity:.35}
+.scene{position:absolute;inset:0;overflow:hidden}
+.scene .who{position:absolute;bottom:0;width:30%;height:62%;border-radius:50% 50% 0 0;background:rgba(40,30,25,.55)}
+.scene .sign{position:absolute;top:24%;padding:2px 8px;background:#f4efe6;color:#222;font:700 15px/1.2 -apple-system,sans-serif;border-radius:3px}
+.mirrored{transform:scaleX(-1)}
+.ov{position:absolute;color:#fff;font-size:11px;display:flex;align-items:center;gap:5px;background:rgba(30,30,32,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:.5px solid rgba(255,255,255,.18)}
+.badge{top:10px;left:10px;padding:3px 9px 3px 7px;border-radius:999px}
+.badge small{opacity:.75;font-size:10px}
+.live{top:10px;right:10px;padding:3px 9px;border-radius:999px;font-weight:500}
+.transport{left:12px;right:12px;bottom:12px;padding:6px 10px;border-radius:10px;gap:9px;font-variant-numeric:tabular-nums}
+.transport .bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.3);position:relative}
+.transport .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#fff}
+.transport .bar b{position:absolute;top:-4px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 .5px 2px rgba(0,0,0,.5);margin-left:-6px}
+.center{left:50%;top:50%;transform:translate(-50%,-50%);flex-direction:column;padding:12px 18px;border-radius:12px;font-size:12px;gap:6px}
+.dimmed{filter:brightness(.55)}
+.focus{outline:3px solid rgba(0,122,255,.55);outline-offset:1px}
+.spec td:first-child{white-space:nowrap}
+.stage.dark p.note{color:#a1a1a6 !important}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:4px;background:var(--code);margin-right:4px}
+</style></head><body><main><nav class="crumbs"><a href="index.html">All playback mocks</a></nav><h1>Last Recording Playback: Mocks</h1><p class="lede">Draft mocks for playing the last recording inside the panel. Decided: one “play last” control (option B), merged into the timer box, whose glyph says the medium (<code>waveform</code> / <code>play.rectangle.fill</code>); mirror disabled during video playback; video returns to live when it ends; no keyboard shortcuts. Visual baseline and CSS: projects/master/mocks. Not yet approved.</p><ul class="links">
+<li><a href="row-options.html">The “play last” control</a>: how it shows audio vs video before pressing (recommended glyphs + 2 alternatives), S/M/L widths, width recommendation, Option A appendix</li>
+<li><a href="audio-playback.html">Audio states</a>: idle, nothing recorded, opening, playing, finished, can’t find</li>
+<li><a href="video-playback.html">Video states</a>: opening, playing, paused, missing, auto-return to live, mirroring callout</li>
+<li><a href="exclusivity.html">Exclusivity</a>: what recording disables, record during playback, state matrix</li></ul>
+<h2>Glyph decision: no play/stop swap</h2>
+<p class="note">The play last control keeps its medium glyph (<code>waveform</code> or <code>play.rectangle.fill</code>) and flips its fill, like the record toggles; it never swaps to stop. The row’s rule is “lit means active, press again to end it”; the pin is the only glyph swapper and adding a second one would make the rule two rules. Transport glyphs that do swap (play/pause) live in the video overlay, where QuickTime’s convention applies and users expect it. The VoiceOver label carries the action: “Play your last recording, audio, 04:17” / “Stop playing the last audio”.</p>
+<h2>Component spec</h2><table class="spec">
+<tr><th>Element</th><th>SwiftUI / AppKit</th><th>States</th><th>Accessibility</th></tr>
+<tr><td>Play last</td><td><code>Button</code> whose label is <code>HStack { Image(systemName: medium == .audio ? "waveform" : "play.rectangle.fill"); RecordingTimer }</code> (<code>play.fill</code> when nothing is recorded) with <code>.help("Play last voice recording (04:17)")</code>, same capsule style as the row (off = bordered, on = round blue), pinned to <code>controlHeight</code>; while recording it is <code>.disabled</code> and keeps <code>accessibilityAddTraits(.updatesFrequently)</code></td><td>idle, hover, pressed, on (blue, white text + 2pt progress), opening, disabled (nothing recorded), recording (readout)</td><td>“Play your last recording, audio, 4 minutes 17 seconds” (names the medium so VoiceOver users are not left guessing)</td></tr>
+<tr><td>Timer progress line</td><td><code>GeometryReader</code>-free overlay: <code>Rectangle().frame(height: 2)</code> scaled by fraction, <code>.blue</code> / white on blue</td><td>shown only while playing</td><td>timer value reads “1 minute 52 of 4 minutes 17”</td></tr>
+<tr><td>Video surface</td><td><code>AVPlayerView</code> (AVKit, <code>NSViewRepresentable</code>), <code>controlsStyle = .floating</code>, <code>videoGravity = .resizeAspect</code>, drawn <b>over</b> the always-mounted preview layer (the preview layer must stay mounted: see the deadlock rules in CLAUDE.md)</td><td>opening, playing, paused, missing; returns to live at end</td><td>native transport is already accessible</td></tr>
+<tr><td>“Last video” badge</td><td><code>Label</code> on <code>.regularMaterial</code> (dark scheme forced) in a <code>Capsule</code></td><td>static</td><td><code>.accessibilityElement(children: .combine)</code>, “Playing your last video, shown as others see it”</td></tr>
+<tr><td>Live Camera</td><td><code>Button</code>, <code>.buttonStyle(.plain)</code> on the same material capsule</td><td>hover (material lightens), pressed, focus ring if keyboard focus is on</td><td>“Back to live camera”</td></tr>
+<tr><td>Missing message</td><td>existing camera message view, <code>exclamationmark.triangle</code> + text + <code>Button</code></td><td>static</td><td>combined element</td></tr>
+<tr><td>Can’t play alert</td><td><code>.alert</code> with OK + “Open Voice Memos” (opens via <code>NSWorkspace</code>)</td><td>static</td><td>native</td></tr></table>
+<h2>Keyboard, menu bar, motion, contrast</h2>
+<p class="note"><b>Keyboard.</b> No shortcuts, matching the shipped app; the floating transport's own play/pause is click-only. <b>Menu bar.</b> The app is <code>LSUIElement</code> with a <code>MenuBarExtra</code> and has no app menus; the status icon does not change during playback (it reports capturing, and playback is not capturing). <b>Reduce Motion.</b> The progress line and scrubber move linearly with time and carry information, so they stay; nothing new animates decoratively. <b>Increase Contrast.</b> The overlay material gains a 1pt white 50% stroke; white on #007AFF is 4.02:1.</p>
+<h2>Open: audio pause</h2><p class="note">Audio playback is play/stop only (the simpler choice); pause is not designed. Flagged for the user.</p><h2>Feasibility flags for EM (not designed around)</h2>
+<p class="note">1. Reading the newest .m4a from Voice Memos’ group container may trigger the macOS “would like to access data from other apps” prompt or be refused; the alert above covers refusal but not the prompt’s timing. 2. Identifying “the last” audio file: the Start shortcut passes <code>Recording-&lt;timestamp&gt;</code>, but whether Voice Memos’ filename relates to it is unverified. 3. Whether the camera session keeps running under video playback (privacy light stays on) or pauses; pausing reintroduces the start latency on Live Camera.</p></main></body></html>

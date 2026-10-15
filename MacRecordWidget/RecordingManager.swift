@@ -3,11 +3,24 @@ import Foundation
 import Observation
 
 /// Which kind of recording is in progress. The two are mutually exclusive.
-enum RecordingMedium {
+/// `String` + `Codable` so the last recording can be persisted.
+enum RecordingMedium: String, Codable {
     /// Voice Memos, driven by the "Start"/"Stop" Shortcuts.
     case audio
     /// An in-app `AVCaptureMovieFileOutput` writing into Photo Booth's library.
     case video
+}
+
+/// What a stopped recording hands to playback.
+struct FinishedRecording {
+    let medium: RecordingMedium
+    /// The movie for video. Nil for audio: Voice Memos picks the filename, and
+    /// the file does not exist yet when Stop returns.
+    let url: URL?
+    /// The timer's reading; replaced by the file's own duration once loaded.
+    let duration: TimeInterval
+    /// The earliest creation date the audio lookup will accept.
+    let notBefore: Date
 }
 
 enum RecordingError: Error, LocalizedError {
@@ -52,6 +65,16 @@ final class RecordingManager {
     /// button, i.e. from inside the arming task, where there is no call stack
     /// left to throw back into.
     @ObservationIgnored var onError: ((Error) -> Void)?
+
+    /// Called once a recording that actually went live has stopped, so
+    /// `PlaybackManager` can offer it as "the last recording". Not called for a
+    /// stop during arming: nothing was captured that the clock can describe.
+    @ObservationIgnored var onFinished: ((FinishedRecording) -> Void)?
+
+    /// When the Start shortcut fired for the current audio recording. Voice
+    /// Memos writes its file only after Stop, so the playback lookup accepts
+    /// only files created after this moment.
+    private var audioFiredAt: Date?
 
     /// True between firing the Start shortcut and the point where Voice Memos
     /// is actually capturing. The UI shows a distinct "starting" state so the
@@ -151,6 +174,7 @@ final class RecordingManager {
         // still has to arm the mic. Hold an explicit arming state for that
         // window so the timer does not over-report and the user is not invited
         // to start talking into a mic that is not listening.
+        audioFiredAt = Date()
         isArming = true
         armingTask?.cancel()
         armingTask = Task { [weak self] in
@@ -188,8 +212,15 @@ final class RecordingManager {
 
         if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
+            onFinished?(FinishedRecording(
+                medium: .audio,
+                url: nil,
+                duration: lastElapsed,
+                notBefore: audioFiredAt ?? startedAt
+            ))
         }
         startedAt = nil
+        audioFiredAt = nil
         isRecording = false
         medium = nil
 
@@ -275,10 +306,20 @@ final class RecordingManager {
         armingTask = nil
         isArming = false
 
-        await camera.stopRecording()
+        let movieURL = await camera.stopRecording()
 
         if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
+            // A nil URL means the file was not written; offering it for
+            // playback would only produce the "missing" state.
+            if let movieURL {
+                onFinished?(FinishedRecording(
+                    medium: .video,
+                    url: movieURL,
+                    duration: lastElapsed,
+                    notBefore: startedAt
+                ))
+            }
         }
         startedAt = nil
         isRecording = false
