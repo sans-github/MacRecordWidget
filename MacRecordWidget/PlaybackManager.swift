@@ -320,11 +320,6 @@ final class PlaybackManager {
         }
     }
 
-    func revealShown() {
-        guard let url = lastRecording?.url else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([url])
-    }
-
     private func show(_ entry: LibraryEntry) async {
         let loaded = (try? await AVURLAsset(url: entry.url).load(.duration))?.seconds ?? 0
         guard phase == .idle || phase == .videoMissing else { return }

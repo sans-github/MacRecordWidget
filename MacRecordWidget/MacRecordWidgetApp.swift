@@ -133,9 +133,6 @@ struct MacRecordWidgetApp: App {
                     Button("Next Recording") { playback.step(1) }
                         .disabled(playback.isActive || !playback.canStepForward)
                     Divider()
-                    Button("Show in Finder") { playback.revealShown() }
-                        .disabled(playback.lastRecording?.url == nil)
-                    Divider()
                     Button("Move to Trash…") { confirmTrash(playback) }
                         .disabled(playback.lastRecording?.url == nil)
                 }
