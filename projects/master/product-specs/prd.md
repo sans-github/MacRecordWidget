@@ -517,7 +517,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-PB-1:** Clicking the timer box plays the shown recording; clicking it while playing stops it. It is disabled while recording or arming and when no recording exists.
 - **AC-PB-2:** During audio playback a scrubber with elapsed and total time sits along the bottom of the live preview, with no pause button. Dragging seeks.
 - **AC-PB-3:** Video playback is mirrored when the mirror toggle is on (the default) and unmirrored when off. The toggle stays enabled during playback. The badge reads "mirrored" or "as others see it".
-- **AC-PB-4:** Both scrubbers end in a trash button (`trashRecordingButton`). It stops playback, asks for confirmation, moves the file to the Trash, then shows the next older recording (or the newer one if none is older).
+- **AC-PB-4:** Both scrubbers end in a trash button (`trashRecordingButton`). It stops playback, asks for confirmation in a card drawn over the preview (not a separate alert window, so the panel stays open when pinned), moves the file to the Trash, then shows the next older recording (or the newer one if none is older).
 - **AC-PB-5:** The timer box's context menu offers Play Last Recording, Previous Recording, Next Recording and Move to Trash…. All are disabled while playing; Previous and Next are disabled at the oldest and newest recording.
 - **AC-PB-6:** Previous/Next order is creation date across Photo Booth `.mov` and Voice Memos `.m4a` files.
 - **AC-PB-7:** On panel open and after a failed play, a deleted shown recording is replaced by the newest remaining one, or the box disables if none remain. An audio recording not yet matched to its file is not treated as deleted within its first minute.

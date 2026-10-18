@@ -55,6 +55,10 @@ final class PlaybackManager {
     private(set) var lastRecording: LastRecording?
     /// Video only. Audio is play/stop.
     private(set) var isPaused = false
+    /// The in-panel "Move to Trash?" confirmation is showing. Drawn inside the
+    /// panel rather than as an NSAlert, because an alert window takes key and
+    /// the MenuBarExtra panel closes on resign key even when pinned.
+    var isConfirmingTrash = false
 
     /// The audio file could not be found or opened. The app shows an alert;
     /// audio has no surface of its own to draw a message on.
@@ -171,6 +175,7 @@ final class PlaybackManager {
         player.pause()
         player.replaceCurrentItem(with: nil)
         isPaused = false
+        isConfirmingTrash = false
         if phase != .idle {
             playbackLog.notice("playback stopped")
         }

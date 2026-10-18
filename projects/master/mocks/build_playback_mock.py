@@ -55,7 +55,18 @@ b+=pair('Audio playing: scrubber over the live camera',lambda t: audio_playing('
   'No pause button: audio is play/stop only. Drag to seek. The trash at the end moves this recording to the Trash after a confirmation.')
 b+=pair('Video playing: mirrored by default',lambda t: vid_playing(t),
   'Playback follows the mirror toggle, which stays enabled. The badge reads “mirrored” or “as others see it”. The file itself is never mirrored.')
-b+=pair('Trash clicked: confirmation (playback stops first)',lambda t: vid_playing(t)+alert(t,*VID))
+def overlay_alert(t):
+    p=panel('L','B',dict(BASE,med='video',t='01:36'),'live',t)
+    i=p.index('<div class="panel"')
+    card=('<div style="position:absolute;left:0;right:0;top:34px;bottom:0;background:rgba(0,0,0,.35);border-radius:0 0 10px 10px;display:flex;align-items:center;justify-content:center;z-index:5">'
+          '<div style="width:300px;background:rgba(40,40,40,.85);backdrop-filter:blur(12px);color:#fff;border-radius:12px;padding:14px;text-align:center;font-size:11px">'
+          '<div style="font-weight:600;font-size:13px;margin-bottom:6px">Move the Last Recording to the Trash?</div>'
+          f'<div style="opacity:.8;margin-bottom:10px">{VID[0]} will be moved to the Trash. It came from Photo Booth.</div>'
+          '<span style="display:inline-block;padding:3px 12px;border-radius:6px;background:rgba(255,255,255,.18);margin-right:8px">Cancel</span>'
+          '<span style="display:inline-block;padding:3px 12px;border-radius:6px;background:rgba(255,255,255,.18);color:#FF6B6E">Move to Trash</span></div></div>')
+    return p[:i]+'<div style="position:relative">'+card+p[i:-6]+'</div></div>'
+b+=pair('Trash clicked: confirmation inside the panel (playback stops first)',overlay_alert,
+  'Drawn over the preview, not as a separate alert window, so a pinned panel stays open. Clicking outside the card cancels.')
 b+=pair('Right-click the timer box (newest recording)',lambda t: withmenu2(t,dict(BASE)),
   'Previous / Next walk every Photo Booth movie and Voice Memos memo by creation date. Next is disabled on the newest. All items are disabled while playing.')
 b+=pair('After Previous: an older video',lambda t: panel('L','B',dict(BASE,t='01:36',med='video'),'live',t),
