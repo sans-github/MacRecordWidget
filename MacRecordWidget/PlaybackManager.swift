@@ -59,6 +59,7 @@ final class PlaybackManager {
     @ObservationIgnored private var openTask: Task<Void, Never>?
     @ObservationIgnored private var endTask: Task<Void, Never>?
     @ObservationIgnored private var resolveTask: Task<Void, Never>?
+    @ObservationIgnored private var refreshTask: Task<Void, Never>?
     private let defaults: UserDefaults
 
     private static let defaultsKey = "lastRecording"
@@ -240,6 +241,70 @@ final class PlaybackManager {
             phase = .idle
             onAudioUnavailable?()
         }
+        refreshIfMissing()
+    }
+
+    // MARK: - Deleted recordings
+
+    /// If the last recording has been deleted (from Photo Booth or Voice
+    /// Memos), falls back to the newest movie or memo still on disk, or to
+    /// nothing, which disables the play control. Run on panel open and after
+    /// a failed open rather than from a file watcher: while the file is there
+    /// this costs one stat, and the directory reads happen only once it is
+    /// gone.
+    func refreshIfMissing() {
+        guard phase == .idle || phase == .videoMissing,
+              let last = lastRecording, Self.isGone(last)
+        else { return }
+        refreshTask?.cancel()
+        refreshTask = Task { [weak self] in await self?.replaceMissing(last) }
+    }
+
+    private static func isGone(_ last: LastRecording) -> Bool {
+        if let url = last.url { return !FileManager.default.fileExists(atPath: url.path) }
+        // Audio not yet matched to a file. Inside the first minute it may
+        // still be saving, so it is not treated as deleted.
+        return last.notBefore < Date().addingTimeInterval(-60)
+    }
+
+    private func replaceMissing(_ last: LastRecording) async {
+        // An unmatched memo gets one more look before it counts as gone.
+        if last.medium == .audio, last.url == nil,
+           await resolveAudioURL(timeout: .zero) != nil {
+            return
+        }
+        let newest = await Self.newestAvailable()
+        guard !Task.isCancelled, lastRecording == last else { return }
+        guard let newest else {
+            playbackLog.notice("last recording deleted, nothing left to play")
+            lastRecording = nil
+            defaults.removeObject(forKey: Self.defaultsKey)
+            return
+        }
+        let loaded = (try? await AVURLAsset(url: newest.url).load(.duration))?.seconds ?? 0
+        guard !Task.isCancelled, lastRecording == last else { return }
+        playbackLog.notice("last recording deleted, falling back to \(newest.url.lastPathComponent, privacy: .public)")
+        setLast(LastRecording(
+            medium: newest.medium,
+            url: newest.url,
+            duration: loaded.isFinite ? loaded : 0,
+            notBefore: newest.created
+        ))
+    }
+
+    /// The newest `.mov` in Photo Booth's library or `.m4a` in Voice Memos.
+    /// A folder that cannot be read counts as empty.
+    nonisolated static func newestAvailable() async -> (url: URL, medium: RecordingMedium, created: Date)? {
+        let movie = (try? newestFile(in: PhotoBoothLibrary.picturesDirectory, ext: "mov", createdAfter: .distantPast))
+            .map { (url: $0.url, medium: RecordingMedium.video, created: $0.created) }
+        let memo = (try? newestFile(in: voiceMemosDirectory, ext: "m4a", createdAfter: .distantPast))
+            .map { (url: $0.url, medium: RecordingMedium.audio, created: $0.created) }
+        switch (movie, memo) {
+        case let (movie?, memo?): return movie.created >= memo.created ? movie : memo
+        case let (movie?, nil): return movie
+        case let (nil, memo?): return memo
+        case (nil, nil): return nil
+        }
     }
 
     // MARK: - Voice Memos lookup
@@ -281,21 +346,27 @@ final class PlaybackManager {
     /// The newest `.m4a` created after `date`. `nonisolated` so the directory
     /// read runs off the main actor.
     nonisolated static func newestVoiceMemo(createdAfter date: Date) async throws -> URL? {
+        try newestFile(in: voiceMemosDirectory, ext: "m4a", createdAfter: date)?.url
+    }
+
+    nonisolated private static func newestFile(
+        in directory: URL, ext: String, createdAfter date: Date
+    ) throws -> (url: URL, created: Date)? {
         let keys: [URLResourceKey] = [.creationDateKey]
         let files = try FileManager.default.contentsOfDirectory(
-            at: voiceMemosDirectory,
+            at: directory,
             includingPropertiesForKeys: keys,
             options: [.skipsHiddenFiles]
         )
         var best: (url: URL, created: Date)?
-        for url in files where url.pathExtension.lowercased() == "m4a" {
+        for url in files where url.pathExtension.lowercased() == ext {
             guard let created = try? url.resourceValues(forKeys: Set(keys)).creationDate,
                   created >= date
             else { continue }
             if let current = best, current.created >= created { continue }
             best = (url, created)
         }
-        return best?.url
+        return best
     }
 
     // MARK: - Persistence

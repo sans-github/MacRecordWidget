@@ -307,6 +307,7 @@ struct MacRecordWidgetApp: App {
                 let playback = self.playback
                 recordingManager.onFinished = { finished in playback.recordingFinished(finished) }
                 playback.onAudioUnavailable = { presentPlaybackAlert() }
+                playback.refreshIfMissing()
                 await camera.start()
             }
             // `pause()`, not a teardown: the session stays configured so the
