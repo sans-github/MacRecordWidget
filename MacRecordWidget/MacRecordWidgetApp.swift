@@ -198,10 +198,9 @@ struct MacRecordWidgetApp: App {
                 // acts on the preview, nothing is being captured because of
                 // it, and red here would claim otherwise.
                 .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
-                // Disabled while a recorded video owns the surface: the file
-                // is pinned unmirrored, and a lit mirror would suggest it can
-                // flip the recording.
-                .disabled(playback.isVideoOnSurface)
+                // Stays live during video playback: playback is drawn the
+                // same way round as the preview. The file itself is pinned
+                // unmirrored, so this never touches what was recorded.
                 .help(mirrorHelp)
                 .accessibilityLabel(mirrorHelp)
                 .accessibilityIdentifier("mirrorToggle")
@@ -422,7 +421,6 @@ struct MacRecordWidgetApp: App {
     /// Names the result rather than the state: the button's fill already says
     /// which way round the preview is.
     private var mirrorHelp: String {
-        if playback.isVideoOnSurface { return "Mirroring applies to the live camera" }
         return camera.isMirrored
             ? "Show the preview as others see it"
             : "Mirror the preview"

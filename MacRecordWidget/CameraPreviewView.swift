@@ -59,7 +59,7 @@ struct CameraPreviewPanel: View {
             // stays mounted and the session keeps running underneath, so
             // "Live Camera" is instant and the deadlock rules are untouched.
             if playback.isVideoOnSurface {
-                VideoPlaybackSurface(playback: playback, scale: scale)
+                VideoPlaybackSurface(playback: playback, scale: scale, isMirrored: camera.isMirrored)
             }
             // Audio leaves the live camera showing and only borrows the
             // bottom edge for a scrubber, in the same place as the video one.
@@ -155,37 +155,64 @@ struct CameraPreviewPanel: View {
 
 /// Hosts `PlaybackManager.playerLayer`. Like the camera preview, the layer is
 /// passed in rather than created here, so mounting and unmounting this view
-/// never rebuilds it.
+/// never rebuilds it. The layer is a sublayer of a plain backing layer rather
+/// than the backing layer itself, because AppKit owns the geometry of a view's
+/// backing layer and could reset the mirroring transform.
 @MainActor
 struct PlayerLayerView: NSViewRepresentable {
     let playerLayer: AVPlayerLayer
+    let isMirrored: Bool
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
+    func makeNSView(context: Context) -> PlayerHostView {
+        let view = PlayerHostView()
         view.wantsLayer = true
-        playerLayer.frame = view.bounds
-        playerLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        view.layer = playerLayer
+        view.playerLayer = playerLayer
+        view.layer?.addSublayer(playerLayer)
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ nsView: PlayerHostView, context: Context) {
+        nsView.isMirrored = isMirrored
+    }
+}
+
+final class PlayerHostView: NSView {
+    var playerLayer: AVPlayerLayer?
+    var isMirrored = false {
+        didSet { if isMirrored != oldValue { needsLayout = true } }
+    }
+
+    override func layout() {
+        super.layout()
+        guard let playerLayer else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        // bounds + position, not frame: frame is undefined under a transform.
+        playerLayer.bounds = bounds
+        playerLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        playerLayer.setAffineTransform(
+            isMirrored ? CGAffineTransform(scaleX: -1, y: 1) : .identity
+        )
+        CATransaction.commit()
+    }
 }
 
 /// The last video on the preview surface: opening, playing/paused, or missing.
 /// Overlay controls sit on a dark material so they read the same in light and
-/// dark appearance. The file is unmirrored and the mirror setting is ignored.
+/// dark appearance. Drawn the same way round as the preview (the mirror
+/// toggle), though the file itself is always unmirrored.
 @MainActor
 struct VideoPlaybackSurface: View {
     let playback: PlaybackManager
     let scale: PanelScale
+    let isMirrored: Bool
 
     var body: some View {
         ZStack {
             switch playback.phase {
             case .playing:
                 Rectangle().fill(Color.black)
-                PlayerLayerView(playerLayer: playback.playerLayer)
+                PlayerLayerView(playerLayer: playback.playerLayer, isMirrored: isMirrored)
                 VStack(spacing: 0) {
                     HStack(alignment: .top, spacing: 8) {
                         badge
@@ -236,16 +263,15 @@ struct VideoPlaybackSurface: View {
         .accessibilityIdentifier("videoPlaybackSurface")
     }
 
-    /// "Last video · as others see it". The secondary text reuses the mirror
-    /// toggle's wording to explain why the image is flipped relative to the
-    /// live preview. Dropped at the small scale, where it would collide with
+    /// "Last video · mirrored" or "Last video · as others see it", naming
+    /// whichever way round the mirror toggle is drawing it. Dropped at the small scale, where it would collide with
     /// Live Camera.
     private var badge: some View {
         HStack(spacing: 5) {
             Image(systemName: "play.rectangle.fill")
             Text("Last video")
             if scale != .small {
-                Text("· as others see it")
+                Text(isMirrored ? "· mirrored" : "· as others see it")
                     .font(.system(size: 10))
                     .opacity(0.75)
             }
@@ -257,7 +283,7 @@ struct VideoPlaybackSurface: View {
         .padding(.vertical, 3)
         .modifier(PlaybackOverlayChrome(cornerRadius: 999))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Playing your last video, shown as others see it")
+        .accessibilityLabel(isMirrored ? "Playing your last video, mirrored" : "Playing your last video, shown as others see it")
     }
 }
 
