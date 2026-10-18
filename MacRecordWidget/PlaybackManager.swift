@@ -8,6 +8,13 @@ let playbackLog = Logger(subsystem: "com.macrecordwidget", category: "playback")
 
 /// The recording the play control replays. Persisted in `UserDefaults` so the
 /// control survives a relaunch.
+/// One recording on disk, from either app's library.
+struct LibraryEntry: Sendable, Equatable {
+    let url: URL
+    let medium: RecordingMedium
+    let created: Date
+}
+
 struct LastRecording: Codable, Equatable {
     let medium: RecordingMedium
     /// The movie for video. For audio, nil until the Voice Memos file has been
@@ -60,6 +67,10 @@ final class PlaybackManager {
     @ObservationIgnored private var endTask: Task<Void, Never>?
     @ObservationIgnored private var resolveTask: Task<Void, Never>?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var libraryTask: Task<Void, Never>?
+    /// Every movie and memo, oldest first. Only drives the Previous/Next
+    /// enablement; each step rescans rather than trusting it.
+    private(set) var library: [LibraryEntry] = []
     private let defaults: UserDefaults
 
     private static let defaultsKey = "lastRecording"
@@ -244,6 +255,97 @@ final class PlaybackManager {
         refreshIfMissing()
     }
 
+    // MARK: - Browsing and deleting
+
+    var canStepBack: Bool { position(in: library).map { $0 > 0 } ?? !library.isEmpty }
+    var canStepForward: Bool { position(in: library).map { $0 < library.count - 1 } ?? false }
+
+    /// Index of the shown recording in `entries`, nil when it is not there
+    /// (an audio recording not yet matched to its file, which is the newest).
+    private func position(in entries: [LibraryEntry]) -> Int? {
+        guard let url = lastRecording?.url?.standardizedFileURL else { return nil }
+        return entries.firstIndex { $0.url.standardizedFileURL == url }
+    }
+
+    func reloadLibrary() {
+        libraryTask?.cancel()
+        libraryTask = Task { [weak self] in
+            let entries = await Self.allRecordings()
+            guard !Task.isCancelled else { return }
+            self?.library = entries
+        }
+    }
+
+    /// Shows the previous (-1) or next (+1) recording by date, audio and video
+    /// alike. Idle only: it swaps what the play control would play.
+    func step(_ offset: Int) {
+        guard phase == .idle else { return }
+        Task { [weak self] in
+            let entries = await Self.allRecordings()
+            guard let self, self.phase == .idle else { return }
+            self.library = entries
+            let from = self.position(in: entries) ?? entries.count
+            let to = from + offset
+            guard entries.indices.contains(to) else { return }
+            await self.show(entries[to])
+        }
+    }
+
+    /// Moves the shown recording to the Trash (recoverable from there), then
+    /// shows its older neighbour, or the newer one if it was the oldest.
+    func trashShown() {
+        guard let url = lastRecording?.url else { return }
+        stop()
+        Task { [weak self] in
+            let before = await Self.allRecordings()
+            guard let self else { return }
+            let index = before.firstIndex { $0.url.standardizedFileURL == url.standardizedFileURL }
+            do {
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                playbackLog.notice("moved \(url.lastPathComponent, privacy: .public) to the Trash")
+            } catch {
+                playbackLog.error("cannot trash \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                return
+            }
+            var after = before
+            if let index { after.remove(at: index) }
+            self.library = after
+            guard !after.isEmpty else {
+                self.lastRecording = nil
+                self.defaults.removeObject(forKey: Self.defaultsKey)
+                return
+            }
+            let next = index.map { max(0, min($0 - 1, after.count - 1)) } ?? after.count - 1
+            await self.show(after[next])
+        }
+    }
+
+    func revealShown() {
+        guard let url = lastRecording?.url else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    private func show(_ entry: LibraryEntry) async {
+        let loaded = (try? await AVURLAsset(url: entry.url).load(.duration))?.seconds ?? 0
+        guard phase == .idle || phase == .videoMissing else { return }
+        setLast(LastRecording(
+            medium: entry.medium,
+            url: entry.url,
+            duration: loaded.isFinite ? loaded : 0,
+            notBefore: entry.created
+        ))
+    }
+
+    /// Every `.mov` in Photo Booth's library and `.m4a` in Voice Memos,
+    /// oldest first. A folder that cannot be read counts as empty.
+    nonisolated static func allRecordings() async -> [LibraryEntry] {
+        let movies = (try? files(in: PhotoBoothLibrary.picturesDirectory, ext: "mov")) ?? []
+        let memos = (try? files(in: voiceMemosDirectory, ext: "m4a")) ?? []
+        return (movies.map { LibraryEntry(url: $0.url, medium: .video, created: $0.created) }
+            + memos.map { LibraryEntry(url: $0.url, medium: .audio, created: $0.created) })
+            .sorted { $0.created < $1.created }
+    }
+
     // MARK: - Deleted recordings
 
     /// If the last recording has been deleted (from Photo Booth or Voice
@@ -292,19 +394,8 @@ final class PlaybackManager {
         ))
     }
 
-    /// The newest `.mov` in Photo Booth's library or `.m4a` in Voice Memos.
-    /// A folder that cannot be read counts as empty.
-    nonisolated static func newestAvailable() async -> (url: URL, medium: RecordingMedium, created: Date)? {
-        let movie = (try? newestFile(in: PhotoBoothLibrary.picturesDirectory, ext: "mov", createdAfter: .distantPast))
-            .map { (url: $0.url, medium: RecordingMedium.video, created: $0.created) }
-        let memo = (try? newestFile(in: voiceMemosDirectory, ext: "m4a", createdAfter: .distantPast))
-            .map { (url: $0.url, medium: RecordingMedium.audio, created: $0.created) }
-        switch (movie, memo) {
-        case let (movie?, memo?): return movie.created >= memo.created ? movie : memo
-        case let (movie?, nil): return movie
-        case let (nil, memo?): return memo
-        case (nil, nil): return nil
-        }
+    nonisolated static func newestAvailable() async -> LibraryEntry? {
+        await allRecordings().last
     }
 
     // MARK: - Voice Memos lookup
@@ -329,6 +420,7 @@ final class PlaybackManager {
                     playbackLog.notice("found voice memo \(found.lastPathComponent, privacy: .public)")
                     lastRecording?.url = found
                     persist()
+                    reloadLibrary()
                     return found
                 }
             } catch {
@@ -352,21 +444,24 @@ final class PlaybackManager {
     nonisolated private static func newestFile(
         in directory: URL, ext: String, createdAfter date: Date
     ) throws -> (url: URL, created: Date)? {
+        try files(in: directory, ext: ext)
+            .filter { $0.created >= date }
+            .max { $0.created < $1.created }
+    }
+
+    nonisolated private static func files(in directory: URL, ext: String) throws -> [(url: URL, created: Date)] {
         let keys: [URLResourceKey] = [.creationDateKey]
-        let files = try FileManager.default.contentsOfDirectory(
+        let urls = try FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: keys,
             options: [.skipsHiddenFiles]
         )
-        var best: (url: URL, created: Date)?
-        for url in files where url.pathExtension.lowercased() == ext {
-            guard let created = try? url.resourceValues(forKeys: Set(keys)).creationDate,
-                  created >= date
-            else { continue }
-            if let current = best, current.created >= created { continue }
-            best = (url, created)
+        return urls.compactMap { url in
+            guard url.pathExtension.lowercased() == ext,
+                  let created = try? url.resourceValues(forKeys: Set(keys)).creationDate
+            else { return nil }
+            return (url: url, created: created)
         }
-        return best
     }
 
     // MARK: - Persistence
@@ -374,6 +469,7 @@ final class PlaybackManager {
     private func setLast(_ recording: LastRecording) {
         lastRecording = recording
         persist()
+        reloadLibrary()
     }
 
     private func updateDuration(_ seconds: TimeInterval) {

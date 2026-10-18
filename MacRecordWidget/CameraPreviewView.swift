@@ -337,6 +337,16 @@ struct PlaybackTransport: View {
                 .accessibilityIdentifier("playbackScrubber")
                 Text(RecordingManager.formatElapsed(total))
                     .monospacedDigit()
+                Divider()
+                    .frame(height: 12)
+                    .overlay(Color.white.opacity(0.3))
+                Button { confirmTrash(playback) } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.plain)
+                .help("Move this recording to the Trash")
+                .accessibilityLabel("Move this recording to the Trash")
+                .accessibilityIdentifier("trashRecordingButton")
             }
             .font(.system(size: 11))
             .lineLimit(1)
@@ -457,4 +467,22 @@ struct CameraControls: View {
 
         }
     }
+}
+
+/// Asks before moving the shown recording to the Trash. Playback stops first:
+/// the alert takes focus, and the file should not be playing as it goes.
+@MainActor
+func confirmTrash(_ playback: PlaybackManager) {
+    guard let last = playback.lastRecording, let url = last.url else { return }
+    playback.stop()
+    let alert = NSAlert()
+    alert.alertStyle = .warning
+    alert.messageText = "Move the Last Recording to the Trash?"
+    let app = last.medium == .video ? "Photo Booth" : "Voice Memos"
+    alert.informativeText = "\u{201C}\(url.lastPathComponent)\u{201D} (\(RecordingManager.formatElapsed(last.duration))) will be moved to the Trash. It came from \(app)."
+    let trash = alert.addButton(withTitle: "Move to Trash")
+    trash.hasDestructiveAction = true
+    alert.addButton(withTitle: "Cancel")
+    guard alert.runModal() == .alertFirstButtonReturn else { return }
+    playback.trashShown()
 }

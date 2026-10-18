@@ -121,6 +121,24 @@ struct MacRecordWidgetApp: App {
                             .allowsHitTesting(false)
                     }
                 }
+                // Browsing and deleting live in a context menu so the row
+                // keeps its width. Previous/Next walk every Photo Booth movie
+                // and Voice Memos memo by creation date.
+                .contextMenu {
+                    Button("Play Last Recording") { playback.play() }
+                        .disabled(playback.isActive)
+                    Divider()
+                    Button("Previous Recording") { playback.step(-1) }
+                        .disabled(playback.isActive || !playback.canStepBack)
+                    Button("Next Recording") { playback.step(1) }
+                        .disabled(playback.isActive || !playback.canStepForward)
+                    Divider()
+                    Button("Show in Finder") { playback.revealShown() }
+                        .disabled(playback.lastRecording?.url == nil)
+                    Divider()
+                    Button("Move to Trash…") { confirmTrash(playback) }
+                        .disabled(playback.lastRecording?.url == nil)
+                }
                 // Disabled while either medium arms or records: recording and
                 // playback never run together. Record during playback is the
                 // other direction, handled in the record bindings.
@@ -308,6 +326,7 @@ struct MacRecordWidgetApp: App {
                 recordingManager.onFinished = { finished in playback.recordingFinished(finished) }
                 playback.onAudioUnavailable = { presentPlaybackAlert() }
                 playback.refreshIfMissing()
+                playback.reloadLibrary()
                 await camera.start()
             }
             // `pause()`, not a teardown: the session stays configured so the
