@@ -6,7 +6,7 @@
 
 Consolidated product baseline. Describes the app **as it actually ships today**.
 
-**Shipped:** production polish (2026-05-18), popover button layout (2026-05-21), live camera preview (2026-09-04), panel pinning and scaling (2026-09-05), recording timer and arming state (2026-09-06), in-app video recording and permanent preview (2026-09-09), preview mirror toggle and camera menu (2026-09-20), semantic capsules (2026-09-24), two-hue palette (2026-09-28).
+**Shipped:** production polish (2026-05-18), popover button layout (2026-05-21), live camera preview (2026-09-04), panel pinning and scaling (2026-09-05), recording timer and arming state (2026-09-06), in-app video recording and permanent preview (2026-09-09), preview mirror toggle and camera menu (2026-09-20), semantic capsules (2026-09-24), two-hue palette (2026-09-28), last recording playback (2026-10-15), playback seek, mirrored playback, deleted-file fallback, browse and delete (2026-10-18).
 
 > **Reading this document:** every unmarked statement describes current, shipped behaviour, verified against the Swift sources on 2026-10-05. Criteria later revisions invalidated are kept in **Superseded acceptance criteria** with the reason and date, so the decision trail survives.
 
@@ -178,6 +178,20 @@ Prior versions of the widget added their own friction:
 
 ---
 
+## Last recording playback
+
+Mocks: [playback.html](../mocks/playback.html).
+
+- The timer box is also the play button. Its glyph names the medium (`waveform` audio, `play.rectangle.fill` video, disabled `play.fill` when nothing exists) and its digits show the recording length, the playback position while playing, or the recording clock while recording.
+- Audio plays in place with a scrubber along the bottom of the live camera preview. Audio is play/stop only, no pause.
+- Video plays over the preview surface with pause, scrubber and "Live Camera". It is drawn the same way round as the preview: mirrored by default, flipped with the mirror toggle. The file itself is never mirrored.
+- Both scrubbers end in a trash button.
+- Right-clicking the timer box offers Play Last Recording, Previous Recording, Next Recording and Move to Trash….
+- Previous/Next walk every `.mov` in Photo Booth's library and every `.m4a` in Voice Memos by creation date, including recordings made outside the app.
+- If the shown recording has been deleted, the box falls back to the newest recording left, audio or video, or disables if none remain. Checked on panel open and after a failed play, not by a file watcher.
+
+**Open risk:** Move to Trash removes only the file. Photo Booth's `Recents.plist` and Voice Memos' library are not updated; how each app reacts has not been tested.
+
 ## Conceptual data model
 
 - One **Recording state** in memory, never persisted: idle, arming, or recording; a **medium** (audio, video, or none); in flight or settled.
@@ -188,7 +202,7 @@ Prior versions of the widget added their own friction:
 - A Movie file is written into the **Photo Booth library** and optionally listed in its filmstrip index.
 - The session shows exactly one **Camera device**: a stable unique identifier, a display name, a connected status.
 - The session has a **status**: idle, starting, running, or a message state (not determined, denied, restricted, no camera, failed).
-- Four **Preferences** outlive a launch: selected camera identifier, mirror flag, pinned flag, panel scale.
+- Four **Preferences** outlive a launch: selected camera identifier, mirror flag, pinned flag, panel scale. One **Last recording** also persists: medium, file URL, duration.
 - A **Panel scale** is small, medium, or large, and derives every dimension in the panel.
 
 ---
@@ -210,6 +224,8 @@ Prior versions of the widget added their own friction:
 | Mirror and camera menu | 2026-09-20 | Preview-only mirror toggle (default on), movie output pinned unmirrored, camera picker rebuilt as a Menu of Buttons, small width 320 to 380 |
 | Semantic capsules | 2026-09-24 | Off/on capsule chrome, Live Ember, `controlHeight` on every control, large re-sized for Photo Booth parity |
 | Two-hue palette | 2026-09-28 | Camera green removed; red for capture, blue for everything else; constant control width |
+| Last recording playback | 2026-10-15 | Timer box becomes the play button; audio plays in place, video over the preview surface |
+| Playback extensions | 2026-10-18 | Audio scrubber, video playback follows the mirror toggle, fallback when the last recording is deleted, Previous/Next and Move to Trash |
 
 ### Deferred
 
@@ -496,6 +512,16 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-ST-9:** No preview failure presents a modal alert.
 - **AC-ST-10:** State messages are clear, non-blaming, sentence case, no exclamation marks.
 
+### Playback
+
+- **AC-PB-1:** Clicking the timer box plays the shown recording; clicking it while playing stops it. It is disabled while recording or arming and when no recording exists.
+- **AC-PB-2:** During audio playback a scrubber with elapsed and total time sits along the bottom of the live preview, with no pause button. Dragging seeks.
+- **AC-PB-3:** Video playback is mirrored when the mirror toggle is on (the default) and unmirrored when off. The toggle stays enabled during playback. The badge reads "mirrored" or "as others see it".
+- **AC-PB-4:** Both scrubbers end in a trash button (`trashRecordingButton`). It stops playback, asks for confirmation, moves the file to the Trash, then shows the next older recording (or the newer one if none is older).
+- **AC-PB-5:** The timer box's context menu offers Play Last Recording, Previous Recording, Next Recording and Move to Trash…. All are disabled while playing; Previous and Next are disabled at the oldest and newest recording.
+- **AC-PB-6:** Previous/Next order is creation date across Photo Booth `.mov` and Voice Memos `.m4a` files.
+- **AC-PB-7:** On panel open and after a failed play, a deleted shown recording is replaced by the newest remaining one, or the box disables if none remain. An audio recording not yet matched to its file is not treated as deleted within its first minute.
+
 ### Accessibility
 
 - **AC-AX-1:** Pin, mic, timer, video, mirror, camera menu, and Quit carry an `accessibilityLabel` and a stable `accessibilityIdentifier` (`pinToggle`, `recordToggle`, `recordingTimer`, `videoRecordToggle`, `mirrorToggle`, `cameraPicker`, `quitButton`).
@@ -511,10 +537,10 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 
 ### Persistence
 
-- **AC-PS-1:** Exactly **four** values persist: `preview.cameraDeviceID`, `preview.mirrored`, `panelPinned`, `panelScale`.
+- **AC-PS-1:** Exactly **five** values persist: `preview.cameraDeviceID`, `preview.mirrored`, `panelPinned`, `panelScale`, and `lastRecording` (medium, file URL, duration, as JSON).
 - **AC-PS-2:** Persistence uses `UserDefaults`. No SwiftData model container (a recorded deviation from `tech-config.md`).
 - **AC-PS-3:** A first launch with no stored camera uses a connected default camera.
-- **AC-PS-4:** No other state persists. Recording state and the timer reset on each launch.
+- **AC-PS-4:** No other state persists. Recording state resets on each launch; the idle timer shows the persisted last recording's length.
 - **AC-PS-5:** The panel scale is stored as the enum's raw string.
 - **AC-PS-6:** A missing mirror value reads as on (the default), not as off.
 

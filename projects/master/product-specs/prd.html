@@ -195,30 +195,33 @@ class="toc-section-number">1.4</span> Problem</a></li>
 class="toc-section-number">1.5</span> Target audience</a></li>
 <li><a href="#features-shipped" id="toc-features-shipped"><span
 class="toc-section-number">1.6</span> Features (shipped)</a></li>
+<li><a href="#last-recording-playback"
+id="toc-last-recording-playback"><span
+class="toc-section-number">1.7</span> Last recording playback</a></li>
 <li><a href="#conceptual-data-model"
 id="toc-conceptual-data-model"><span
-class="toc-section-number">1.7</span> Conceptual data model</a></li>
+class="toc-section-number">1.8</span> Conceptual data model</a></li>
 <li><a href="#roadmap" id="toc-roadmap"><span
-class="toc-section-number">1.8</span> Roadmap</a></li>
+class="toc-section-number">1.9</span> Roadmap</a></li>
 <li><a href="#app-flows" id="toc-app-flows"><span
-class="toc-section-number">1.9</span> App flows</a></li>
+class="toc-section-number">1.10</span> App flows</a></li>
 <li><a href="#preview-states" id="toc-preview-states"><span
-class="toc-section-number">1.10</span> Preview states</a></li>
+class="toc-section-number">1.11</span> Preview states</a></li>
 <li><a href="#acceptance-criteria" id="toc-acceptance-criteria"><span
-class="toc-section-number">1.11</span> Acceptance criteria</a></li>
+class="toc-section-number">1.12</span> Acceptance criteria</a></li>
 <li><a href="#superseded-acceptance-criteria"
 id="toc-superseded-acceptance-criteria"><span
-class="toc-section-number">1.12</span> Superseded acceptance
+class="toc-section-number">1.13</span> Superseded acceptance
 criteria</a></li>
 <li><a href="#risks-and-mitigations"
 id="toc-risks-and-mitigations"><span
-class="toc-section-number">1.13</span> Risks and mitigations</a></li>
+class="toc-section-number">1.14</span> Risks and mitigations</a></li>
 <li><a href="#known-limitations" id="toc-known-limitations"><span
-class="toc-section-number">1.14</span> Known limitations</a></li>
+class="toc-section-number">1.15</span> Known limitations</a></li>
 <li><a href="#assumptions-resolved" id="toc-assumptions-resolved"><span
-class="toc-section-number">1.15</span> Assumptions: resolved</a></li>
+class="toc-section-number">1.16</span> Assumptions: resolved</a></li>
 <li><a href="#platform-notes" id="toc-platform-notes"><span
-class="toc-section-number">1.16</span> Platform notes</a></li>
+class="toc-section-number">1.17</span> Platform notes</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -236,7 +239,9 @@ button layout (2026-05-21), live camera preview (2026-09-04), panel
 pinning and scaling (2026-09-05), recording timer and arming state
 (2026-09-06), in-app video recording and permanent preview (2026-09-09),
 preview mirror toggle and camera menu (2026-09-20), semantic capsules
-(2026-09-24), two-hue palette (2026-09-28).</p>
+(2026-09-24), two-hue palette (2026-09-28), last recording playback
+(2026-10-15), playback seek, mirrored playback, deleted-file fallback,
+browse and delete (2026-10-18).</p>
 <blockquote>
 <p><strong>Reading this document:</strong> every unmarked statement
 describes current, shipped behaviour, verified against the Swift sources
@@ -625,8 +630,37 @@ the session configured, so reopening is fast. It does not pause during a
 video recording</li>
 </ul>
 <hr />
-<h2 data-number="1.7" id="conceptual-data-model"><span
-class="header-section-number">1.7</span> Conceptual data model</h2>
+<h2 data-number="1.7" id="last-recording-playback"><span
+class="header-section-number">1.7</span> Last recording playback</h2>
+<p>Mocks: <a href="../mocks/playback.html">playback.html</a>.</p>
+<ul>
+<li>The timer box is also the play button. Its glyph names the medium
+(<code>waveform</code> audio, <code>play.rectangle.fill</code> video,
+disabled <code>play.fill</code> when nothing exists) and its digits show
+the recording length, the playback position while playing, or the
+recording clock while recording.</li>
+<li>Audio plays in place with a scrubber along the bottom of the live
+camera preview. Audio is play/stop only, no pause.</li>
+<li>Video plays over the preview surface with pause, scrubber and "Live
+Camera". It is drawn the same way round as the preview: mirrored by
+default, flipped with the mirror toggle. The file itself is never
+mirrored.</li>
+<li>Both scrubbers end in a trash button.</li>
+<li>Right-clicking the timer box offers Play Last Recording, Previous
+Recording, Next Recording and Move to Trash….</li>
+<li>Previous/Next walk every <code>.mov</code> in Photo Booth's library
+and every <code>.m4a</code> in Voice Memos by creation date, including
+recordings made outside the app.</li>
+<li>If the shown recording has been deleted, the box falls back to the
+newest recording left, audio or video, or disables if none remain.
+Checked on panel open and after a failed play, not by a file
+watcher.</li>
+</ul>
+<p><strong>Open risk:</strong> Move to Trash removes only the file.
+Photo Booth's <code>Recents.plist</code> and Voice Memos' library are
+not updated; how each app reacts has not been tested.</p>
+<h2 data-number="1.8" id="conceptual-data-model"><span
+class="header-section-number">1.8</span> Conceptual data model</h2>
 <ul>
 <li>One <strong>Recording state</strong> in memory, never persisted:
 idle, arming, or recording; a <strong>medium</strong> (audio, video, or
@@ -649,15 +683,16 @@ stable unique identifier, a display name, a connected status.</li>
 or a message state (not determined, denied, restricted, no camera,
 failed).</li>
 <li>Four <strong>Preferences</strong> outlive a launch: selected camera
-identifier, mirror flag, pinned flag, panel scale.</li>
+identifier, mirror flag, pinned flag, panel scale. One <strong>Last
+recording</strong> also persists: medium, file URL, duration.</li>
 <li>A <strong>Panel scale</strong> is small, medium, or large, and
 derives every dimension in the panel.</li>
 </ul>
 <hr />
-<h2 data-number="1.8" id="roadmap"><span
-class="header-section-number">1.8</span> Roadmap</h2>
-<h3 data-number="1.8.1" id="shipped"><span
-class="header-section-number">1.8.1</span> Shipped</h3>
+<h2 data-number="1.9" id="roadmap"><span
+class="header-section-number">1.9</span> Roadmap</h2>
+<h3 data-number="1.9.1" id="shipped"><span
+class="header-section-number">1.9.1</span> Shipped</h3>
 <table>
 <thead>
 <tr>
@@ -737,10 +772,22 @@ every control, large re-sized for Photo Booth parity</td>
 <td>Camera green removed; red for capture, blue for everything else;
 constant control width</td>
 </tr>
+<tr>
+<td>Last recording playback</td>
+<td>2026-10-15</td>
+<td>Timer box becomes the play button; audio plays in place, video over
+the preview surface</td>
+</tr>
+<tr>
+<td>Playback extensions</td>
+<td>2026-10-18</td>
+<td>Audio scrubber, video playback follows the mirror toggle, fallback
+when the last recording is deleted, Previous/Next and Move to Trash</td>
+</tr>
 </tbody>
 </table>
-<h3 data-number="1.8.2" id="deferred"><span
-class="header-section-number">1.8.2</span> Deferred</h3>
+<h3 data-number="1.9.2" id="deferred"><span
+class="header-section-number">1.9.2</span> Deferred</h3>
 <table>
 <thead>
 <tr>
@@ -797,10 +844,10 @@ step evenly</td>
 </tbody>
 </table>
 <hr />
-<h2 data-number="1.9" id="app-flows"><span
-class="header-section-number">1.9</span> App flows</h2>
-<h3 data-number="1.9.1" id="site-map"><span
-class="header-section-number">1.9.1</span> Site map</h3>
+<h2 data-number="1.10" id="app-flows"><span
+class="header-section-number">1.10</span> App flows</h2>
+<h3 data-number="1.10.1" id="site-map"><span
+class="header-section-number">1.10.1</span> Site map</h3>
 <table>
 <thead>
 <tr>
@@ -836,8 +883,8 @@ microphone-denied alert.</td>
 </tr>
 </tbody>
 </table>
-<h3 data-number="1.9.2" id="user-roles-and-access"><span
-class="header-section-number">1.9.2</span> User roles and access</h3>
+<h3 data-number="1.10.2" id="user-roles-and-access"><span
+class="header-section-number">1.10.2</span> User roles and access</h3>
 <table>
 <thead>
 <tr>
@@ -852,8 +899,8 @@ class="header-section-number">1.9.2</span> User roles and access</h3>
 </tr>
 </tbody>
 </table>
-<h3 data-number="1.9.3" id="user-journeys"><span
-class="header-section-number">1.9.3</span> User journeys</h3>
+<h3 data-number="1.10.3" id="user-journeys"><span
+class="header-section-number">1.10.3</span> User journeys</h3>
 <p><strong>1. Record audio</strong></p>
 <ol type="1">
 <li>Click the menu bar icon; the panel opens with the live preview</li>
@@ -911,8 +958,8 @@ preference</li>
 usable</li>
 </ol>
 <hr />
-<h2 data-number="1.10" id="preview-states"><span
-class="header-section-number">1.10</span> Preview states</h2>
+<h2 data-number="1.11" id="preview-states"><span
+class="header-section-number">1.11</span> Preview states</h2>
 <p>In <strong>every</strong> state below, the mic, mirror, pin, S/M/L,
 and Quit remain usable. The video button is enabled only in
 <strong>Running</strong>.</p>
@@ -980,13 +1027,13 @@ restores it.</p>
 the device actually feeding the preview. There is no separate name
 label.</p>
 <hr />
-<h2 data-number="1.11" id="acceptance-criteria"><span
-class="header-section-number">1.11</span> Acceptance criteria</h2>
+<h2 data-number="1.12" id="acceptance-criteria"><span
+class="header-section-number">1.12</span> Acceptance criteria</h2>
 <p>All criteria below describe shipped behaviour as of 2026-10-05.
 Invalidated criteria are in <strong>Superseded acceptance
 criteria</strong>.</p>
-<h3 data-number="1.11.1" id="panel-layout"><span
-class="header-section-number">1.11.1</span> Panel layout</h3>
+<h3 data-number="1.12.1" id="panel-layout"><span
+class="header-section-number">1.12.1</span> Panel layout</h3>
 <ul>
 <li><strong>AC-L-1:</strong> The panel content is a <code>VStack</code>
 with zero spacing: one <code>HStack</code> button row, with the preview
@@ -1026,8 +1073,8 @@ left, right, and bottom edges. No inset, no border.</li>
 <li><strong>AC-L-11:</strong> Only the preview's bottom two corners are
 rounded, matching the panel. Its top corners are square.</li>
 </ul>
-<h3 data-number="1.11.2" id="colour"><span
-class="header-section-number">1.11.2</span> Colour</h3>
+<h3 data-number="1.12.2" id="colour"><span
+class="header-section-number">1.12.2</span> Colour</h3>
 <ul>
 <li><strong>AC-COL-1:</strong> The row uses exactly two fill hues: red
 <code>#FF383C</code> and blue <code>#007AFF</code>. No green or other
@@ -1042,8 +1089,8 @@ no off state.</li>
 <li><strong>AC-COL-5:</strong> White glyphs on both hues clear 3:1
 contrast (3.57:1 on red, 4.02:1 on blue).</li>
 </ul>
-<h3 data-number="1.11.3" id="controls"><span
-class="header-section-number">1.11.3</span> Controls</h3>
+<h3 data-number="1.12.3" id="controls"><span
+class="header-section-number">1.12.3</span> Controls</h3>
 <ul>
 <li><strong>AC-C-1:</strong> A <strong>single</strong> audio toggle
 (<code>recordToggle</code>) starts and stops audio. There is no separate
@@ -1091,8 +1138,8 @@ and is never disabled, including during a video recording.</li>
 carries a blinking amber dot on its bottom-right corner, offset mostly
 onto the panel background.</li>
 </ul>
-<h3 data-number="1.11.4" id="timer"><span
-class="header-section-number">1.11.4</span> Timer</h3>
+<h3 data-number="1.12.4" id="timer"><span
+class="header-section-number">1.12.4</span> Timer</h3>
 <ul>
 <li><strong>AC-T-1:</strong> The timer (<code>recordingTimer</code>)
 shows MM:SS in a box with a 1pt <code>separatorColor</code> border at
@@ -1108,8 +1155,8 @@ not when it stops. After Stop it keeps showing the final duration.</li>
 scale, and its digits are monospaced so the box does not twitch.</li>
 <li><strong>AC-T-6:</strong> Audio and video share the one timer.</li>
 </ul>
-<h3 data-number="1.11.5" id="live-ember"><span
-class="header-section-number">1.11.5</span> Live Ember</h3>
+<h3 data-number="1.12.5" id="live-ember"><span
+class="header-section-number">1.12.5</span> Live Ember</h3>
 <ul>
 <li><strong>AC-E-1:</strong> A recording button wears an animated red
 gradient with a breathing glow on a 3.4s period while its medium is
@@ -1122,8 +1169,8 @@ replaced by the flat red fill.</li>
 <li><strong>AC-E-5:</strong> Both record buttons use the same ember
 hue.</li>
 </ul>
-<h3 data-number="1.11.6" id="menu-bar-icon"><span
-class="header-section-number">1.11.6</span> Menu bar icon</h3>
+<h3 data-number="1.12.6" id="menu-bar-icon"><span
+class="header-section-number">1.12.6</span> Menu bar icon</h3>
 <ul>
 <li><strong>AC-M-1:</strong> The icon is <code>record.circle</code>,
 rendered hierarchically, primary-coloured when idle and green while
@@ -1137,8 +1184,8 @@ accessibility.</li>
 <li><strong>AC-M-5:</strong> The icon glyph never changes to a mic or
 camera symbol.</li>
 </ul>
-<h3 data-number="1.11.7" id="panel-lifecycle"><span
-class="header-section-number">1.11.7</span> Panel lifecycle</h3>
+<h3 data-number="1.12.7" id="panel-lifecycle"><span
+class="header-section-number">1.12.7</span> Panel lifecycle</h3>
 <ul>
 <li><strong>AC-P-1:</strong> The panel stays open after starting a
 recording.</li>
@@ -1158,8 +1205,8 @@ off on the panel window.</li>
 <li><strong>AC-P-7:</strong> The pinned state persists under
 <code>panelPinned</code> and is restored on launch.</li>
 </ul>
-<h3 data-number="1.11.8" id="recording-behaviour"><span
-class="header-section-number">1.11.8</span> Recording behaviour</h3>
+<h3 data-number="1.12.8" id="recording-behaviour"><span
+class="header-section-number">1.12.8</span> Recording behaviour</h3>
 <ul>
 <li><strong>AC-R-1:</strong> If Voice Memos is running at Start, it is
 terminated and the app waits 1.5s before firing the Start shortcut.</li>
@@ -1184,8 +1231,8 @@ arming state for 3s before showing "recording". During arming the
 pressed button is disabled, its glyph is at 35% opacity, and its tooltip
 reads "Starting…".</li>
 </ul>
-<h3 data-number="1.11.9" id="video-recording"><span
-class="header-section-number">1.11.9</span> Video recording</h3>
+<h3 data-number="1.12.9" id="video-recording"><span
+class="header-section-number">1.12.9</span> Video recording</h3>
 <ul>
 <li><strong>AC-V-1:</strong> Video is written by the app's
 <code>AVCaptureMovieFileOutput</code> as an H.264 + AAC
@@ -1209,8 +1256,8 @@ recording.</li>
 <li><strong>AC-V-8:</strong> Closing the panel during a video recording
 does not stop or truncate it.</li>
 </ul>
-<h3 data-number="1.11.10" id="swift-and-reliability"><span
-class="header-section-number">1.11.10</span> Swift and reliability</h3>
+<h3 data-number="1.12.10" id="swift-and-reliability"><span
+class="header-section-number">1.12.10</span> Swift and reliability</h3>
 <ul>
 <li><strong>AC-SW-1:</strong> <code>RecordingManager</code> and
 <code>CameraManager</code> are <code>@MainActor @Observable</code>. No
@@ -1240,8 +1287,8 @@ it).</li>
 <li><strong>AC-SW-9:</strong> The preview layer is created once by
 <code>CameraManager</code> and never deallocated.</li>
 </ul>
-<h3 data-number="1.11.11" id="preview-surface"><span
-class="header-section-number">1.11.11</span> Preview surface</h3>
+<h3 data-number="1.12.11" id="preview-surface"><span
+class="header-section-number">1.12.11</span> Preview surface</h3>
 <ul>
 <li><strong>AC-PV-1:</strong> The preview sits <strong>below</strong>
 the button row.</li>
@@ -1261,8 +1308,8 @@ warning colour, no caution icon, no error copy.</li>
 <li><strong>AC-PV-8:</strong> The preview area renders correctly in
 light and dark mode.</li>
 </ul>
-<h3 data-number="1.11.12" id="panel-sizing"><span
-class="header-section-number">1.11.12</span> Panel sizing</h3>
+<h3 data-number="1.12.12" id="panel-sizing"><span
+class="header-section-number">1.12.12</span> Panel sizing</h3>
 <ul>
 <li><strong>AC-PNL-1:</strong> The panel width is the current scale's
 preview width. It changes only when the scale changes.</li>
@@ -1281,8 +1328,8 @@ the anchored intermediate frame is never painted.</li>
 <li><strong>AC-PNL-8:</strong> Changing the scale moves only the left
 edge.</li>
 </ul>
-<h3 data-number="1.11.13" id="panel-scale"><span
-class="header-section-number">1.11.13</span> Panel scale</h3>
+<h3 data-number="1.12.13" id="panel-scale"><span
+class="header-section-number">1.12.13</span> Panel scale</h3>
 <ul>
 <li><strong>AC-SC-1:</strong> Three sizes: small, medium, large. Medium
 is the default on first launch.</li>
@@ -1312,8 +1359,8 @@ preview together.</li>
 17pt in a 14pt font, control and size-label fonts 13pt, top padding 7pt,
 bottom padding 6pt.</li>
 </ul>
-<h3 data-number="1.11.14" id="camera-menu"><span
-class="header-section-number">1.11.14</span> Camera menu</h3>
+<h3 data-number="1.12.14" id="camera-menu"><span
+class="header-section-number">1.12.14</span> Camera menu</h3>
 <ul>
 <li><strong>AC-CAM-1:</strong> The menu lists every connected video
 device by display name, with a checkmark on the active one.</li>
@@ -1334,8 +1381,8 @@ state where a device exists, and disabled when no device exists.</li>
 <li><strong>AC-CAM-8:</strong> A long device name truncates within the
 scale's menu width and pushes no control out of the panel.</li>
 </ul>
-<h3 data-number="1.11.15" id="mirroring"><span
-class="header-section-number">1.11.15</span> Mirroring</h3>
+<h3 data-number="1.12.15" id="mirroring"><span
+class="header-section-number">1.12.15</span> Mirroring</h3>
 <ul>
 <li><strong>AC-MIR-1:</strong> A mirror toggle controls whether the
 preview is mirrored. It defaults to <strong>on</strong>.</li>
@@ -1348,8 +1395,8 @@ before each recording.</li>
 recording changes the preview only and cannot disturb the file being
 written.</li>
 </ul>
-<h3 data-number="1.11.16" id="session-lifecycle"><span
-class="header-section-number">1.11.16</span> Session lifecycle</h3>
+<h3 data-number="1.12.16" id="session-lifecycle"><span
+class="header-section-number">1.12.16</span> Session lifecycle</h3>
 <ul>
 <li><strong>AC-LC-1:</strong> The capture session starts when the panel
 opens.</li>
@@ -1365,8 +1412,8 @@ starting, the state becomes Failed with "Try Again".</li>
 <li><strong>AC-LC-6:</strong> The preview shows "Starting camera…" until
 the first real frame arrives, never a black layer.</li>
 </ul>
-<h3 data-number="1.11.17" id="permission-and-failure-states"><span
-class="header-section-number">1.11.17</span> Permission and failure
+<h3 data-number="1.12.17" id="permission-and-failure-states"><span
+class="header-section-number">1.12.17</span> Permission and failure
 states</h3>
 <ul>
 <li><strong>AC-ST-1:</strong> On the first panel open with permission
@@ -1394,8 +1441,37 @@ alert.</li>
 <li><strong>AC-ST-10:</strong> State messages are clear, non-blaming,
 sentence case, no exclamation marks.</li>
 </ul>
-<h3 data-number="1.11.18" id="accessibility"><span
-class="header-section-number">1.11.18</span> Accessibility</h3>
+<h3 data-number="1.12.18" id="playback"><span
+class="header-section-number">1.12.18</span> Playback</h3>
+<ul>
+<li><strong>AC-PB-1:</strong> Clicking the timer box plays the shown
+recording; clicking it while playing stops it. It is disabled while
+recording or arming and when no recording exists.</li>
+<li><strong>AC-PB-2:</strong> During audio playback a scrubber with
+elapsed and total time sits along the bottom of the live preview, with
+no pause button. Dragging seeks.</li>
+<li><strong>AC-PB-3:</strong> Video playback is mirrored when the mirror
+toggle is on (the default) and unmirrored when off. The toggle stays
+enabled during playback. The badge reads "mirrored" or "as others see
+it".</li>
+<li><strong>AC-PB-4:</strong> Both scrubbers end in a trash button
+(<code>trashRecordingButton</code>). It stops playback, asks for
+confirmation, moves the file to the Trash, then shows the next older
+recording (or the newer one if none is older).</li>
+<li><strong>AC-PB-5:</strong> The timer box's context menu offers Play
+Last Recording, Previous Recording, Next Recording and Move to Trash….
+All are disabled while playing; Previous and Next are disabled at the
+oldest and newest recording.</li>
+<li><strong>AC-PB-6:</strong> Previous/Next order is creation date
+across Photo Booth <code>.mov</code> and Voice Memos <code>.m4a</code>
+files.</li>
+<li><strong>AC-PB-7:</strong> On panel open and after a failed play, a
+deleted shown recording is replaced by the newest remaining one, or the
+box disables if none remain. An audio recording not yet matched to its
+file is not treated as deleted within its first minute.</li>
+</ul>
+<h3 data-number="1.12.19" id="accessibility"><span
+class="header-section-number">1.12.19</span> Accessibility</h3>
 <ul>
 <li><strong>AC-AX-1:</strong> Pin, mic, timer, video, mirror, camera
 menu, and Quit carry an <code>accessibilityLabel</code> and a stable
@@ -1427,28 +1503,30 @@ closed.</li>
 <li><strong>AC-AX-9:</strong> All motion (ember, both amber dots) stops
 under Reduce Motion.</li>
 </ul>
-<h3 data-number="1.11.19" id="persistence"><span
-class="header-section-number">1.11.19</span> Persistence</h3>
+<h3 data-number="1.12.20" id="persistence"><span
+class="header-section-number">1.12.20</span> Persistence</h3>
 <ul>
-<li><strong>AC-PS-1:</strong> Exactly <strong>four</strong> values
+<li><strong>AC-PS-1:</strong> Exactly <strong>five</strong> values
 persist: <code>preview.cameraDeviceID</code>,
 <code>preview.mirrored</code>, <code>panelPinned</code>,
-<code>panelScale</code>.</li>
+<code>panelScale</code>, and <code>lastRecording</code> (medium, file
+URL, duration, as JSON).</li>
 <li><strong>AC-PS-2:</strong> Persistence uses
 <code>UserDefaults</code>. No SwiftData model container (a recorded
 deviation from <code>tech-config.md</code>).</li>
 <li><strong>AC-PS-3:</strong> A first launch with no stored camera uses
 a connected default camera.</li>
 <li><strong>AC-PS-4:</strong> No other state persists. Recording state
-and the timer reset on each launch.</li>
+resets on each launch; the idle timer shows the persisted last
+recording's length.</li>
 <li><strong>AC-PS-5:</strong> The panel scale is stored as the enum's
 raw string.</li>
 <li><strong>AC-PS-6:</strong> A missing mirror value reads as on (the
 default), not as off.</li>
 </ul>
 <hr />
-<h2 data-number="1.12" id="superseded-acceptance-criteria"><span
-class="header-section-number">1.12</span> Superseded acceptance
+<h2 data-number="1.13" id="superseded-acceptance-criteria"><span
+class="header-section-number">1.13</span> Superseded acceptance
 criteria</h2>
 <p>Kept for the decision trail. <strong>Do not test against any
 criterion below.</strong> Each was correct when approved and was
@@ -2034,8 +2112,8 @@ contrast failure</td>
 </tbody>
 </table>
 <hr />
-<h2 data-number="1.13" id="risks-and-mitigations"><span
-class="header-section-number">1.13</span> Risks and mitigations</h2>
+<h2 data-number="1.14" id="risks-and-mitigations"><span
+class="header-section-number">1.14</span> Risks and mitigations</h2>
 <table>
 <thead>
 <tr>
@@ -2163,8 +2241,8 @@ fix</td>
 </tbody>
 </table>
 <hr />
-<h2 data-number="1.14" id="known-limitations"><span
-class="header-section-number">1.14</span> Known limitations</h2>
+<h2 data-number="1.15" id="known-limitations"><span
+class="header-section-number">1.15</span> Known limitations</h2>
 <ul>
 <li><strong>Known defect: the mic lights up during a video
 recording.</strong> The mic toggle reads <code>isRecording</code>, which
@@ -2187,8 +2265,8 @@ fill, dot, timer, tooltip, and menu bar icon carry the state.</li>
 row.</li>
 </ul>
 <hr />
-<h2 data-number="1.15" id="assumptions-resolved"><span
-class="header-section-number">1.15</span> Assumptions: resolved</h2>
+<h2 data-number="1.16" id="assumptions-resolved"><span
+class="header-section-number">1.16</span> Assumptions: resolved</h2>
 <p>Every assumption recorded as open before implementation is now
 settled.</p>
 <table>
@@ -2239,8 +2317,8 @@ scale). Fixed by driving the window frame explicitly in
 explicit annotations are required (AC-SW-8).</li>
 </ul>
 <hr />
-<h2 data-number="1.16" id="platform-notes"><span
-class="header-section-number">1.16</span> Platform notes</h2>
+<h2 data-number="1.17" id="platform-notes"><span
+class="header-section-number">1.17</span> Platform notes</h2>
 <p><strong>Framework note:</strong> <code>AVFoundation</code>
 (<code>AVCaptureSession</code>, <code>AVCaptureVideoPreviewLayer</code>,
 <code>AVCaptureMovieFileOutput</code>,
