@@ -66,7 +66,7 @@ struct CameraPreviewPanel: View {
             if playback.phase == .playing(.audio) {
                 VStack {
                     Spacer(minLength: 0)
-                    PlaybackTransport(playback: playback, showsPause: false)
+                    PlaybackTransport(playback: playback)
                 }
                 .padding(10)
                 .foregroundStyle(Color.white)
@@ -235,7 +235,7 @@ struct VideoPlaybackSurface: View {
                             .accessibilityIdentifier("liveCameraButton")
                     }
                     Spacer(minLength: 0)
-                    PlaybackTransport(playback: playback, showsPause: true)
+                    PlaybackTransport(playback: playback)
                 }
                 .padding(10)
                 .foregroundStyle(Color.white)
@@ -295,12 +295,10 @@ struct VideoPlaybackSurface: View {
 }
 
 /// Play/pause, elapsed, scrubber, duration. Click-only: the app defines no
-/// keyboard shortcuts. Shared by both mediums; audio drops the pause button
-/// because audio is play/stop only (pause is an open design question).
+/// keyboard shortcuts. Shared by both mediums.
 @MainActor
 struct PlaybackTransport: View {
     let playback: PlaybackManager
-    let showsPause: Bool
 
     /// Held while the user drags, so the periodic refresh does not yank the
     /// knob back to the player's position mid-drag.
@@ -311,18 +309,16 @@ struct PlaybackTransport: View {
             let total = max(playback.duration, 0.1)
             let position = min(scrubbing ?? playback.currentTime(), total)
             HStack(spacing: 9) {
-                if showsPause {
-                    Button { playback.togglePause() } label: {
-                        // Swaps glyph, unlike the row: QuickTime's convention
-                        // applies inside the video.
-                        Image(systemName: playback.isPaused ? "play.fill" : "pause.fill")
-                            .frame(width: 14)
-                    }
-                    .buttonStyle(.plain)
-                    .help(playback.isPaused ? "Play" : "Pause")
-                    .accessibilityLabel(playback.isPaused ? "Play" : "Pause")
-                    .accessibilityIdentifier("playPauseButton")
+                Button { playback.togglePause() } label: {
+                    // Swaps glyph, unlike the row: QuickTime's convention
+                    // applies inside the player.
+                    Image(systemName: playback.isPaused ? "play.fill" : "pause.fill")
+                        .frame(width: 14)
                 }
+                .buttonStyle(.plain)
+                .help(playback.isPaused ? "Play" : "Pause")
+                .accessibilityLabel(playback.isPaused ? "Play" : "Pause")
+                .accessibilityIdentifier("playPauseButton")
                 Text(RecordingManager.formatElapsed(position))
                     .monospacedDigit()
                 Slider(

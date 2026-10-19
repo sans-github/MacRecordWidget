@@ -183,7 +183,7 @@ final class PlaybackManager {
     }
 
     func togglePause() {
-        guard phase == .playing(.video) else { return }
+        guard isPlaying else { return }
         if isPaused { player.play() } else { player.pause() }
         isPaused.toggle()
     }
