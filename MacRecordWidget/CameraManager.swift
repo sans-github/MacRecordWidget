@@ -144,6 +144,7 @@ final class CameraManager {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        PhotoBoothLibrary.startSyncing()
         // `object(forKey:)` rather than `bool(forKey:)`: the latter cannot
         // tell "never set" from "set to false", and the default here is true.
         self.isMirrored = defaults.object(forKey: Keys.mirrored) as? Bool ?? true

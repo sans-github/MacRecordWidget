@@ -41,7 +41,7 @@ Added 2026-10-15. Design: `projects/20261015-last-recording-playback/generated-d
 - **Audio gets the same transport as video.** While it plays, `PlaybackTransport` (pause, scrubber, trash; added pause for audio 2026-10-18) sits along the bottom of the live camera preview. The camera stays visible behind it.
 - **Finding the audio file.** `RecordingManager.onFinished` hands over the Start-shortcut fire time; `PlaybackManager` takes the newest `.m4a` in `~/Library/Group Containers/group.com.apple.VoiceMemos.shared/Recordings/` *created* after it. The file appears only after Stop, so the lookup polls: 15s in the background right after Stop, 5s on a press (the "opening" state). A read error is not retried. Failure shows the "Can't Play the Last Recording" alert, never a crash. A stop during arming does not replace the last recording.
 - **A deleted last recording falls back to the newest one left.** `refreshIfMissing()` runs on panel open and after a failed open: one `fileExists` while the file is there, and only once it is gone a read of Photo Booth's `Pictures/` (`.mov`) and the Voice Memos folder (`.m4a`), adopting the newer of the two, or clearing `lastRecording` (control disabled) if neither has anything. Deliberately not a file watcher. An audio recording not yet matched to a file is not treated as deleted for its first minute, since Voice Memos may still be saving it. Unverified: whether Voice Memos removes a deleted memo's `.m4a` from that folder straight away or keeps it there during its "Recently Deleted" period; if it keeps it, the fallback could pick a memo the user has deleted.
-- **Browse and delete** (added 2026-10-18). Right-clicking the timer box gives Play Last Recording, Previous / Next Recording and Move to Trash…; the scrubber (`PlaybackTransport`) ends in a trash button. Previous/Next walk `allRecordings()`: every `.mov` in Photo Booth's `Pictures/` and every `.m4a` in Voice Memos, by creation date, so recordings made outside this app are included. The cached `library` only drives menu enablement; each step rescans. Delete is `FileManager.trashItem` after a confirmation drawn *inside* the panel (`TrashConfirmation`, over the preview), not an `NSAlert`: an alert window takes key and the MenuBarExtra panel then closes even when pinned (observed 2026-10-18; the in-panel card avoids the key change entirely). Afterwards the older neighbour is shown. **Unverified and possibly risky:** only the file is trashed. Photo Booth's `Recents.plist` and Voice Memos' own library (iCloud-synced) are not touched, and how either app reacts to a file vanishing under its index has not been tested (see the Photo Booth warning below about its reaction to outside edits). The file is recoverable from the Trash.
+- **Browse and delete** (added 2026-10-18). Right-clicking the timer box gives Play Last Recording, Previous / Next Recording and Move to Trash…; the scrubber (`PlaybackTransport`) ends in a trash button. Previous/Next walk `allRecordings()`: every `.mov` in Photo Booth's `Pictures/` and every `.m4a` in Voice Memos, by creation date, so recordings made outside this app are included. The cached `library` only drives menu enablement; each step rescans. Delete is `FileManager.trashItem` after a confirmation drawn *inside* the panel (`TrashConfirmation`, over the preview), not an `NSAlert`: an alert window takes key and the MenuBarExtra panel then closes even when pinned (observed 2026-10-18; the in-panel card avoids the key change entirely). Afterwards the older neighbour is shown. Trashing a `.mov` also drops it from Photo Booth's `Recents.plist` (queued like an add). **Voice Memos' own library (iCloud-synced) is not touched**, so a trashed `.m4a` is left as an unplayable entry in Voice Memos (observed 2026-10-20). How Photo Booth reacts to the removal edit is untested (see the warning below about outside edits). The file is recoverable from the Trash.
 - **Unverified: whether the app may read that folder at all.** The app is not sandboxed and has no hardened runtime, so no entitlement applies, but recent macOS versions gate other apps' containers behind a TCC "access data from other apps" prompt, and there is no verified source on whether Voice Memos' group container is covered. If playback always fails for audio, the `playback` log category will say "cannot read Voice Memos recordings" with the underlying error. Do not add an entitlement for it without that evidence.
 
 ## Gotchas
@@ -217,11 +217,19 @@ owns it.
   listed in the array** to the Trash and empty the array. Four files went to the
   Trash, three of them real user recordings. Do not experiment against a library
   that has anything in it worth keeping.
-- **The app never writes the plist while Photo Booth is running.**
-  `addToFilmstrip` returns `false` in that case and the movie is simply left on
-  disk unindexed. Photo Booth holds its own copy of the array in memory and
-  rewrites the file on quit, so writing underneath it either gets clobbered or
-  clobbers its entries.
+- **The app never writes the plist while Photo Booth is running.** Photo
+  Booth holds its own copy of the array in memory and rewrites the file on
+  quit, so writing underneath it either gets clobbered or clobbers its entries.
+  Changes are **queued instead** (`photoBooth.pendingAdds` /
+  `photoBooth.pendingRemovals` in `UserDefaults`) and flushed on Photo Booth's
+  `didTerminate` and at launch.
+- **An unindexed movie is not ignored, it is "recovered".** Read from Photo
+  Booth's disassembly 2026-10-20 (not yet confirmed by a live test): at launch
+  it treats every `.mov` in `Pictures/` missing from `Recents.plist` (and not
+  carrying a `com.apple.photobooth.recovery-failed` xattr) as an orphan, indexes
+  it itself and shows "A movie was recovered". The old behaviour of leaving a
+  movie unindexed while Photo Booth was running produced exactly that alert.
+  This contradicts the 2026-09-09 note that unlisted files are ignored.
 - **The filename separator before AM/PM is U+202F NARROW NO-BREAK SPACE,** not a
   plain space. Verified by hex dump of every movie Photo Booth has written. A
   name built with an ASCII space is a *different filename*; a `cp` using one

@@ -308,6 +308,7 @@ final class PlaybackManager {
             do {
                 try FileManager.default.trashItem(at: url, resultingItemURL: nil)
                 playbackLog.notice("moved \(url.lastPathComponent, privacy: .public) to the Trash")
+                PhotoBoothLibrary.removeFromFilmstrip(url)
             } catch {
                 playbackLog.error("cannot trash \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 return
