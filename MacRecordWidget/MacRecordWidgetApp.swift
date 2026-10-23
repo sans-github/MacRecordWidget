@@ -242,8 +242,8 @@ struct MacRecordWidgetApp: App {
                 // This sizes the *preview* only. It has never had any bearing
                 // on the recorded video, which uses the camera's own format.
                 HStack(spacing: 2) {
-                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out")
-                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In")
+                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out", shortcut: "⌘−")
+                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In", shortcut: "⌘+")
                 }
                 .accessibilityIdentifier("panelZoom")
 
@@ -451,7 +451,7 @@ struct MacRecordWidgetApp: App {
 
     /// One zoom step. `target` is nil at the end of the range, which disables
     /// the button rather than hiding it, so the row does not shift.
-    private func zoomButton(to target: PanelScale?, symbol: String, title: String) -> some View {
+    private func zoomButton(to target: PanelScale?, symbol: String, title: String, shortcut: String) -> some View {
         Button {
             if let target { scaleRaw = target.rawValue }
         } label: {
@@ -468,7 +468,7 @@ struct MacRecordWidgetApp: App {
             )
         )
         .disabled(target == nil)
-        .help(target.map { "\(title) (\($0.helpLabel))" } ?? title)
+        .help(target.map { "\(title) to \($0.helpLabel) (\(shortcut))" } ?? title)
         .accessibilityLabel(title)
         .accessibilityValue("\(scale.helpLabel) preview")
     }
@@ -486,8 +486,8 @@ struct MacRecordWidgetApp: App {
     private var armingAwareHelp: String {
         if isArmingAudio { return "Starting… wait to speak" }
         return recordingManager.isRecordingAudio
-            ? "Stop and save to Voice Memos"
-            : "Record audio to Voice Memos"
+            ? "Stop and save to Voice Memos (⌘.)"
+            : "Record audio to Voice Memos (⌘R)"
     }
 
     /// Drives the single audio control: on starts, off stops.
@@ -546,10 +546,10 @@ struct MacRecordWidgetApp: App {
     /// area cannot disagree about what is wrong.
     private var videoHelp: String {
         if isArmingVideo { return "Starting… wait to perform" }
-        if recordingManager.isRecordingVideo { return "Stop and save to Photo Booth" }
+        if recordingManager.isRecordingVideo { return "Stop and save to Photo Booth (⌘.)" }
         if recordingManager.medium == .audio { return "Stop the audio recording first" }
         if let reason = camera.videoUnavailableReason { return reason }
-        return "Record video to Photo Booth"
+        return "Record video to Photo Booth (⇧⌘R)"
     }
 
     /// Names the result rather than the state: the button's fill already says
