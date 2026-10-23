@@ -7,11 +7,8 @@ import AppKit
 @main
 @MainActor
 struct MacRecordWidgetApp: App {
-    /// `--open-panel` (passed by MacAppLauncher) opens the panel after launch,
-    /// as if the menu bar icon were clicked. Without it nothing changes.
-    init() {
-        PanelLaunchOpener.openIfRequested()
-    }
+    /// Opens the panel on launch and reopen. See `PanelLaunchOpener`.
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     @State private var recordingManager = RecordingManager()
     @State private var camera = CameraManager()

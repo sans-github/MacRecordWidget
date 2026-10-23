@@ -331,14 +331,20 @@ preview").
 
 ### Panel sizing gotchas
 
-- **`--open-panel` opens the panel at launch.** MacAppLauncher passes it via
-  `NSWorkspace.OpenConfiguration.arguments`. `PanelLaunchOpener` (end of
-  `PanelSizer.swift`, started from `App.init`) finds the status item's button
-  in the `NSStatusBarWindow`, activates the app and calls `performClick`,
-  retrying every 0.1s for up to 3s because the status item does not exist when
-  `init` runs. It is the same path as a user click, so `PanelSizer`'s pinning
-  and resign-key handling apply unchanged. Without the flag nothing runs. A
-  running app never receives launch arguments; that case is out of scope.
+- **The panel opens itself on launch and on reopen** (changed 2026-10-23;
+  it used to need `--open-panel`). `AppDelegate` (via
+  `@NSApplicationDelegateAdaptor`, end of `PanelSizer.swift`) calls
+  `PanelLaunchOpener`, which finds the status item's button in the
+  `NSStatusBarWindow`, activates the app and calls `performClick`, retrying
+  every 0.1s for up to 3s because the status item does not exist yet, then
+  makes the panel key once more 0.3s later so a Spotlight launch does not leave
+  Spotlight's caller frontmost. Same path as a user click, so `PanelSizer`'s
+  pinning and resign-key handling apply unchanged. **A login-item launch is
+  the exception** (detected by `keyAELaunchedAsLogInItem` on the open Apple
+  event; unverified for `SMAppService` login items) and stays closed unless
+  `--open-panel` is passed. Reopen (Spotlight/Finder/Dock on a running app)
+  opens a closed panel or gives an open one key; it never clicks an open one,
+  because the click toggles.
 
 - **`MenuBarExtraWindow` reverts origin changes made inside `setFrame`.** The size
   is honoured and the move is silently discarded, so reading the frame back

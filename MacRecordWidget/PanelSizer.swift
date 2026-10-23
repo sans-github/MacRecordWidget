@@ -468,36 +468,64 @@ enum PanelScale: String, CaseIterable, Identifiable {
 
 // MARK: - Open on launch
 
-/// Opens the panel at launch when the app was started with `--open-panel`.
+/// Opens the panel at launch and on reopen, as if the menu bar icon were clicked.
+///
+/// Every launch opens it (Spotlight, Finder, Dock, MacAppLauncher's
+/// `--open-panel`) except a login-item launch: popping the panel, and with it
+/// the camera, at every login is not wanted. Unverified: whether an
+/// `SMAppService` login item carries `keyAELaunchedAsLogInItem` the way a
+/// classic login item does. If the panel opens at login, that is why.
 ///
 /// SwiftUI has no public API to open a `MenuBarExtra`, so this clicks the
 /// status item's own button. That is the same path a user's click takes, so
-/// the panel opens, becomes key and is pinned to the right edge by
-/// `PanelSizer` exactly as usual; nothing downstream knows the difference.
-///
-/// The status item does not exist yet when `App.init` runs, so the click is
-/// retried every 0.1s for up to 3s. Arguments only reach a fresh launch; an
-/// already-running app never sees them, which is out of scope here.
+/// `PanelSizer` pins and sizes it exactly as usual. The status item does not
+/// exist yet at launch, so the click is retried every 0.1s for up to 3s. Key
+/// is then asserted once more, because a launch from Spotlight or another app
+/// can leave that app frontmost and the panel would not take keystrokes.
 @MainActor
 enum PanelLaunchOpener {
     static let argument = "--open-panel"
     private static let log = Logger(subsystem: "com.macrecordwidget", category: "panel")
 
-    static func openIfRequested() {
-        guard CommandLine.arguments.contains(argument) else { return }
+    /// Call from `applicationDidFinishLaunching`, while the launch Apple event
+    /// is still current.
+    static func openAfterLaunch() {
+        if launchedAsLoginItem && !CommandLine.arguments.contains(argument) {
+            log.notice("login item launch; panel left closed")
+            return
+        }
         attempt(remaining: 30)
+    }
+
+    /// Spotlight, Finder or the Dock on an app that is already running.
+    /// Clicking toggles, so an open panel is only given key.
+    static func openOnReopen() {
+        if let window = PanelSizer.panelWindow, window.isVisible {
+            makePanelKey()
+        } else {
+            attempt(remaining: 30)
+        }
+    }
+
+    private static var launchedAsLoginItem: Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent,
+              event.eventID == AEEventID(kAEOpenApplication) else { return false }
+        // Explicit conversions: these constants import as different integer
+        // types across SDKs, and these inits are no-ops where they already match.
+        return event.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue
+            == OSType(keyAELaunchedAsLogInItem)
     }
 
     private static func attempt(remaining: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             MainActor.assumeIsolated {
                 if let button = statusItemButton() {
-                    // Launched by another app, which may still be frontmost.
-                    // Activating first means the panel takes key when it opens,
-                    // so the resign-key close does not fire straight away.
                     NSApp.activate()
                     button.performClick(nil)
-                    log.notice("opened panel for \(argument, privacy: .public)")
+                    log.notice("opened panel at launch")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        MainActor.assumeIsolated { makePanelKey() }
+                    }
                 } else if remaining > 0 {
                     attempt(remaining: remaining - 1)
                 } else {
@@ -505,6 +533,12 @@ enum PanelLaunchOpener {
                 }
             }
         }
+    }
+
+    private static func makePanelKey() {
+        guard let window = PanelSizer.panelWindow, window.isVisible, !window.isKeyWindow else { return }
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
     }
 
     private static func statusItemButton() -> NSButton? {
@@ -522,5 +556,18 @@ enum PanelLaunchOpener {
             if let button = firstButton(in: subview) { return button }
         }
         return nil
+    }
+}
+
+/// Launch and reopen hooks, which SwiftUI's `App` does not expose.
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        PanelLaunchOpener.openAfterLaunch()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        PanelLaunchOpener.openOnReopen()
+        return false
     }
 }
