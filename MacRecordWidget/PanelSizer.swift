@@ -62,6 +62,10 @@ struct PanelSizer: NSViewRepresentable {
     /// Zero: the panel sits flush against the edge.
     fileprivate static let screenMargin: CGFloat = 0
 
+    /// The panel's window once it has opened, for code outside the view tree
+    /// that needs to hand key status back to it. Weak: AppKit owns it.
+    static weak var panelWindow: NSWindow?
+
     final class Coordinator {
         var size: CGSize = .zero
         var isPinned = false
@@ -77,6 +81,7 @@ struct PanelSizer: NSViewRepresentable {
             tokens.forEach(NotificationCenter.default.removeObserver)
             tokens.removeAll()
             self.window = window
+            PanelSizer.panelWindow = window
 
             let center = NotificationCenter.default
             for name in [NSWindow.didMoveNotification, NSWindow.didResizeNotification] {

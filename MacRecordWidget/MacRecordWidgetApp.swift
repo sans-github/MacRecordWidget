@@ -1,3 +1,4 @@
+import os
 import SwiftUI
 import AppKit
 
@@ -312,6 +313,11 @@ struct MacRecordWidgetApp: App {
             )
             .background(PanelSizer(size: measuredSize, isPinned: isPinned))
             .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
+            // Starting or stopping audio runs a Shortcut, which brings
+            // Shortcuts or Voice Memos forward and takes key from the panel,
+            // so ⌘. would go nowhere. Take it back, but only from them.
+            .onChange(of: recordingManager.isArming) { Self.reclaimFocusFromRecorder() }
+            .onChange(of: recordingManager.isRecording) { Self.reclaimFocusFromRecorder() }
             .task {
                 recordingManager.onError = { error in presentAlert(for: error) }
                 let playback = self.playback
@@ -408,6 +414,29 @@ struct MacRecordWidgetApp: App {
                 return event
             }
             return nil
+        }
+    }
+
+    /// Hands key back to the panel if Shortcuts or Voice Memos took it.
+    ///
+    /// Checked twice, because the Shortcut's apps come forward on their own
+    /// schedule after the URL opens. Only those two are ever displaced: if the
+    /// user has moved to any other app in the meantime, focus stays there, and
+    /// a closed panel is never reopened.
+    private static func reclaimFocusFromRecorder() {
+        for delay in [0.3, 1.5] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                MainActor.assumeIsolated {
+                    guard let window = PanelSizer.panelWindow, window.isVisible, !window.isKeyWindow else { return }
+                    let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "none"
+                    // Logged so a miss can be traced to the app that took key.
+                    Logger(subsystem: "com.macrecordwidget", category: "panel")
+                        .notice("panel not key after \(delay, privacy: .public)s; frontmost \(front, privacy: .public)")
+                    guard ["com.apple.shortcuts", "com.apple.VoiceMemos"].contains(front) else { return }
+                    NSApp.activate()
+                    window.makeKeyAndOrderFront(nil)
+                }
+            }
         }
     }
 
