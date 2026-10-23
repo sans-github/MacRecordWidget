@@ -238,13 +238,10 @@ struct MacRecordWidgetApp: App {
                 // This sizes the *preview* only. It has never had any bearing
                 // on the recorded video, which uses the camera's own format.
                 HStack(spacing: 2) {
-                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out", key: "-")
-                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In", key: "=")
+                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out")
+                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In")
                 }
                 .accessibilityIdentifier("panelZoom")
-                // Keyboard shortcuts with no button of their own. Mounted here
-                // because the row is always mounted; they do not belong to zoom.
-                .background { hiddenShortcuts }
 
                 Button {
                     Task {
@@ -316,6 +313,7 @@ struct MacRecordWidgetApp: App {
                 playback.onAudioUnavailable = { presentPlaybackAlert() }
                 playback.refreshIfMissing()
                 playback.reloadLibrary()
+                installKeyMonitor()
                 await camera.start()
             }
             // `pause()`, not a teardown: the session stays configured so the
@@ -339,51 +337,85 @@ struct MacRecordWidgetApp: App {
     /// row and the preview grow together rather than drifting apart.
     private var scale: PanelScale { PanelScale(rawValue: scaleRaw) ?? .medium }
 
-    /// Shortcuts that are not a single visible button's own.
+    // MARK: - Keyboard shortcuts
+
+    /// Installed once for the app's lifetime.
+    private static var keyMonitor: Any?
+
+    /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘R starts audio, ⇧⌘R starts video,
+    /// ⌘. stops whichever is recording.
     ///
-    /// ⌘+ is typed as ⌘⇧= on most layouts, so it needs its own key beside the
-    /// ⌘= on the zoom-in button, as Safari accepts both. ⌘R / ⇧⌘R only *start*
-    /// and ⌘. only *stops*, either medium: a mistimed press can never start a
-    /// second recording or stop one the user meant to start. Each guard is the
-    /// matching button's own disabled rule, so a key can do nothing the button
-    /// could not. Invisible rather than `.hidden()`, which is not guaranteed to
-    /// keep a shortcut live. All of them fire only while the panel is key.
-    private var hiddenShortcuts: some View {
-        ZStack {
-            shortcut("+", .command) {
-                if let larger = scale.larger { scaleRaw = larger.rawValue }
-            }
-            shortcut("r", .command) {
-                guard recordingManager.medium == nil, !recordingManager.isInFlight else { return }
-                recordingBinding.wrappedValue = true
-            }
-            shortcut("r", [.command, .shift]) {
-                guard recordingManager.medium == nil, !isVideoButtonDisabled else { return }
-                videoRecordingBinding.wrappedValue = true
-            }
-            shortcut(".", .command) {
-                guard !recordingManager.isInFlight, !recordingManager.isArming else { return }
-                if recordingManager.isRecordingAudio {
-                    recordingBinding.wrappedValue = false
-                } else if recordingManager.isRecordingVideo {
-                    videoRecordingBinding.wrappedValue = false
+    /// A local key monitor, not `.keyboardShortcut`. The SwiftUI shortcuts on
+    /// the zoom buttons stuck between two sizes on hardware (2026-10-23): the
+    /// registered action evidently kept a target computed at an older render.
+    /// Here everything is read when the key is pressed: the scale from
+    /// `UserDefaults` (which `@AppStorage` observes), recording state from the
+    /// managers themselves. The app is `LSUIElement`, so keys reach it only
+    /// while the panel is key; nothing here is a global hotkey.
+    ///
+    /// Start keys never stop and the stop key never starts, so a mistimed
+    /// press cannot start a second recording or end one meant to begin. Each
+    /// guard repeats the matching button's disabled rule.
+    private func installKeyMonitor() {
+        guard Self.keyMonitor == nil else { return }
+        let manager = recordingManager, camera = camera, playback = playback
+        let app = self
+        Self.keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Leave alerts alone: ⌘. is Cancel there.
+            guard NSApp.modalWindow == nil else { return event }
+            let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
+            guard flags.contains(.command), !flags.contains(.option), !flags.contains(.control),
+                  let key = event.charactersIgnoringModifiers?.lowercased() else { return event }
+            let shift = flags.contains(.shift)
+            switch key {
+            case "=", "+":
+                Self.zoom(larger: true)
+            case "-" where !shift:
+                Self.zoom(larger: false)
+            case "r":
+                guard manager.medium == nil, !manager.isInFlight else { return nil }
+                if shift {
+                    guard camera.canRecordVideo else { return nil }
+                    Task {
+                        playback.stop()
+                        do { try await manager.startVideoRecording(camera: camera) }
+                        catch { app.presentAlert(for: error) }
+                    }
+                } else {
+                    Task {
+                        playback.stop()
+                        do { try await manager.startRecording() }
+                        catch { app.presentAlert(for: error) }
+                    }
                 }
+            case "." where !shift:
+                guard !manager.isInFlight, !manager.isArming else { return nil }
+                if manager.isRecordingAudio {
+                    Task {
+                        do { try await manager.stopRecording() }
+                        catch { app.presentAlert(for: error) }
+                    }
+                } else if manager.isRecordingVideo {
+                    Task { await manager.stopVideoRecording(camera: camera) }
+                }
+            default:
+                return event
             }
+            return nil
         }
-        .opacity(0)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
-    private func shortcut(_ key: KeyEquivalent, _ modifiers: EventModifiers, action: @escaping () -> Void) -> some View {
-        Button("", action: action).keyboardShortcut(key, modifiers: modifiers)
+    private static func zoom(larger: Bool) {
+        let defaults = UserDefaults.standard
+        let current = PanelScale(rawValue: defaults.string(forKey: "panelScale") ?? "") ?? .medium
+        if let next = larger ? current.larger : current.smaller {
+            defaults.set(next.rawValue, forKey: "panelScale")
+        }
     }
 
     /// One zoom step. `target` is nil at the end of the range, which disables
-    /// the button rather than hiding it, so the row does not shift. `key` with
-    /// Command is the shortcut, the same ⌘= / ⌘− pair Safari and Preview use;
-    /// like every shortcut here it works only while the panel is key.
-    private func zoomButton(to target: PanelScale?, symbol: String, title: String, key: KeyEquivalent) -> some View {
+    /// the button rather than hiding it, so the row does not shift.
+    private func zoomButton(to target: PanelScale?, symbol: String, title: String) -> some View {
         Button {
             if let target { scaleRaw = target.rawValue }
         } label: {
@@ -399,7 +431,6 @@ struct MacRecordWidgetApp: App {
                 isOn: false
             )
         )
-        .keyboardShortcut(key, modifiers: .command)
         .disabled(target == nil)
         .help(target.map { "\(title) (\($0.helpLabel))" } ?? title)
         .accessibilityLabel(title)
