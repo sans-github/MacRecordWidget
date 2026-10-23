@@ -1,5 +1,6 @@
 // MacRecordWidget mock kit: the current panel, drawn from the app's own numbers.
 // Every mock loads this and builds only the part under review on top of it.
+// Slots: afterCamera (html), beforeQuit (fn receiving this scale's control()).
 // Numbers mirror PanelScale (MacRecordWidget/PanelSizer.swift); glyphs are real
 // SF Symbols exported by export-symbols.swift. Update both in the same commit
 // as any change to the row. Ground truth: reference/*.png (2026-10-23).
@@ -61,7 +62,9 @@
       `<span class="mrw-grp" style="gap:2px">` +
         c({ icon: 'minus.magnifyingglass', disabled: i <= 0, title: 'Zoom Out' }) +
         c({ icon: 'plus.magnifyingglass', disabled: i >= order.length - 1, title: 'Zoom In' }) +
-      `</span>` + c({ icon: 'power', on: true, title: 'Quit' }) + `</div>`;
+      `</span>` + (opts.beforeQuit ? opts.beforeQuit(c) : '') +
+      `<span class="mrw-grp" style="gap:2px">` + c({ icon: 'xmark', title: 'Close panel (⌘W)' }) +
+      c({ icon: 'power', on: true, title: 'Quit (⌘Q)' }) + `</span></div>`;
   }
 
   // The whole panel: row over a 16:9 preview running flush to the panel edges.

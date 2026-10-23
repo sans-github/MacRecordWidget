@@ -247,41 +247,51 @@ struct MacRecordWidgetApp: App {
                 }
                 .accessibilityIdentifier("panelZoom")
 
-                Button {
-                    Task {
-                        // Await finalisation rather than terminating straight
-                        // away: AVCaptureMovieFileOutput closes its file
-                        // asynchronously, and a process that dies first leaves
-                        // an unplayable .mov behind.
-                        switch recordingManager.medium {
-                        case .video:
-                            await recordingManager.stopVideoRecording(camera: camera)
-                        case .audio:
-                            try? await recordingManager.stopRecording()
-                        case nil:
-                            break
-                        }
-                        NSApplication.shared.terminate(nil)
+                // Close and Quit as one pair, 2pt apart like the zoom pair:
+                // the two ways of leaving. Close is a plain off capsule, since
+                // it has no on state; Quit stays the permanent blue capsule.
+                HStack(spacing: 2) {
+                    Button {
+                        PanelSizer.closePanel()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(scale.glyphFont)
+                            .frame(width: scale.glyphSize, height: scale.glyphSize)
                     }
-                } label: {
-                    Image(systemName: "power")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                }
-                // A permanent blue capsule: quit acts on the window, and
-                // unlike every other control here it has no off state, so it is
-                // always drawn lit.
-                .buttonStyle(
-                    CapsuleControlButtonStyle(
-                        scale: scale,
-                        tint: RowPalette.control,
-                        ember: nil,
-                        isOn: true
+                    .buttonStyle(
+                        CapsuleControlButtonStyle(
+                            scale: scale,
+                            tint: RowPalette.control,
+                            ember: nil,
+                            isOn: false
+                        )
                     )
-                )
-                .help("Quit")
-                .accessibilityLabel("Quit MacRecordWidget")
-                .accessibilityIdentifier("quitButton")
+                    .help("Close panel (⌘W)")
+                    .accessibilityLabel("Close panel")
+                    .accessibilityIdentifier("closePanelButton")
+
+                    Button {
+                        quit()
+                    } label: {
+                        Image(systemName: "power")
+                            .font(scale.glyphFont)
+                            .frame(width: scale.glyphSize, height: scale.glyphSize)
+                    }
+                    // A permanent blue capsule: quit acts on the window, and
+                    // unlike every other control here it has no off state, so it is
+                    // always drawn lit.
+                    .buttonStyle(
+                        CapsuleControlButtonStyle(
+                            scale: scale,
+                            tint: RowPalette.control,
+                            ember: nil,
+                            isOn: true
+                        )
+                    )
+                    .help("Quit (⌘Q)")
+                    .accessibilityLabel("Quit MacRecordWidget")
+                    .accessibilityIdentifier("quitButton")
+                }
             }
             .focusEffectDisabled()
             // Leading-aligned: the panel is a fixed width, so the row fills it
@@ -352,7 +362,8 @@ struct MacRecordWidgetApp: App {
     private static var keyMonitor: Any?
 
     /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘R starts audio, ⇧⌘R starts video,
-    /// ⌘. stops whichever is recording, ⌘W closes the panel (a recording
+    /// ⌘. stops whichever is recording, Space plays or stops the last
+    /// recording as the timer box does, ⌘Q quits as the Quit button does, ⌘W closes the panel (a recording
     /// carries on: audio lives in Voice Memos, and `pause()` refuses to stop
     /// the session mid-video).
     ///
@@ -375,6 +386,13 @@ struct MacRecordWidgetApp: App {
             // Leave alerts alone: ⌘. is Cancel there.
             guard NSApp.modalWindow == nil else { return event }
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
+            // Space plays or stops the last recording, like the timer box.
+            // keyCode 49 is Space on every layout.
+            if flags.isEmpty, event.keyCode == 49 {
+                guard playback.lastRecording != nil, !manager.isBusy, !manager.isInFlight else { return nil }
+                if playback.isActive { playback.stop() } else { playback.play() }
+                return nil
+            }
             guard flags.contains(.command), !flags.contains(.option), !flags.contains(.control),
                   let key = event.charactersIgnoringModifiers?.lowercased() else { return event }
             let shift = flags.contains(.shift)
@@ -399,6 +417,8 @@ struct MacRecordWidgetApp: App {
                         catch { app.presentAlert(for: error) }
                     }
                 }
+            case "q" where !shift:
+                app.quit()
             case "w" where !shift:
                 PanelSizer.closePanel()
             case "." where !shift:
@@ -446,6 +466,25 @@ struct MacRecordWidgetApp: App {
         let current = PanelScale(rawValue: defaults.string(forKey: "panelScale") ?? "") ?? .medium
         if let next = larger ? current.larger : current.smaller {
             defaults.set(next.rawValue, forKey: "panelScale")
+        }
+    }
+
+    /// Shared by the Quit button and ⌘Q.
+    private func quit() {
+        Task {
+            // Await finalisation rather than terminating straight
+            // away: AVCaptureMovieFileOutput closes its file
+            // asynchronously, and a process that dies first leaves
+            // an unplayable .mov behind.
+            switch recordingManager.medium {
+            case .video:
+                await recordingManager.stopVideoRecording(camera: camera)
+            case .audio:
+                try? await recordingManager.stopRecording()
+            case nil:
+                break
+            }
+            NSApplication.shared.terminate(nil)
         }
     }
 
@@ -631,12 +670,12 @@ struct MacRecordWidgetApp: App {
         if recordingManager.isBusy { return "Recording time" }
         if playback.isOpening { return "Opening the last recording…" }
         if playback.isActive {
-            return last.medium == .video ? "Back to the live camera" : "Stop playing"
+            return last.medium == .video ? "Back to the live camera (Space)" : "Stop playing (Space)"
         }
         let length = RecordingManager.formatElapsed(last.duration)
         return last.medium == .audio
-            ? "Play last voice recording (\(length))"
-            : "Play last video recording (\(length))"
+            ? "Play last voice recording (\(length)) (Space)"
+            : "Play last video recording (\(length)) (Space)"
     }
 
     /// Spoken form names the medium, so VoiceOver users are not left guessing

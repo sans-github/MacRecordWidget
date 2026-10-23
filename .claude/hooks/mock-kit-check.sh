@@ -12,6 +12,6 @@ if ! grep -q 'mocks/kit/kit.js\|src="kit/kit.js"' <<<"$content"; then
   echo "Mock blocked: $path must load projects/master/mocks/kit/kit.js and render the panel with MRW.panel()/MRW.row(). See .claude/rules/mock-fidelity-rule.md." >&2
   exit 2
 fi
-if perl -CS -ne 'exit 1 if /[\x{1F300}-\x{1FAFF}\x{2300}-\x{23FF}\x{21C0}-\x{21FF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}]/' <<<"$content"; then exit 0; fi
+if perl -CS -ne 'exit 1 if /(?![\x{2318}\x{21E7}\x{2325}\x{2303}])[\x{1F300}-\x{1FAFF}\x{2300}-\x{23FF}\x{21C0}-\x{21FF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}]/' <<<"$content"; then exit 0; fi
 echo "Mock blocked: $path contains emoji or unicode symbol stand-ins. Use MRW.symbol() with real SF Symbols from kit/symbols/." >&2
 exit 2

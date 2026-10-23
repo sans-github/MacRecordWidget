@@ -879,7 +879,7 @@ toggles the panel.</td>
 <tr>
 <td>Panel, button row</td>
 <td>Pin, record group (mic, timer, video), mirror, camera menu, zoom out
-/ zoom in, Quit.</td>
+/ zoom in, close / Quit pair.</td>
 </tr>
 <tr>
 <td>Panel, preview area</td>
@@ -1054,8 +1054,8 @@ class="header-section-number">1.12.1</span> Panel layout</h3>
 with zero spacing: one <code>HStack</code> button row, with the preview
 always below it.</li>
 <li><strong>AC-L-2:</strong> The row is ordered: pin, record group (mic,
-timer, video), mirror, spacer, camera menu, zoom out, zoom in, Quit.
-Every item is always mounted.</li>
+timer, video), mirror, spacer, camera menu, zoom out, zoom in, close,
+Quit. Every item is always mounted.</li>
 <li><strong>AC-L-2b:</strong> The record group's internal spacing is
 half the row spacing. The mirror toggle sits at full row spacing,
 outside the group.</li>
@@ -1508,6 +1508,13 @@ in flight, or (video) while the camera is not delivering frames; no stop
 during arming.</li>
 <li><strong>AC-K-6:</strong> ⌘W closes the panel, pinned or not. A
 recording in progress continues.</li>
+<li><strong>AC-K-7:</strong> ⌘Q quits exactly as the Quit button does,
+finalising a video first. A close button (<code>xmark</code>) sits 2pt
+left of Quit and does what ⌘W does. Their tooltips are "Close panel
+(⌘W)" and "Quit (⌘Q)".</li>
+<li><strong>AC-K-8:</strong> Space plays the last recording, or stops it
+while playing, exactly as the timer box does, and does nothing while
+that box is disabled. Its tooltip names "(Space)".</li>
 <li><strong>AC-K-5:</strong> Shortcuts fire only while the panel is the
 key window. There are no global hotkeys.</li>
 </ul>

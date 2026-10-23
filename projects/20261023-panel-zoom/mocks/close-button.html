@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Close panel button: variations</title>
+<script src="../../master/mocks/kit/kit.js"></script>
+<style>
+body{margin:0;padding:28px;background:#f2f2f7;font:13px -apple-system,sans-serif;color:#1d1d1f}
+h1{font-size:19px;margin:0 0 4px}h2{font-size:15px;margin:0 0 4px}p{color:#555;margin:0 0 10px;max-width:900px}
+.v{background:#fff;border:1px solid #ddd;border-radius:12px;padding:18px;margin:20px 0}
+.s{margin:10px 0 4px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em}
+.bar{border-radius:10px;overflow:hidden;box-shadow:0 0 0 .5px rgba(0,0,0,.25)}
+</style></head><body>
+<h1>Close-panel button (⌘W), left of Quit</h1>
+<p>All rows are drawn by the mock kit at the real Small (400pt), Medium (480pt) and Large widths. The camera menu is the only flexible item, so the new button comes out of its width: at Small that is about 26pt (the 22pt button box plus spacing), and "Logitech BRIO" truncates further. Tooltip in every variation: "Close panel (⌘W)".</p>
+
+<div class="v" id="a"><h2>A. Close glyph, standalone</h2>
+<p><code>xmark</code> as an off-state capsule at full row spacing before Quit. Plainest reading of "close".</p></div>
+
+<div class="v" id="b"><h2>B. Close glyph paired with Quit</h2>
+<p>Same <code>xmark</code>, held 2pt from Quit like the zoom pair, so the two "leave" actions read as one group. Saves one row gap, so the camera menu loses less at Small.</p></div>
+
+<div class="v" id="c"><h2>C. Collapse glyph, paired with Quit</h2>
+<p><code>chevron.up</code>: "fold back into the menu bar". Avoids an <code>xmark</code> sitting next to <code>power</code>, which some may read as two ways to quit.</p></div>
+
+<script>
+const st = { time: '00:07', camera: 'Logitech BRIO', last: 'audio', pinned: true, mirrored: true };
+const make = (icon, paired) => (c) => {
+  const btn = c({ icon, title: 'Close panel (⌘W)' });
+  return paired ? `<span style="display:inline-flex;margin-right:calc(2px - var(--g))">${btn}</span>` : btn;
+};
+const variants = { a: make('xmark', false), b: make('xmark', true), c: make('chevron.up', true) };
+for (const [id, beforeQuit] of Object.entries(variants)) {
+  const v = document.getElementById(id);
+  for (const scale of ['small', 'medium', 'large']) {
+    const s = MRW.scales[scale];
+    v.insertAdjacentHTML('beforeend', `<div class="s">${scale} · ${s.w}pt</div>` +
+      `<div class="bar" style="width:${s.w}px;--g:${s.gap}px">` +
+      MRW.row({ scale, state: { ...st, scale }, beforeQuit }) + `</div>`);
+  }
+}
+</script></body></html>

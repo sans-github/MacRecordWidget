@@ -253,7 +253,7 @@ Mocks: [playback.html](../mocks/playback.html).
 | Surface | Purpose |
 |---------|---------|
 | Menu bar icon | Always-visible status. Green while either medium records. Click toggles the panel. |
-| Panel, button row | Pin, record group (mic, timer, video), mirror, camera menu, zoom out / zoom in, Quit. |
+| Panel, button row | Pin, record group (mic, timer, video), mirror, camera menu, zoom out / zoom in, close / Quit pair. |
 | Panel, preview area | Always present. Live image or an inline state message. Flush to the panel's left, right, and bottom edges. |
 | Photo Booth | External. Where video recordings appear. Never launched by the app. |
 | System Settings, Privacy & Security, Camera / Microphone | External. Reached from the denied-camera state or the microphone-denied alert. |
@@ -330,7 +330,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 ### Panel layout
 
 - **AC-L-1:** The panel content is a `VStack` with zero spacing: one `HStack` button row, with the preview always below it.
-- **AC-L-2:** The row is ordered: pin, record group (mic, timer, video), mirror, spacer, camera menu, zoom out, zoom in, Quit. Every item is always mounted.
+- **AC-L-2:** The row is ordered: pin, record group (mic, timer, video), mirror, spacer, camera menu, zoom out, zoom in, close, Quit. Every item is always mounted.
 - **AC-L-2b:** The record group's internal spacing is half the row spacing. The mirror toggle sits at full row spacing, outside the group.
 - **AC-L-3:** No recording-status dot appears in the panel except the amber dot on a recording button's corner.
 - **AC-L-4:** Every control is a glyph, a single letter, the timer, or the camera name, with an `accessibilityLabel`. There is no text label in the row.
@@ -532,6 +532,8 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-K-3:** ⌘. stops whichever medium is recording. It never starts one.
 - **AC-K-4:** A key acts only when the matching button would: no start while the other medium holds the clock, while a call is in flight, or (video) while the camera is not delivering frames; no stop during arming.
 - **AC-K-6:** ⌘W closes the panel, pinned or not. A recording in progress continues.
+- **AC-K-7:** ⌘Q quits exactly as the Quit button does, finalising a video first. A close button (`xmark`) sits 2pt left of Quit and does what ⌘W does. Their tooltips are "Close panel (⌘W)" and "Quit (⌘Q)".
+- **AC-K-8:** Space plays the last recording, or stops it while playing, exactly as the timer box does, and does nothing while that box is disabled. Its tooltip names "(Space)".
 - **AC-K-5:** Shortcuts fire only while the panel is the key window. There are no global hotkeys.
 
 ### Accessibility

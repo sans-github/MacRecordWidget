@@ -3,7 +3,7 @@
 import AppKit
 let names = ["pin.fill","pin.slash","mic.fill","waveform","play.rectangle.fill","play.fill","pause.fill",
   "video.fill","arrow.left.and.right.righttriangle.left.righttriangle.right","chevron.down",
-  "minus.magnifyingglass","plus.magnifyingglass","power","trash","record.circle","exclamationmark.triangle"]
+  "minus.magnifyingglass","plus.magnifyingglass","power","trash","record.circle","exclamationmark.triangle","xmark","chevron.up"]
 let out = CommandLine.arguments[1]
 for n in names {
     let cfg = NSImage.SymbolConfiguration(pointSize: 48, weight: .regular)
