@@ -386,11 +386,18 @@ struct MacRecordWidgetApp: App {
             // Leave alerts alone: ⌘. is Cancel there.
             guard NSApp.modalWindow == nil else { return event }
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-            // Space plays or stops the last recording, like the timer box.
+            // Space plays the last recording, then pauses and resumes it.
             // keyCode 49 is Space on every layout.
             if flags.isEmpty, event.keyCode == 49 {
                 guard playback.lastRecording != nil, !manager.isBusy, !manager.isInFlight else { return nil }
-                if playback.isActive { playback.stop() } else { playback.play() }
+                // An opening or missing state is dismissed rather than paused.
+                if playback.isPlaying {
+                    playback.togglePause()
+                } else if playback.isActive {
+                    playback.stop()
+                } else {
+                    playback.play()
+                }
                 return nil
             }
             // Left and right arrows (123, 124) jump 10s while a recording plays.
