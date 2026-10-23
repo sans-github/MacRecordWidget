@@ -523,8 +523,7 @@ enum PanelLaunchOpener {
                     NSApp.activate(ignoringOtherApps: true)
                     let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
                     let action = button.action.map { NSStringFromSelector($0) } ?? "nil"
-                    let mask = button.cell.map { String($0.sendAction(on: []), radix: 16) } ?? "?"
-                    log.notice("button target=\(target, privacy: .public) action=\(action, privacy: .public) sendOn=\(mask, privacy: .public)")
+                    log.notice("button target=\(target, privacy: .public) action=\(action, privacy: .public) tree=\(describeTree(button.window?.contentView), privacy: .public)")
                     if let sel = button.action {
                         NSApp.sendAction(sel, to: button.target, from: button)
                     } else {
@@ -565,6 +564,14 @@ enum PanelLaunchOpener {
         return NSApp.windows.contains {
             $0.isVisible && !String(describing: type(of: $0)).contains("StatusBar")
         }
+    }
+
+    private static func describeTree(_ view: NSView?) -> String {
+        guard let view else { return "" }
+        let gestures = view.gestureRecognizers.map { String(describing: type(of: $0)) }
+        let me = String(describing: type(of: view)) + (gestures.isEmpty ? "" : "\(gestures)")
+        let kids = view.subviews.map(describeTree).joined(separator: ",")
+        return kids.isEmpty ? me : "\(me){\(kids)}"
     }
 
     private static func logWindows(_ stage: String) {
