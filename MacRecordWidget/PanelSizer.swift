@@ -522,9 +522,25 @@ enum PanelLaunchOpener {
                 if let button = statusItemButton() {
                     NSApp.activate()
                     button.performClick(nil)
-                    log.notice("opened panel at launch")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        MainActor.assumeIsolated { makePanelKey() }
+                    log.notice("performClick on \(String(describing: type(of: button)), privacy: .public)")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        MainActor.assumeIsolated {
+                            logWindows("after performClick")
+                            if isPanelVisible {
+                                makePanelKey()
+                            } else {
+                                // performClick fires the button's action, but the
+                                // status item may open its window on mouse-down
+                                // instead. Send it a real click.
+                                syntheticClick(on: button)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                    MainActor.assumeIsolated {
+                                        logWindows("after synthetic click")
+                                        makePanelKey()
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else if remaining > 0 {
                     attempt(remaining: remaining - 1)
@@ -533,6 +549,42 @@ enum PanelLaunchOpener {
                 }
             }
         }
+    }
+
+    /// Any visible window other than the status item itself. The panel's
+    /// window is not known to `PanelSizer` until its content first appears.
+    private static var isPanelVisible: Bool {
+        if let window = PanelSizer.panelWindow { return window.isVisible }
+        return NSApp.windows.contains {
+            $0.isVisible && !String(describing: type(of: $0)).contains("StatusBar")
+        }
+    }
+
+    private static func logWindows(_ stage: String) {
+        let list = NSApp.windows
+            .map { "\(String(describing: type(of: $0)))(visible:\($0.isVisible) key:\($0.isKeyWindow))" }
+            .joined(separator: ", ")
+        log.notice("\(stage, privacy: .public): active=\(NSApp.isActive, privacy: .public) \(list, privacy: .public)")
+    }
+
+    /// Mouse down then up at the button's centre, delivered through its window.
+    /// The up is queued first because the down starts a tracking loop that
+    /// waits for it.
+    private static func syntheticClick(on button: NSButton) {
+        guard let window = button.window else { return }
+        let point = button.convert(NSPoint(x: button.bounds.midX, y: button.bounds.midY), to: nil)
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(
+                with: type, location: point, modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: window.windowNumber, context: nil,
+                eventNumber: 0, clickCount: 1, pressure: 1
+            )
+        }
+        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        log.notice("synthetic click on status item")
+        NSApp.postEvent(up, atStart: false)
+        window.sendEvent(down)
     }
 
     private static func makePanelKey() {
