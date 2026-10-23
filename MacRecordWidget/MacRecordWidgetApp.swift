@@ -393,6 +393,12 @@ struct MacRecordWidgetApp: App {
                 if playback.isActive { playback.stop() } else { playback.play() }
                 return nil
             }
+            // Left and right arrows (123, 124) jump 10s while a recording plays.
+            if flags.isEmpty, event.keyCode == 123 || event.keyCode == 124 {
+                guard playback.isPlaying else { return event }
+                playback.skip(by: event.keyCode == 123 ? -10 : 10)
+                return nil
+            }
             guard flags.contains(.command), !flags.contains(.option), !flags.contains(.control),
                   let key = event.charactersIgnoringModifiers?.lowercased() else { return event }
             let shift = flags.contains(.shift)

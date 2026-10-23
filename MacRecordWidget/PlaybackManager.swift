@@ -197,6 +197,12 @@ final class PlaybackManager {
         )
     }
 
+    /// Jumps forward or back from the current position, clamped to the file.
+    func skip(by seconds: TimeInterval) {
+        guard isPlaying else { return }
+        seek(to: min(max(0, currentTime() + seconds), duration))
+    }
+
     // MARK: - Opening
 
     private func open(_ last: LastRecording) async {
