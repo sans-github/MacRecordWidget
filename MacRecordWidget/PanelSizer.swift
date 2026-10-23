@@ -66,6 +66,26 @@ struct PanelSizer: NSViewRepresentable {
     /// that needs to hand key status back to it. Weak: AppKit owns it.
     static weak var panelWindow: NSWindow?
 
+    /// True for the moment ⌘W is closing the panel, so the pin's resign-key
+    /// handler does not put it straight back.
+    fileprivate static var isClosingOnRequest = false
+
+    /// Closes the panel as ⌘W asks, pinned or not. The camera pauses through
+    /// the content's `onDisappear`, as on any other close. Unverified on
+    /// hardware: whether `MenuBarExtra` notices a `close()` it did not start,
+    /// so that the next icon click opens rather than needing two clicks.
+    static func closePanel() {
+        guard let window = panelWindow, window.isVisible else { return }
+        isClosingOnRequest = true
+        window.close()
+        // Two passes, matching keepVisibleIfPinned's own deferred re-show.
+        DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { isClosingOnRequest = false }
+            }
+        }
+    }
+
     final class Coordinator {
         var size: CGSize = .zero
         var isPinned = false
@@ -142,7 +162,7 @@ struct PanelSizer: NSViewRepresentable {
         /// the order-out already happened) and once on the next runloop pass
         /// (in case it has not).
         func keepVisibleIfPinned() {
-            guard isPinned else { return }
+            guard isPinned, !PanelSizer.isClosingOnRequest else { return }
             orderFront()
             DispatchQueue.main.async { [weak self] in
                 MainActor.assumeIsolated { self?.orderFront() }
@@ -150,7 +170,7 @@ struct PanelSizer: NSViewRepresentable {
         }
 
         private func orderFront() {
-            guard isPinned, let window, !window.isVisible else { return }
+            guard isPinned, !PanelSizer.isClosingOnRequest, let window, !window.isVisible else { return }
             window.orderFrontRegardless()
             align()
         }

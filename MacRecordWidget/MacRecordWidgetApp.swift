@@ -352,7 +352,9 @@ struct MacRecordWidgetApp: App {
     private static var keyMonitor: Any?
 
     /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘R starts audio, ⇧⌘R starts video,
-    /// ⌘. stops whichever is recording.
+    /// ⌘. stops whichever is recording, ⌘W closes the panel (a recording
+    /// carries on: audio lives in Voice Memos, and `pause()` refuses to stop
+    /// the session mid-video).
     ///
     /// A local key monitor, not `.keyboardShortcut`. The SwiftUI shortcuts on
     /// the zoom buttons stuck between two sizes on hardware (2026-10-23): the
@@ -397,6 +399,8 @@ struct MacRecordWidgetApp: App {
                         catch { app.presentAlert(for: error) }
                     }
                 }
+            case "w" where !shift:
+                PanelSizer.closePanel()
             case "." where !shift:
                 guard !manager.isInFlight, !manager.isArming else { return nil }
                 if manager.isRecordingAudio {

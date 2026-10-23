@@ -531,6 +531,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-K-2:** ⌘R starts an audio recording and ⇧⌘R starts a video recording. Neither stops a recording.
 - **AC-K-3:** ⌘. stops whichever medium is recording. It never starts one.
 - **AC-K-4:** A key acts only when the matching button would: no start while the other medium holds the clock, while a call is in flight, or (video) while the camera is not delivering frames; no stop during arming.
+- **AC-K-6:** ⌘W closes the panel, pinned or not. A recording in progress continues.
 - **AC-K-5:** Shortcuts fire only while the panel is the key window. There are no global hotkeys.
 
 ### Accessibility
