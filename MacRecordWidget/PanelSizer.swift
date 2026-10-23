@@ -1,4 +1,5 @@
 import AppKit
+import os
 import SwiftUI
 
 
@@ -457,5 +458,64 @@ enum PanelScale: String, CaseIterable, Identifiable {
         case .medium: 200
         case .large, .extraLarge, .full: 260
         }
+    }
+}
+
+// MARK: - Open on launch
+
+/// Opens the panel at launch when the app was started with `--open-panel`.
+///
+/// SwiftUI has no public API to open a `MenuBarExtra`, so this clicks the
+/// status item's own button. That is the same path a user's click takes, so
+/// the panel opens, becomes key and is pinned to the right edge by
+/// `PanelSizer` exactly as usual; nothing downstream knows the difference.
+///
+/// The status item does not exist yet when `App.init` runs, so the click is
+/// retried every 0.1s for up to 3s. Arguments only reach a fresh launch; an
+/// already-running app never sees them, which is out of scope here.
+@MainActor
+enum PanelLaunchOpener {
+    static let argument = "--open-panel"
+    private static let log = Logger(subsystem: "com.macrecordwidget", category: "panel")
+
+    static func openIfRequested() {
+        guard CommandLine.arguments.contains(argument) else { return }
+        attempt(remaining: 30)
+    }
+
+    private static func attempt(remaining: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            MainActor.assumeIsolated {
+                if let button = statusItemButton() {
+                    // Launched by another app, which may still be frontmost.
+                    // Activating first means the panel takes key when it opens,
+                    // so the resign-key close does not fire straight away.
+                    NSApp.activate()
+                    button.performClick(nil)
+                    log.notice("opened panel for \(argument, privacy: .public)")
+                } else if remaining > 0 {
+                    attempt(remaining: remaining - 1)
+                } else {
+                    log.error("no status item button found; panel not opened")
+                }
+            }
+        }
+    }
+
+    private static func statusItemButton() -> NSButton? {
+        for window in NSApp.windows
+        where String(describing: type(of: window)).contains("NSStatusBarWindow") {
+            if let button = firstButton(in: window.contentView) { return button }
+        }
+        return nil
+    }
+
+    private static func firstButton(in view: NSView?) -> NSButton? {
+        guard let view else { return nil }
+        if let button = view as? NSButton { return button }
+        for subview in view.subviews {
+            if let button = firstButton(in: subview) { return button }
+        }
+        return nil
     }
 }

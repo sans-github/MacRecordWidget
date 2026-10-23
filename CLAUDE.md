@@ -331,6 +331,15 @@ preview").
 
 ### Panel sizing gotchas
 
+- **`--open-panel` opens the panel at launch.** MacAppLauncher passes it via
+  `NSWorkspace.OpenConfiguration.arguments`. `PanelLaunchOpener` (end of
+  `PanelSizer.swift`, started from `App.init`) finds the status item's button
+  in the `NSStatusBarWindow`, activates the app and calls `performClick`,
+  retrying every 0.1s for up to 3s because the status item does not exist when
+  `init` runs. It is the same path as a user click, so `PanelSizer`'s pinning
+  and resign-key handling apply unchanged. Without the flag nothing runs. A
+  running app never receives launch arguments; that case is out of scope.
+
 - **`MenuBarExtraWindow` reverts origin changes made inside `setFrame`.** The size
   is honoured and the move is silently discarded, so reading the frame back
   immediately shows the old x. Measured: asking for x=1072 landed at x=848,
