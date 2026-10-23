@@ -494,7 +494,7 @@ enum PanelLaunchOpener {
             log.notice("login item launch; panel left closed")
             return
         }
-        attempt(remaining: 30)
+        attempt(remaining: 50)
     }
 
     /// Spotlight, Finder or the Dock on an app that is already running.
@@ -503,7 +503,7 @@ enum PanelLaunchOpener {
         if let window = PanelSizer.panelWindow, window.isVisible {
             makePanelKey()
         } else {
-            attempt(remaining: 30)
+            attempt(remaining: 50)
         }
     }
 
@@ -519,7 +519,8 @@ enum PanelLaunchOpener {
     private static func attempt(remaining: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             MainActor.assumeIsolated {
-                if let button = statusItemButton() {
+                if let button = statusItemButton(), button.action != nil || remaining == 0 {
+                    log.notice("button ready after \(50 - remaining, privacy: .public) tries")
                     NSApp.activate(ignoringOtherApps: true)
                     let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
                     let action = button.action.map { NSStringFromSelector($0) } ?? "nil"
