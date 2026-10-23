@@ -520,9 +520,16 @@ enum PanelLaunchOpener {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             MainActor.assumeIsolated {
                 if let button = statusItemButton() {
-                    NSApp.activate()
-                    button.performClick(nil)
-                    log.notice("performClick on \(String(describing: type(of: button)), privacy: .public)")
+                    NSApp.activate(ignoringOtherApps: true)
+                    let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
+                    let action = button.action.map { NSStringFromSelector($0) } ?? "nil"
+                    let mask = button.cell.map { String($0.sendAction(on: []), radix: 16) } ?? "?"
+                    log.notice("button target=\(target, privacy: .public) action=\(action, privacy: .public) sendOn=\(mask, privacy: .public)")
+                    if let sel = button.action {
+                        NSApp.sendAction(sel, to: button.target, from: button)
+                    } else {
+                        button.performClick(nil)
+                    }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         MainActor.assumeIsolated {
                             logWindows("after performClick")
