@@ -1,0 +1,77 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Panel zoom: variations</title>
+<style>
+:root{--blue:#007AFF;--red:#FF383C;--bg:#1e1e1e;--ctl:#2c2c2e;--sep:#48484a;--fg:#e5e5e7;--dim:.35}
+body{margin:0;padding:32px;background:#111;color:var(--fg);font:13px -apple-system,BlinkMacSystemFont,sans-serif}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:0 0 4px}p{color:#a1a1a6;margin:0 0 12px;max-width:860px}
+.v{margin:28px 0 40px;padding:20px;border:1px solid #333;border-radius:12px;background:#161616}
+.wrap{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.panel{width:560px;background:var(--bg);border:1px solid #3a3a3c;border-radius:10px;overflow:hidden}
+.row{display:flex;align-items:center;gap:8px;padding:7px 8px 6px}
+.c{height:22px;min-width:22px;padding:0 4px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--sep);background:var(--ctl);border-radius:6px;color:var(--fg);font-size:13px}
+.on{background:var(--blue);border-color:transparent;border-radius:11px;color:#fff}
+.grp{display:flex;gap:3px}.sp{flex:1}
+.cam{flex:0 1 150px;justify-content:space-between;gap:6px;padding-right:0;overflow:hidden;white-space:nowrap}
+.cam b{background:var(--blue);color:#fff;border-radius:0 5px 5px 0;padding:0 4px;height:100%;display:flex;align-items:center;font-weight:400}
+.timer{font-variant-numeric:tabular-nums;gap:4px;opacity:.6}
+.prev{height:252px;background:linear-gradient(135deg,#3b4a5a,#24303b);display:flex;align-items:center;justify-content:center;color:#8e9aa6}
+button.c{cursor:pointer;font-family:inherit}button.c:hover:not(:disabled){filter:brightness(1.25)}
+button.c:disabled{opacity:var(--dim);cursor:default}
+.pair{display:inline-flex;height:22px;border:1px solid var(--sep);border-radius:6px;background:var(--ctl);overflow:hidden}
+.pair button{border:0;border-radius:0;background:transparent;height:20px;width:24px}
+.pair i{width:1px;background:var(--sep)}
+.read{min-width:34px;font-variant-numeric:tabular-nums;color:#c7c7cc;font-size:12px;justify-content:center;display:inline-flex;align-items:center}
+svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+.screen{width:302px}.scr{position:relative;width:300px;height:195px;border:1px solid #555;border-radius:6px;background:#2a2a2a;overflow:hidden}
+.mb{height:7px;background:#3a3a3a}.pv{position:absolute;right:0;top:7px;background:rgba(0,122,255,.35);border:1px solid var(--blue);box-sizing:border-box;transition:width .2s,height .2s}
+.over{border-color:var(--red);background:rgba(255,56,60,.3)}
+.cap{margin-top:6px;color:#a1a1a6;font-size:12px}
+.lv{display:flex;gap:6px;margin-top:8px}.lv span{flex:1;text-align:center;font-size:11px;padding:3px 0;border-radius:4px;background:#222;color:#777}.lv .cur{background:var(--blue);color:#fff}
+.note{background:#2a1f12;border:1px solid #6b4a1c;color:#f0c890;padding:10px 12px;border-radius:8px;max-width:860px;margin:12px 0}
+</style></head><body>
+<h1>Panel zoom: replacing S / M / L</h1>
+<p>Five sizes: Small (400pt), Medium (480pt), Large (half screen), X-Large (three quarters), Full (screen width). Zoom out disables at Small, zoom in disables at Full. Each variation is live: click its buttons. The thumbnail shows the panel on a 1512&times;982pt MacBook screen (right anchored, as today).</p>
+<div class="note"><b>Fit check.</b> The preview is 16:9, so a full-width panel is as tall as <i>width &times; 9/16</i> plus the row. On a 16:10 MacBook that fits (1512 wide gives ~886pt tall). On a 16:9 external display (e.g. 2560&times;1440) full width needs ~1476pt against ~1415pt of visible height, so it overflows; the thumbnail turns red when that happens. Toggle the display below.
+<label style="margin-left:8px"><input type="checkbox" id="ext"> 2560&times;1440 display</label></div>
+
+<template id="row">
+<div class="panel"><div class="row">
+ <span class="c">&#128204;</span>
+ <span class="grp"><span class="c">&#127908;</span><span class="c timer">&#9654; 00:00</span><span class="c">&#127909;</span></span>
+ <span class="c on">&#8646;</span><span class="sp"></span>
+ <span class="c cam">FaceTime HD Camera <b>&#8964;</b></span>
+ <slot></slot>
+ <span class="c on">&#9211;</span>
+</div><div class="prev">camera preview</div></div>
+</template>
+
+<div class="v" data-k="a"><h2>A. Two magnifier buttons</h2>
+<p>Separate bordered capsules with magnifier minus / plus glyphs (SF Symbols <code>minus.magnifyingglass</code>, <code>plus.magnifyingglass</code>). Most self-explanatory glyphs; costs two full control widths plus spacing.</p>
+<div class="wrap"><div class="host"><span class="grp" style="gap:4px"><button class="c out" title="Zoom Out"><svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4M4.5 6.5h4"/></svg></button><button class="c in" title="Zoom In"><svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4M4.5 6.5h4M6.5 4.5v4"/></svg></button></span></div><div class="screen"></div></div></div>
+
+<div class="v" data-k="b"><h2>B. Joined minus / plus pair</h2>
+<p>One bordered capsule split by a hairline, like Preview's and Safari's zoom pair. Narrowest option (about 50pt), reads as a single "size" control. No indication of the current size in the row itself.</p>
+<div class="wrap"><div class="host"><span class="pair"><button class="c out" title="Zoom Out">&minus;</button><i></i><button class="c in" title="Zoom In">+</button></span></div><div class="screen"></div></div></div>
+
+<div class="v" data-k="c"><h2>C. Pair with size readout</h2>
+<p>Same joined pair with the current size between the buttons (S, M, &frac12;, &frac34;, Full). Keeps what the S/M/L letters used to tell you, which a bare pair loses. Widest of the three (about 85pt), so it comes out of the camera menu.</p>
+<div class="wrap"><div class="host"><span class="pair"><button class="c out" title="Zoom Out">&minus;</button><i></i><span class="read"></span><i></i><button class="c in" title="Zoom In">+</button></span></div><div class="screen"></div></div></div>
+
+<script>
+const L=[{n:'S',w:400},{n:'M',w:480},{n:'½',f:.5},{n:'¾',f:.75},{n:'Full',f:1}],ROW=36,MB=37;
+const ext=document.getElementById('ext');
+const scr=()=>ext.checked?{w:2560,h:1440}:{w:1512,h:982};
+document.querySelectorAll('.v').forEach(v=>{
+ const t=document.getElementById('row').content.cloneNode(true),host=v.querySelector('.host');
+ t.querySelector('slot').replaceWith(host.firstElementChild);host.replaceWith(t);
+ let i=2;const sc=v.querySelector('.screen');
+ sc.innerHTML='<div class="scr"><div class="mb"></div><div class="pv"></div></div><div class="cap"></div><div class="lv">'+L.map(l=>'<span>'+l.n+'</span>').join('')+'</div>';
+ const draw=()=>{const s=scr(),w=L[i].w||Math.floor(s.w*L[i].f),h=Math.round(w*9/16)+ROW,k=300/s.w,vis=s.h-MB,pv=sc.querySelector('.pv');
+  pv.style.width=w*k+'px';pv.style.height=Math.min(h,vis)*k+'px';pv.classList.toggle('over',h>vis);
+  sc.querySelector('.cap').textContent=w+' × '+h+'pt'+(h>vis?'  (taller than the '+vis+'pt visible area)':'');
+  sc.querySelectorAll('.lv span').forEach((e,j)=>e.classList.toggle('cur',j==i));
+  v.querySelector('.out').disabled=i==0;v.querySelector('.in').disabled=i==L.length-1;
+  const r=v.querySelector('.read');if(r)r.textContent=L[i].n;};
+ v.querySelector('.out').onclick=()=>{i--;draw()};v.querySelector('.in').onclick=()=>{i++;draw()};
+ ext.addEventListener('change',draw);draw();});
+</script></body></html>

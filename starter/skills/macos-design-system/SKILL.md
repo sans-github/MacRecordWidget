@@ -47,7 +47,7 @@ Both collapse to static under **Reduce Motion** (`accessibilityReduceMotion`) an
 
 If the app offers sizes, one `enum` (`PanelScale` in the reference) owns glyph size, glyph font, control font, label font, control height, row spacing, padding and corner radius. Never scatter the numbers across views; the row and the content have to scale together.
 
-- Three fonts, not interchangeable: `glyphFont` (SF Symbols), `controlFont` (text inside AppKit-backed controls; `ControlSize` does not carry text size), `scaleLabelFont` (single letters, a point smaller at the small scale because a letter fills its box more solidly).
+- Two fonts, not interchangeable: `glyphFont` (SF Symbols), `controlFont` (text inside AppKit-backed controls; `ControlSize` does not carry text size).
 - Keep the box-to-text ratio around 1.3 (glyph 17 / text 13 at large).
 - 22pt is the floor for `controlHeight` (HIG minimum click target).
 - Optical over arithmetic padding: a gap against hard content can be a point smaller than a gap against window chrome.

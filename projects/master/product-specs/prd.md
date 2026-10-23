@@ -58,7 +58,7 @@ The app records **audio or video, never both at once**.
 
 ## Elevator pitch
 
-MacRecordWidget is a menu bar app that records audio or video in one click. Audio fires two user-created Shortcuts ("Start" and "Stop") into Voice Memos. Video is captured in-app and written straight into Photo Booth's library. A live camera preview is always on below one row of icon controls, with a shared MM:SS timer. The panel has three sizes (S/M/L) and can be pinned so it survives losing focus.
+MacRecordWidget is a menu bar app that records audio or video in one click. Audio fires two user-created Shortcuts ("Start" and "Stop") into Voice Memos. Video is captured in-app and written straight into Photo Booth's library. A live camera preview is always on below one row of icon controls, with a shared MM:SS timer. The panel zooms through five sizes, up to the full screen width, and can be pinned so it survives losing focus.
 
 ---
 
@@ -101,7 +101,7 @@ Prior versions of the widget added their own friction:
 - Mirror toggle (`mirrorToggle`): Flip Horizontal glyph, blue when on. At full row spacing, outside the record group, because it acts on the preview, not on a recording
 - A spacer
 - Camera menu (`cameraPicker`): label names the camera actually feeding the preview, with a chevron in a blue well
-- Three S/M/L size toggles (`panelScalePicker`), blue when selected
+- Zoom out / zoom in buttons (`panelZoom`), off-state capsules, each disabled at its end of the range
 - Quit button (`quitButton`): `power` glyph, a permanent blue capsule. Finishes any recording, then terminates
 - No text label anywhere in the row. Every control is a glyph, a single letter, the timer, or the camera name
 
@@ -115,13 +115,13 @@ Prior versions of the widget added their own friction:
 | Mirror toggle | "Mirror the preview" (off) / "Show the preview as others see it" (on) | same as tooltip |
 | Pin toggle | "Keep panel open" / "Let panel close on its own" | "Keep panel open" |
 | Camera menu | none | "Preview camera" |
-| S/M/L | "Small preview" / "Medium preview" / "Large preview" | "Small preview size", and so on |
+| Zoom out / Zoom in | "Zoom Out (Medium)" / "Zoom In (Large)", naming the size it goes to; bare "Zoom Out" / "Zoom In" when disabled | "Zoom Out" / "Zoom In", value "Medium preview" and so on |
 | Quit | "Quit" | "Quit MacRecordWidget" |
 
 **Control chrome (semantic capsules)**
 - Off: a rounded rect at the scale's corner radius, `controlBackgroundColor` fill, 1pt `separatorColor` outline, glyph in `labelColor`
 - On: a fully round capsule filled with a semantic hue, white glyph, no outline (the fill is the edge)
-- Two hues only: red `#FF383C` for a live recording (audio and video alike); blue `#007AFF` for every other lit control (pin, mirror, S/M/L, camera chevron well, Quit)
+- Two hues only: red `#FF383C` for a live recording (audio and video alike); blue `#007AFF` for every other lit control (pin, mirror, camera chevron well, Quit)
 - The user's accent colour is not honoured in the row
 - Width never changes between off and on: `controlPaddingH` is 4pt in both states
 - Every control, including the timer and camera menu, is pinned to `PanelScale.controlHeight`
@@ -165,8 +165,8 @@ Prior versions of the widget added their own friction:
 - Distinct inline states for permission not determined, denied, restricted, no camera, and failure
 
 **Panel**
-- Three sizes, chosen with the S/M/L toggles and persisted: small, medium (default), large
-- Width is the scale's preview width: 380 / 480 / half the screen's visible width (never below 480)
+- Five sizes, stepped with zoom out / zoom in and persisted: small, medium (default), large, extra large, full
+- Width is the scale's preview width: 400 / 480 / a half, three quarters and all of the screen's visible width (never below 480, and capped so the panel fits the visible height)
 - Flush against the right edge of the screen's visible frame (zero margin)
 - Not draggable, and the resize is not animated
 
@@ -226,6 +226,7 @@ Mocks: [playback.html](../mocks/playback.html).
 | Two-hue palette | 2026-09-28 | Camera green removed; red for capture, blue for everything else; constant control width |
 | Last recording playback | 2026-10-15 | Timer box becomes the play button; audio plays in place, video over the preview surface |
 | Playback extensions | 2026-10-18 | Audio scrubber, video playback follows the mirror toggle, fallback when the last recording is deleted, Previous/Next and Move to Trash |
+| Panel zoom | 2026-10-23 | S/M/L toggles replaced by zoom out / zoom in buttons over five sizes (adds three quarters and full width, capped to the screen height); the row stops growing at large |
 
 ### Deferred
 
@@ -251,7 +252,7 @@ Mocks: [playback.html](../mocks/playback.html).
 | Surface | Purpose |
 |---------|---------|
 | Menu bar icon | Always-visible status. Green while either medium records. Click toggles the panel. |
-| Panel, button row | Pin, record group (mic, timer, video), mirror, camera menu, S/M/L, Quit. |
+| Panel, button row | Pin, record group (mic, timer, video), mirror, camera menu, zoom out / zoom in, Quit. |
 | Panel, preview area | Always present. Live image or an inline state message. Flush to the panel's left, right, and bottom edges. |
 | Photo Booth | External. Where video recordings appear. Never launched by the app. |
 | System Settings, Privacy & Security, Camera / Microphone | External. Reached from the denied-camera state or the microphone-denied alert. |
@@ -276,7 +277,7 @@ Mocks: [playback.html](../mocks/playback.html).
 
 **3. Frame the shot**
 1. Open the panel; the preview starts ("Starting camera…" until the first frame)
-2. Toggle mirror, pick a camera from the menu, or pick S/M/L
+2. Toggle mirror, pick a camera from the menu, or zoom in / out
 3. Choices persist across launches
 
 **4. Keep the panel open while working**
@@ -303,7 +304,7 @@ Mocks: [playback.html](../mocks/playback.html).
 
 ## Preview states
 
-In **every** state below, the mic, mirror, pin, S/M/L, and Quit remain usable. The video button is enabled only in **Running**.
+In **every** state below, the mic, mirror, pin, zoom, and Quit remain usable. The video button is enabled only in **Running**.
 
 | State | Trigger | Preview area shows | Actions offered |
 |-------|---------|--------------------|-----------------|
@@ -328,7 +329,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 ### Panel layout
 
 - **AC-L-1:** The panel content is a `VStack` with zero spacing: one `HStack` button row, with the preview always below it.
-- **AC-L-2:** The row is ordered: pin, record group (mic, timer, video), mirror, spacer, camera menu, S/M/L, Quit. Every item is always mounted.
+- **AC-L-2:** The row is ordered: pin, record group (mic, timer, video), mirror, spacer, camera menu, zoom out, zoom in, Quit. Every item is always mounted.
 - **AC-L-2b:** The record group's internal spacing is half the row spacing. The mirror toggle sits at full row spacing, outside the group.
 - **AC-L-3:** No recording-status dot appears in the panel except the amber dot on a recording button's corner.
 - **AC-L-4:** Every control is a glyph, a single letter, the timer, or the camera name, with an `accessibilityLabel`. There is no text label in the row.
@@ -346,7 +347,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 
 - **AC-COL-1:** The row uses exactly two fill hues: red `#FF383C` and blue `#007AFF`. No green or other hue appears on any control.
 - **AC-COL-2:** Red appears only on a recording button (mic or video) while that medium is recording.
-- **AC-COL-3:** Blue is the lit colour for pin, mirror, the selected S/M/L toggle, the camera menu's chevron well, and Quit.
+- **AC-COL-3:** Blue is the lit colour for pin, mirror, the camera menu's chevron well, and Quit.
 - **AC-COL-4:** Quit is always drawn lit (blue). It has no off state.
 - **AC-COL-5:** White glyphs on both hues clear 3:1 contrast (3.57:1 on red, 4.02:1 on blue).
 
@@ -362,7 +363,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-C-7:** The camera menu is always in the row, capped at the scale's width (110 / 200 / 260pt).
 - **AC-C-8:** A pin toggle (`pinToggle`) is the leftmost control. It shows `pin.slash` off and `pin.fill` on, and is never disabled.
 - **AC-C-9:** The panel sizes are three separate toggles labelled S, M, L. They are **not** a segmented `Picker`, because `NSSegmentedControl` ignores SwiftUI's `.font()`.
-- **AC-C-10:** The S/M/L toggles are always mounted, immediately after the camera menu.
+- **AC-C-10:** The zoom out / zoom in buttons are always mounted, immediately after the camera menu. They are plain buttons with no on state: zoom out is disabled at small, zoom in at full.
 - **AC-C-11:** Turning on a size toggle selects that size. Turning off the selected one is ignored: exactly one size is always selected.
 - **AC-C-12:** Each control's tooltip matches the Tooltips and VoiceOver table, and changes with state where the table lists several values.
 - **AC-C-13:** The mirror toggle (`mirrorToggle`) uses Apple's Flip Horizontal glyph (`arrow.left.and.right.righttriangle.left.righttriangle.right`) and is never disabled, including during a video recording.
@@ -461,16 +462,17 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 
 ### Panel scale
 
-- **AC-SC-1:** Three sizes: small, medium, large. Medium is the default on first launch.
-- **AC-SC-2:** One `PanelScale` enum owns every derived dimension: preview size, glyph size and font, control font, size-label font, `ControlSize`, control height, control horizontal padding, row spacing, horizontal and top/bottom padding, corner radius, timer padding, recording-dot size, chevron well, and camera menu width.
-- **AC-SC-3:** `ControlSize` maps to `.mini` at small, `.small` at medium, `.regular` at large.
-- **AC-SC-4:** Small is 380pt wide and medium is 480pt wide.
-- **AC-SC-5:** Large is half the screen's visible width, rounded down, never below 480.
+- **AC-SC-1:** Five sizes in zoom order: small, medium, large, extra large, full. Medium is the default on first launch.
+- **AC-SC-2:** One `PanelScale` enum owns every derived dimension: preview size, glyph size and font, control font, `ControlSize`, control height, control horizontal padding, row spacing, horizontal and top/bottom padding, corner radius, timer padding, recording-dot size, chevron well, and camera menu width.
+- **AC-SC-3:** `ControlSize` maps to `.mini` at small, `.small` at medium, `.regular` at large and above.
+- **AC-SC-4:** Small is 400pt wide and medium is 480pt wide.
+- **AC-SC-5:** Large, extra large and full are a half, three quarters and all of the screen's visible width, rounded down, never below 480. Each is also capped at the widest 16:9 preview whose panel (preview plus row) fits the visible height, so on a 16:9 display full stops short of the screen width.
 - **AC-SC-6:** Large measures the **panel**, so it never laps a window tiled to the left half.
 - **AC-SC-7:** Preview height is preview width times 9/16, rounded.
 - **AC-SC-8:** The scale persists under `panelScale` as the enum's raw string. An unrecognised value falls back to medium.
 - **AC-SC-9:** Changing the scale resizes the row and the preview together.
-- **AC-SC-10:** Large uses control height 22pt, glyph 17pt in a 14pt font, control and size-label fonts 13pt, top padding 7pt, bottom padding 6pt.
+- **AC-SC-10:** Large uses control height 22pt, glyph 17pt in a 14pt font, control font 13pt, top padding 7pt, bottom padding 6pt.
+- **AC-SC-11:** Extra large and full use every row dimension of large. Only the preview grows past large; the bar does not.
 
 ### Camera menu
 
@@ -508,7 +510,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-ST-5:** On disconnect, the app falls back to another device if one exists, else shows the no-camera message.
 - **AC-ST-6:** `starting`, `denied`, `restricted`, `notDetermined`, `noCamera`, and `failed` are distinct states with distinct copy.
 - **AC-ST-7:** In every state, the mic keeps its normal behaviour.
-- **AC-ST-8:** In every state, mirror, pin, S/M/L, and Quit keep their normal behaviour. The video button is disabled outside Running, with the state's reason as its tooltip.
+- **AC-ST-8:** In every state, mirror, pin, zoom, and Quit keep their normal behaviour. The video button is disabled outside Running, with the state's reason as its tooltip.
 - **AC-ST-9:** No preview failure presents a modal alert.
 - **AC-ST-10:** State messages are clear, non-blaming, sentence case, no exclamation marks.
 
@@ -525,7 +527,7 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 ### Accessibility
 
 - **AC-AX-1:** Pin, mic, timer, video, mirror, camera menu, and Quit carry an `accessibilityLabel` and a stable `accessibilityIdentifier` (`pinToggle`, `recordToggle`, `recordingTimer`, `videoRecordToggle`, `mirrorToggle`, `cameraPicker`, `quitButton`).
-- **AC-AX-1b:** The S/M/L toggles carry spelled-out labels ("Small preview size", and so on). `panelScalePicker` is on their container.
+- **AC-AX-1b:** The zoom buttons are labelled "Zoom Out" / "Zoom In" with the current size as their value ("Medium preview", and so on). `panelZoom` is on their container.
 - **AC-AX-2:** The mic and video labels reflect their current state, including "Starting…" during arming.
 - **AC-AX-3:** The preview carries the label "Camera preview" and identifier `cameraPreview`.
 - **AC-AX-4:** Every inline state message is readable by VoiceOver.
@@ -619,6 +621,7 @@ Kept for the decision trail. **Do not test against any criterion below.** Each w
 | AC-PS-4 (2026-09-05) | The camera toggle resets on each launch | AC-PS-4 | No camera toggle exists | 2026-09-09 |
 | "Product gap: no video capture" section | The app cannot record video; Photo Booth never launched | Two mediums, one timer | Video is captured in-app into Photo Booth's library | 2026-09-09 |
 | Any mention of camera green `#3AD862` on mirror, S/M/L, or the chevron | A third hue for camera controls | AC-COL-1 to AC-COL-3 | It read as an unexplained third state and carried the row's one contrast failure | 2026-09-28 |
+| AC-SC-1, AC-SC-4, AC-SC-5, AC-C-9, AC-C-10, AC-AX-1b (2026-09) | Three S/M/L size toggles; small 380pt; large half the screen at most | AC-SC-1 to AC-SC-11, AC-C-10, AC-AX-1b | Replaced by zoom out / zoom in buttons over five sizes, adding three quarters and full width; the row stops growing at large | 2026-10-23 |
 
 ---
 

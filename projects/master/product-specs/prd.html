@@ -392,8 +392,9 @@ class="header-section-number">1.3</span> Elevator pitch</h2>
 click. Audio fires two user-created Shortcuts ("Start" and "Stop") into
 Voice Memos. Video is captured in-app and written straight into Photo
 Booth's library. A live camera preview is always on below one row of
-icon controls, with a shared MM:SS timer. The panel has three sizes
-(S/M/L) and can be pinned so it survives losing focus.</p>
+icon controls, with a shared MM:SS timer. The panel zooms through five
+sizes, up to the full screen width, and can be pinned so it survives
+losing focus.</p>
 <hr />
 <h2 data-number="1.4" id="problem"><span
 class="header-section-number">1.4</span> Problem</h2>
@@ -459,8 +460,8 @@ acts on the preview, not on a recording</li>
 <li>A spacer</li>
 <li>Camera menu (<code>cameraPicker</code>): label names the camera
 actually feeding the preview, with a chevron in a blue well</li>
-<li>Three S/M/L size toggles (<code>panelScalePicker</code>), blue when
-selected</li>
+<li>Zoom out / zoom in buttons (<code>panelZoom</code>), off-state
+capsules, each disabled at its end of the range</li>
 <li>Quit button (<code>quitButton</code>): <code>power</code> glyph, a
 permanent blue capsule. Finishes any recording, then terminates</li>
 <li>No text label anywhere in the row. Every control is a glyph, a
@@ -511,9 +512,10 @@ camera's unavailable reason</td>
 <td>"Preview camera"</td>
 </tr>
 <tr>
-<td>S/M/L</td>
-<td>"Small preview" / "Medium preview" / "Large preview"</td>
-<td>"Small preview size", and so on</td>
+<td>Zoom out / Zoom in</td>
+<td>"Zoom Out (Medium)" / "Zoom In (Large)", naming the size it goes to;
+bare "Zoom Out" / "Zoom In" when disabled</td>
+<td>"Zoom Out" / "Zoom In", value "Medium preview" and so on</td>
 </tr>
 <tr>
 <td>Quit</td>
@@ -532,7 +534,7 @@ camera's unavailable reason</td>
 no outline (the fill is the edge)</li>
 <li>Two hues only: red <code>#FF383C</code> for a live recording (audio
 and video alike); blue <code>#007AFF</code> for every other lit control
-(pin, mirror, S/M/L, camera chevron well, Quit)</li>
+(pin, mirror, camera chevron well, Quit)</li>
 <li>The user's accent colour is not honoured in the row</li>
 <li>Width never changes between off and on: <code>controlPaddingH</code>
 is 4pt in both states</li>
@@ -611,10 +613,11 @@ restricted, no camera, and failure</li>
 </ul>
 <p><strong>Panel</strong></p>
 <ul>
-<li>Three sizes, chosen with the S/M/L toggles and persisted: small,
-medium (default), large</li>
-<li>Width is the scale's preview width: 380 / 480 / half the screen's
-visible width (never below 480)</li>
+<li>Five sizes, stepped with zoom out / zoom in and persisted: small,
+medium (default), large, extra large, full</li>
+<li>Width is the scale's preview width: 400 / 480 / a half, three
+quarters and all of the screen's visible width (never below 480, and
+capped so the panel fits the visible height)</li>
 <li>Flush against the right edge of the screen's visible frame (zero
 margin)</li>
 <li>Not draggable, and the resize is not animated</li>
@@ -784,6 +787,13 @@ the preview surface</td>
 <td>Audio scrubber, video playback follows the mirror toggle, fallback
 when the last recording is deleted, Previous/Next and Move to Trash</td>
 </tr>
+<tr>
+<td>Panel zoom</td>
+<td>2026-10-23</td>
+<td>S/M/L toggles replaced by zoom out / zoom in buttons over five sizes
+(adds three quarters and full width, capped to the screen height); the
+row stops growing at large</td>
+</tr>
 </tbody>
 </table>
 <h3 data-number="1.9.2" id="deferred"><span
@@ -863,8 +873,8 @@ toggles the panel.</td>
 </tr>
 <tr>
 <td>Panel, button row</td>
-<td>Pin, record group (mic, timer, video), mirror, camera menu, S/M/L,
-Quit.</td>
+<td>Pin, record group (mic, timer, video), mirror, camera menu, zoom out
+/ zoom in, Quit.</td>
 </tr>
 <tr>
 <td>Panel, preview area</td>
@@ -922,7 +932,7 @@ library</li>
 <ol type="1">
 <li>Open the panel; the preview starts ("Starting camera…" until the
 first frame)</li>
-<li>Toggle mirror, pick a camera from the menu, or pick S/M/L</li>
+<li>Toggle mirror, pick a camera from the menu, or zoom in / out</li>
 <li>Choices persist across launches</li>
 </ol>
 <p><strong>4. Keep the panel open while working</strong></p>
@@ -960,7 +970,7 @@ usable</li>
 <hr />
 <h2 data-number="1.11" id="preview-states"><span
 class="header-section-number">1.11</span> Preview states</h2>
-<p>In <strong>every</strong> state below, the mic, mirror, pin, S/M/L,
+<p>In <strong>every</strong> state below, the mic, mirror, pin, zoom,
 and Quit remain usable. The video button is enabled only in
 <strong>Running</strong>.</p>
 <table>
@@ -1039,8 +1049,8 @@ class="header-section-number">1.12.1</span> Panel layout</h3>
 with zero spacing: one <code>HStack</code> button row, with the preview
 always below it.</li>
 <li><strong>AC-L-2:</strong> The row is ordered: pin, record group (mic,
-timer, video), mirror, spacer, camera menu, S/M/L, Quit. Every item is
-always mounted.</li>
+timer, video), mirror, spacer, camera menu, zoom out, zoom in, Quit.
+Every item is always mounted.</li>
 <li><strong>AC-L-2b:</strong> The record group's internal spacing is
 half the row spacing. The mirror toggle sits at full row spacing,
 outside the group.</li>
@@ -1082,8 +1092,7 @@ hue appears on any control.</li>
 <li><strong>AC-COL-2:</strong> Red appears only on a recording button
 (mic or video) while that medium is recording.</li>
 <li><strong>AC-COL-3:</strong> Blue is the lit colour for pin, mirror,
-the selected S/M/L toggle, the camera menu's chevron well, and
-Quit.</li>
+the camera menu's chevron well, and Quit.</li>
 <li><strong>AC-COL-4:</strong> Quit is always drawn lit (blue). It has
 no off state.</li>
 <li><strong>AC-COL-5:</strong> White glyphs on both hues clear 3:1
@@ -1122,8 +1131,9 @@ the leftmost control. It shows <code>pin.slash</code> off and
 labelled S, M, L. They are <strong>not</strong> a segmented
 <code>Picker</code>, because <code>NSSegmentedControl</code> ignores
 SwiftUI's <code>.font()</code>.</li>
-<li><strong>AC-C-10:</strong> The S/M/L toggles are always mounted,
-immediately after the camera menu.</li>
+<li><strong>AC-C-10:</strong> The zoom out / zoom in buttons are always
+mounted, immediately after the camera menu. They are plain buttons with
+no on state: zoom out is disabled at small, zoom in at full.</li>
 <li><strong>AC-C-11:</strong> Turning on a size toggle selects that
 size. Turning off the selected one is ignored: exactly one size is
 always selected.</li>
@@ -1331,21 +1341,24 @@ edge.</li>
 <h3 data-number="1.12.13" id="panel-scale"><span
 class="header-section-number">1.12.13</span> Panel scale</h3>
 <ul>
-<li><strong>AC-SC-1:</strong> Three sizes: small, medium, large. Medium
-is the default on first launch.</li>
+<li><strong>AC-SC-1:</strong> Five sizes in zoom order: small, medium,
+large, extra large, full. Medium is the default on first launch.</li>
 <li><strong>AC-SC-2:</strong> One <code>PanelScale</code> enum owns
 every derived dimension: preview size, glyph size and font, control
-font, size-label font, <code>ControlSize</code>, control height, control
-horizontal padding, row spacing, horizontal and top/bottom padding,
-corner radius, timer padding, recording-dot size, chevron well, and
-camera menu width.</li>
+font, <code>ControlSize</code>, control height, control horizontal
+padding, row spacing, horizontal and top/bottom padding, corner radius,
+timer padding, recording-dot size, chevron well, and camera menu
+width.</li>
 <li><strong>AC-SC-3:</strong> <code>ControlSize</code> maps to
 <code>.mini</code> at small, <code>.small</code> at medium,
-<code>.regular</code> at large.</li>
-<li><strong>AC-SC-4:</strong> Small is 380pt wide and medium is 480pt
+<code>.regular</code> at large and above.</li>
+<li><strong>AC-SC-4:</strong> Small is 400pt wide and medium is 480pt
 wide.</li>
-<li><strong>AC-SC-5:</strong> Large is half the screen's visible width,
-rounded down, never below 480.</li>
+<li><strong>AC-SC-5:</strong> Large, extra large and full are a half,
+three quarters and all of the screen's visible width, rounded down,
+never below 480. Each is also capped at the widest 16:9 preview whose
+panel (preview plus row) fits the visible height, so on a 16:9 display
+full stops short of the screen width.</li>
 <li><strong>AC-SC-6:</strong> Large measures the <strong>panel</strong>,
 so it never laps a window tiled to the left half.</li>
 <li><strong>AC-SC-7:</strong> Preview height is preview width times
@@ -1356,8 +1369,11 @@ falls back to medium.</li>
 <li><strong>AC-SC-9:</strong> Changing the scale resizes the row and the
 preview together.</li>
 <li><strong>AC-SC-10:</strong> Large uses control height 22pt, glyph
-17pt in a 14pt font, control and size-label fonts 13pt, top padding 7pt,
-bottom padding 6pt.</li>
+17pt in a 14pt font, control font 13pt, top padding 7pt, bottom padding
+6pt.</li>
+<li><strong>AC-SC-11:</strong> Extra large and full use every row
+dimension of large. Only the preview grows past large; the bar does
+not.</li>
 </ul>
 <h3 data-number="1.12.14" id="camera-menu"><span
 class="header-section-number">1.12.14</span> Camera menu</h3>
@@ -1433,7 +1449,7 @@ another device if one exists, else shows the no-camera message.</li>
 <code>failed</code> are distinct states with distinct copy.</li>
 <li><strong>AC-ST-7:</strong> In every state, the mic keeps its normal
 behaviour.</li>
-<li><strong>AC-ST-8:</strong> In every state, mirror, pin, S/M/L, and
+<li><strong>AC-ST-8:</strong> In every state, mirror, pin, zoom, and
 Quit keep their normal behaviour. The video button is disabled outside
 Running, with the state's reason as its tooltip.</li>
 <li><strong>AC-ST-9:</strong> No preview failure presents a modal
@@ -1481,9 +1497,9 @@ menu, and Quit carry an <code>accessibilityLabel</code> and a stable
 <code>recordToggle</code>, <code>recordingTimer</code>,
 <code>videoRecordToggle</code>, <code>mirrorToggle</code>,
 <code>cameraPicker</code>, <code>quitButton</code>).</li>
-<li><strong>AC-AX-1b:</strong> The S/M/L toggles carry spelled-out
-labels ("Small preview size", and so on). <code>panelScalePicker</code>
-is on their container.</li>
+<li><strong>AC-AX-1b:</strong> The zoom buttons are labelled "Zoom Out"
+/ "Zoom In" with the current size as their value ("Medium preview", and
+so on). <code>panelZoom</code> is on their container.</li>
 <li><strong>AC-AX-2:</strong> The mic and video labels reflect their
 current state, including "Starting…" during arming.</li>
 <li><strong>AC-AX-3:</strong> The preview carries the label "Camera
@@ -2110,6 +2126,15 @@ or the chevron</td>
 <td>It read as an unexplained third state and carried the row's one
 contrast failure</td>
 <td>2026-09-28</td>
+</tr>
+<tr>
+<td>AC-SC-1, AC-SC-4, AC-SC-5, AC-C-9, AC-C-10, AC-AX-1b (2026-09)</td>
+<td>Three S/M/L size toggles; small 380pt; large half the screen at
+most</td>
+<td>AC-SC-1 to AC-SC-11, AC-C-10, AC-AX-1b</td>
+<td>Replaced by zoom out / zoom in buttons over five sizes, adding three
+quarters and full width; the row stops growing at large</td>
+<td>2026-10-23</td>
 </tr>
 </tbody>
 </table>

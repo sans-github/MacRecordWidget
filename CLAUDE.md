@@ -10,7 +10,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Seven Swift files, no tests:
 
-- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` video record toggle. The glyph does **not** swap to `stop.fill`: the record toggles keep their glyph and flip their fill, and this one used to be the exception. The pin is the one toggle that still swaps glyphs (`pin.fill` on, `pin.slash` off). While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), the **play-last control**: a medium glyph plus `RecordingTimer` showing MM:SS in one bordered box that is also the play button (see "Play last recording"), grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, three S/M/L preview-size toggles, and a quit button (`power`) that is always drawn as a lit blue capsule (`isOn: true`), never as a bordered off-state control. The row sets `.focusEffectDisabled()`, so keyboard focus shows no ring, and the app defines no keyboard shortcuts. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, height, spacing and corner radius from `PanelScale`, and the whole row scales as a unit. Since 2026-09-24 the controls are **semantic capsules**: off is the scale's corner radius plus a 1pt `separatorColor` outline on `controlBackgroundColor`; on is a *fully round* capsule filled with a semantic hue and a white glyph, with no outline (the fill is the edge). Hue says whether the app is capturing, not which subsystem a control belongs to (narrowed from three hues to two on 2026-09-28): red `#FF383C` for a live recording, audio and video alike, and blue `#007AFF` for every other lit control (pin, mirror, S/M/L, the camera menu's chevron well, quit). The camera green `#3AD862` that mirror, S/M/L and the chevron used to wear is gone: it read as a third, unexplained state beside the blue controls, and it carried the row's one accepted contrast failure. The user's accent colour is still not honoured in the row. Contrast now clears WCAG 1.4.11's 3:1 for a control icon in both hues (white on red 3.57:1, white on blue 4.02:1, computed); the only value still under it is the ember gradient's bright point (`#FF7A3D`, 2.59:1), which was already true of the audio ember. The silhouette therefore changes between off and on, and the one thing holding the row together across that is `PanelScale.controlHeight`, which every control including the timer is pinned to. While a medium is
+- `MacRecordWidgetApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` video record toggle. The glyph does **not** swap to `stop.fill`: the record toggles keep their glyph and flip their fill, and this one used to be the exception. The pin is the one toggle that still swaps glyphs (`pin.fill` on, `pin.slash` off). While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), the **play-last control**: a medium glyph plus `RecordingTimer` showing MM:SS in one bordered box that is also the play button (see "Play last recording"), grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, zoom out / zoom in buttons (`minus.magnifyingglass` / `plus.magnifyingglass`, off-state capsules that step through the five panel sizes and disable at either end), and a quit button (`power`) that is always drawn as a lit blue capsule (`isOn: true`), never as a bordered off-state control. The row sets `.focusEffectDisabled()`, so keyboard focus shows no ring, and the app defines no keyboard shortcuts. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, height, spacing and corner radius from `PanelScale`, and the whole row scales as a unit. Since 2026-09-24 the controls are **semantic capsules**: off is the scale's corner radius plus a 1pt `separatorColor` outline on `controlBackgroundColor`; on is a *fully round* capsule filled with a semantic hue and a white glyph, with no outline (the fill is the edge). Hue says whether the app is capturing, not which subsystem a control belongs to (narrowed from three hues to two on 2026-09-28): red `#FF383C` for a live recording, audio and video alike, and blue `#007AFF` for every other lit control (pin, mirror, the camera menu's chevron well, quit). The camera green `#3AD862` that mirror, S/M/L and the chevron used to wear is gone: it read as a third, unexplained state beside the blue controls, and it carried the row's one accepted contrast failure. The user's accent colour is still not honoured in the row. Contrast now clears WCAG 1.4.11's 3:1 for a control icon in both hues (white on red 3.57:1, white on blue 4.02:1, computed); the only value still under it is the ember gradient's bright point (`#FF7A3D`, 2.59:1), which was already true of the audio ember. The silhouette therefore changes between off and on, and the one thing holding the row together across that is `PanelScale.controlHeight`, which every control including the timer is pinned to. While a medium is
 genuinely capturing, that control's capsule wears a **Live Ember** in the
 capture red: one `EmberHue`, shared by both record buttons, because what the
 animation reports is "you are being recorded" and the medium is already said by
@@ -63,7 +63,7 @@ and running flush to the panel's left, right and bottom edges.
 **There is no preview toggle and there must not be one.** The preview is the
 app's resting state: the panel opens showing the camera, always. The
 `video.fill` button that used to collapse it now records video instead. A
-consequence worth knowing: the S/M/L toggles are mounted unconditionally now,
+consequence worth knowing: the size controls are mounted unconditionally now,
 which incidentally fixed the old bug where leaving the scale on `large` and
 closing the preview stranded an oversized button row with no visible control to
 shrink it.
@@ -258,14 +258,22 @@ into `projects/master/`.
 ### Panel scale
 
 `PanelScale` (in `PanelSizer.swift`) owns every dimension that follows from the
-S/M/L choice: preview size, glyph size and font, `ControlSize`, row spacing,
+zoom level: preview size, glyph size and font, `ControlSize`, row spacing,
 padding, corner radius, picker width, and two text fonts. It is one enum on
 purpose, because the row and the preview have to scale together and spreading
 the numbers across the views is how they drift apart. The choice persists in
 `UserDefaults` under `panelScale`.
 
 The preview runs the full width of the panel, so `previewWidth` *is* the panel
-width, and `large` is half the screen exactly.
+width. There are five sizes, in zoom order: `small` 400, `medium` 480, then
+`large`, `extraLarge` and `full` at a half, three quarters and all of the
+screen width. Those three are each capped at the widest 16:9 preview whose
+panel fits the visible height, so on a 16:9 monitor `full` stops short of the
+screen width (and `extraLarge` may equal it).
+
+**The row stops growing at `large`.** `extraLarge` and `full` share every row
+dimension with `large` (each row switch lists them together); only the preview
+grows. Changed 2026-10-23 so the bar does not thicken at the big sizes.
 
 **A control's width must not depend on whether it is lit.**
 `PanelScale.controlPaddingH` is one number for both states (4pt). It used to be
@@ -303,7 +311,7 @@ its eight siblings despite an identical modifier chain, because
 symbol metrics rather than from the `glyphSize` frame. A background drawn
 against an explicit height cannot do that.
 
-**Three fonts, not one, and they are not interchangeable:**
+**Two fonts, not one, and they are not interchangeable:**
 
 - `glyphFont` sizes the SF Symbols in the icon buttons.
 - `controlFont` sizes text inside AppKit-backed controls, currently the camera
@@ -313,17 +321,12 @@ against an explicit height cannot do that.
   same pass rather than by ignoring it. What actually governs how the row reads
   is the box-to-text ratio: 17/13 = 1.31, against the 20/15 = 1.33 it replaced.
   Moving the font alone would have taken it to 1.54.
-- `scaleLabelFont` sizes the S/M/L letters, and is a point smaller than
-  `controlFont` at the small scale. A letter fills its box more solidly than a
-  glyph does, so equal point sizes do not give equal visual weight. Matching
-  them made S look wrong while the numbers looked consistent.
 
-The size buttons are **`Toggle`s, not a segmented `Picker`**.
-`.pickerStyle(.segmented)` is an `NSSegmentedControl` underneath and ignores
-SwiftUI's `.font()`, so its labels stayed at 13pt while everything around them
-scaled. Do not "simplify" them back into a `Picker` without solving that.
+The S/M/L toggles (and `scaleLabelFont`, which sized their letters) were
+replaced on 2026-10-23 by zoom out / zoom in buttons. Design:
+`projects/20261023-panel-zoom/mocks/zoom-variations.html` (variation A).
 
-They are mounted unconditionally, like the preview itself (see "Live camera
+The zoom buttons are mounted unconditionally, like the preview itself (see "Live camera
 preview").
 
 ### Panel sizing gotchas
@@ -339,7 +342,7 @@ preview").
   `disableScreenUpdatesUntilFlush()` and flushes once, so the anchored
   intermediate position is never painted.
 - **The panel width is constant across camera on/off, but not across scales.**
-  Toggling the camera only ever changes the height. Changing S/M/L does change
+  Toggling the camera only ever changes the height. Zooming does change
   the width, and that is fine: the panel is right-anchored, so only the left
   edge moves, and the screen-update suppression above covers a width change the
   same way it covers a height change. An earlier version of this file claimed

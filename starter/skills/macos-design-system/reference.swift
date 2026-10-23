@@ -1,5 +1,5 @@
 // Reference implementation, extracted verbatim from MacRecordWidget. Adapt, do not paste blindly:
-// names like the recording medium and the S/M/L choice are MacRecordWidget-specific.
+// names like the recording medium and the zoom (panel size) choice are MacRecordWidget-specific.
 
 import SwiftUI
 import AppKit
@@ -11,7 +11,7 @@ import AppKit
 ///
 /// Hue says whether the app is *capturing*, not which subsystem a control
 /// belongs to. Red is a recording in progress, audio or video alike; blue is
-/// every other lit control in the row -- pin, mirror, S/M/L, the camera menu's
+/// every other lit control in the row -- pin, mirror, the camera menu's
 /// chevron well, quit. The camera green that mirror, S/M/L and the chevron
 /// used to wear is gone: it read as a third, unexplained state sitting beside
 /// the blue controls, and the subsystem it encoded is not something the user
@@ -30,7 +30,7 @@ enum RowPalette {
     /// appearances.
     static let capture = Color(red: 1.0, green: 0.2196, blue: 0.2353)
 
-    /// #007AFF. Every lit control that is not a recording: pin, mirror, S/M/L,
+    /// #007AFF. Every lit control that is not a recording: pin, mirror,
     /// the chevron well, quit. This is systemBlue's *light* value used in both
     /// appearances, so the dark panel gets a slightly heavier blue than macOS
     /// would pick.
@@ -302,36 +302,48 @@ struct RecordingDot: View {
 
 
 enum PanelScale: String, CaseIterable, Identifiable {
-    case small, medium, large
+    case small, medium, large, extraLarge, full
 
     var id: String { rawValue }
 
-    var label: String {
-        switch self {
-        case .small: "S"
-        case .medium: "M"
-        case .large: "L"
-        }
-    }
-
-    /// Spelled out for tooltips and VoiceOver, where a bare letter says nothing.
+    /// Spelled out for tooltips and VoiceOver.
     var helpLabel: String {
         switch self {
         case .small: "Small"
         case .medium: "Medium"
         case .large: "Large"
+        case .extraLarge: "Extra Large"
+        case .full: "Full Width"
         }
     }
 
-    /// Large tracks the display rather than a hardcoded number, so it is half
-    /// the screen on any Mac. Clamped to at least the medium width, because on
-    /// a small display half the screen can be narrower than medium, which would
-    /// put the sizes out of order.
+    var smaller: PanelScale? { step(-1) }
+    var larger: PanelScale? { step(1) }
+
+    private func step(_ offset: Int) -> PanelScale? {
+        let all = Self.allCases
+        guard let i = all.firstIndex(of: self) else { return nil }
+        let j = i + offset
+        return all.indices.contains(j) ? all[j] : nil
+    }
+
+    /// Large, extra large and full track the display rather than a hardcoded
+    /// number: half, three quarters and all of the screen's width. Each is
+    /// clamped to at least the medium width, because on a small display half
+    /// the screen can be narrower than medium, which would put the sizes out of
+    /// order.
     ///
-    /// It is the *panel* that measures half the screen, not the preview inside
-    /// it, so the padding and the screen margin come off the top. Sizing the
-    /// preview to half the screen instead makes the panel wider than half by
-    /// exactly that much, and it laps over a window tiled to the left half.
+    /// It is the *panel* that measures the fraction, not the preview inside
+    /// it, so the screen margin comes off the top. Sizing the preview to half
+    /// the screen instead makes the panel wider than half by exactly that much,
+    /// and it laps over a window tiled to the left half.
+    ///
+    /// The preview is 16:9, so on a 16:9 display a full-width panel is taller
+    /// than the screen. Every screen-relative width is therefore also capped at
+    /// the widest preview whose panel (preview plus button row) fits the
+    /// visible height. On a 16:10 MacBook full is the full width; on a 16:9
+    /// monitor it stops a little short of it, and extra large may meet it.
+    ///
     /// Every branch returns explicitly. One case here needs more than a single
     /// expression, which makes this a switch statement rather than a switch
     /// expression, and then the one-line cases are no longer implicit returns.
@@ -346,12 +358,18 @@ enum PanelScale: String, CaseIterable, Identifiable {
         // new button silently comes out of its width.
         case .small: return 400
         case .medium: return 480
-        case .large:
-            // The preview runs the full width of the panel, so this is the
-            // panel width too and large can be half the screen exactly.
-            let screenWidth = NSScreen.main?.visibleFrame.width ?? 960
-            return max(480, (screenWidth / 2 - PanelSizer.screenMargin).rounded(.down))
+        case .large: return screenWidth(fraction: 0.5)
+        case .extraLarge: return screenWidth(fraction: 0.75)
+        case .full: return screenWidth(fraction: 1)
         }
+    }
+
+    private func screenWidth(fraction: CGFloat) -> CGFloat {
+        let visible = NSScreen.main?.visibleFrame.size ?? CGSize(width: 960, height: 600)
+        let wanted = (visible.width * fraction - PanelSizer.screenMargin).rounded(.down)
+        let rowHeight = verticalPaddingTop + controlHeight + verticalPaddingBottom
+        let fitsHeight = ((visible.height - rowHeight) * 16 / 9).rounded(.down)
+        return max(480, min(wanted, fitsHeight))
     }
 
     /// 16:9, so the preview matches the aspect of the cameras feeding it.
@@ -369,7 +387,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 14
         case .medium: 16
-        case .large: 17
+        case .large, .extraLarge, .full: 17
         }
     }
 
@@ -377,7 +395,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .system(size: 11, weight: .regular)
         case .medium: .system(size: 13, weight: .regular)
-        case .large: .system(size: 14, weight: .regular)
+        case .large, .extraLarge, .full: .system(size: 14, weight: .regular)
         }
     }
 
@@ -397,19 +415,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .system(size: 10)
         case .medium: .system(size: 12)
-        case .large: .system(size: 13)
-        }
-    }
-
-    /// The S/M/L letters. A letter fills its box more solidly than a glyph
-    /// does, so at the small scale it needs to be a point under `controlFont`
-    /// to carry the same weight as the icons beside it. At medium and large the
-    /// two agree.
-    var scaleLabelFont: Font {
-        switch self {
-        case .small: .system(size: 9)
-        case .medium: .system(size: 12)
-        case .large: .system(size: 13)
+        case .large, .extraLarge, .full: .system(size: 13)
         }
     }
 
@@ -420,7 +426,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .mini
         case .medium: .small
-        case .large: .regular
+        case .large, .extraLarge, .full: .regular
         }
     }
 
@@ -430,7 +436,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 5
         case .medium: 6
-        case .large: 8
+        case .large, .extraLarge, .full: 8
         }
     }
 
@@ -439,7 +445,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 5
         case .medium: 6
-        case .large: 7
+        case .large, .extraLarge, .full: 7
         }
     }
 
@@ -448,7 +454,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         // Six gaps at this scale, so each point here costs the picker six.
         case .small: 8
         case .medium: 14
-        case .large: 18
+        case .large, .extraLarge, .full: 18
         }
     }
 
@@ -456,7 +462,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 10
         case .medium: 12
-        case .large: 16
+        case .large, .extraLarge, .full: 16
         }
     }
 
@@ -477,7 +483,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 6
         case .medium: 8
-        case .large: 7
+        case .large, .extraLarge, .full: 7
         }
     }
 
@@ -485,7 +491,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 6
         case .medium: 8
-        case .large: 6
+        case .large, .extraLarge, .full: 6
         }
     }
 
@@ -508,7 +514,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 17
         case .medium: 20
-        case .large: 22
+        case .large, .extraLarge, .full: 22
         }
     }
 
@@ -535,7 +541,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 11
         case .medium: 13
-        case .large: 14
+        case .large, .extraLarge, .full: 14
         }
     }
 
@@ -543,7 +549,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: .system(size: 7, weight: .semibold)
         case .medium: .system(size: 8, weight: .semibold)
-        case .large: .system(size: 9, weight: .semibold)
+        case .large, .extraLarge, .full: .system(size: 9, weight: .semibold)
         }
     }
 
@@ -551,7 +557,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 4
         case .medium: 5
-        case .large: 6
+        case .large, .extraLarge, .full: 6
         }
     }
 
@@ -559,7 +565,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
         switch self {
         case .small: 110
         case .medium: 200
-        case .large: 260
+        case .large, .extraLarge, .full: 260
         }
     }
 }

@@ -231,28 +231,17 @@ struct MacRecordWidgetApp: App {
                     // truncate a movie mid-write.
                     .disabled(recordingManager.isRecordingVideo)
 
-                // Three toggle buttons rather than a segmented Picker.
-                // `.pickerStyle(.segmented)` is an NSSegmentedControl, which
-                // ignores SwiftUI's `.font()`, so its labels stayed 13pt while
-                // everything around them grew. These use the same pattern as
-                // the rest of the row, so they scale with it.
+                // Zoom out / zoom in step through the five sizes in order and
+                // disable at either end. Plain buttons, not toggles: neither
+                // has an on state, so both are drawn as off capsules.
                 //
                 // This sizes the *preview* only. It has never had any bearing
                 // on the recorded video, which uses the camera's own format.
                 HStack(spacing: 2) {
-                    ForEach(PanelScale.allCases) { option in
-                        Toggle(isOn: scaleBinding(for: option)) {
-                            Text(option.label)
-                                .font(scale.scaleLabelFont)
-                                .frame(width: scale.glyphSize, height: scale.glyphSize)
-                        }
-                        // Blue: these size the preview, they do not record.
-                        .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
-                        .help("\(option.helpLabel) preview")
-                        .accessibilityLabel("\(option.helpLabel) preview size")
-                    }
+                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out")
+                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In")
                 }
-                .accessibilityIdentifier("panelScalePicker")
+                .accessibilityIdentifier("panelZoom")
 
                 Button {
                     Task {
@@ -347,13 +336,28 @@ struct MacRecordWidgetApp: App {
     /// row and the preview grow together rather than drifting apart.
     private var scale: PanelScale { PanelScale(rawValue: scaleRaw) ?? .medium }
 
-    /// One binding per size button. Turning a button on selects that size;
-    /// turning the selected one off is ignored, since a panel always has a size.
-    private func scaleBinding(for option: PanelScale) -> Binding<Bool> {
-        Binding(
-            get: { scale == option },
-            set: { isOn in if isOn { scaleRaw = option.rawValue } }
+    /// One zoom step. `target` is nil at the end of the range, which disables
+    /// the button rather than hiding it, so the row does not shift.
+    private func zoomButton(to target: PanelScale?, symbol: String, title: String) -> some View {
+        Button {
+            if let target { scaleRaw = target.rawValue }
+        } label: {
+            Image(systemName: symbol)
+                .font(scale.glyphFont)
+                .frame(width: scale.glyphSize, height: scale.glyphSize)
+        }
+        .buttonStyle(
+            CapsuleControlButtonStyle(
+                scale: scale,
+                tint: RowPalette.control,
+                ember: nil,
+                isOn: false
+            )
         )
+        .disabled(target == nil)
+        .help(target.map { "\(title) (\($0.helpLabel))" } ?? title)
+        .accessibilityLabel(title)
+        .accessibilityValue("\(scale.helpLabel) preview")
     }
 
     /// The preview width for the chosen scale, in both states, so toggling the
@@ -974,7 +978,8 @@ private struct CapsuleControlChrome<Label: View>: View {
     }
 }
 
-/// Used directly by the quit button, which has no off state, and indirectly by
+/// Used directly by the quit button (always on) and the zoom buttons (always
+/// off), and indirectly by
 /// every toggle through `CapsuleToggleStyle`.
 struct CapsuleControlButtonStyle: ButtonStyle {
     let scale: PanelScale
