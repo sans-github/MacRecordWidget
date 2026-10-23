@@ -788,6 +788,11 @@ the preview surface</td>
 when the last recording is deleted, Previous/Next and Move to Trash</td>
 </tr>
 <tr>
+<td>Keyboard shortcuts</td>
+<td>2026-10-23</td>
+<td>⌘= / ⌘+ / ⌘− zoom, ⌘R audio, ⇧⌘R video, ⌘. stop; panel-only</td>
+</tr>
+<tr>
 <td>Panel zoom</td>
 <td>2026-10-23</td>
 <td>S/M/L toggles replaced by zoom out / zoom in buttons over five sizes
@@ -1488,8 +1493,24 @@ deleted shown recording is replaced by the newest remaining one, or the
 box disables if none remain. An audio recording not yet matched to its
 file is not treated as deleted within its first minute.</li>
 </ul>
-<h3 data-number="1.12.19" id="accessibility"><span
-class="header-section-number">1.12.19</span> Accessibility</h3>
+<h3 data-number="1.12.19" id="keyboard-shortcuts"><span
+class="header-section-number">1.12.19</span> Keyboard shortcuts</h3>
+<ul>
+<li><strong>AC-K-1:</strong> ⌘= and ⌘+ zoom in; ⌘− zooms out. At either
+end of the range the key does nothing, like the disabled button.</li>
+<li><strong>AC-K-2:</strong> ⌘R starts an audio recording and ⇧⌘R starts
+a video recording. Neither stops a recording.</li>
+<li><strong>AC-K-3:</strong> ⌘. stops whichever medium is recording. It
+never starts one.</li>
+<li><strong>AC-K-4:</strong> A key acts only when the matching button
+would: no start while the other medium holds the clock, while a call is
+in flight, or (video) while the camera is not delivering frames; no stop
+during arming.</li>
+<li><strong>AC-K-5:</strong> Shortcuts fire only while the panel is the
+key window. There are no global hotkeys.</li>
+</ul>
+<h3 data-number="1.12.20" id="accessibility"><span
+class="header-section-number">1.12.20</span> Accessibility</h3>
 <ul>
 <li><strong>AC-AX-1:</strong> Pin, mic, timer, video, mirror, camera
 menu, and Quit carry an <code>accessibilityLabel</code> and a stable
@@ -1521,8 +1542,8 @@ closed.</li>
 <li><strong>AC-AX-9:</strong> All motion (ember, both amber dots) stops
 under Reduce Motion.</li>
 </ul>
-<h3 data-number="1.12.20" id="persistence"><span
-class="header-section-number">1.12.20</span> Persistence</h3>
+<h3 data-number="1.12.21" id="persistence"><span
+class="header-section-number">1.12.21</span> Persistence</h3>
 <ul>
 <li><strong>AC-PS-1:</strong> Exactly <strong>five</strong> values
 persist: <code>preview.cameraDeviceID</code>,

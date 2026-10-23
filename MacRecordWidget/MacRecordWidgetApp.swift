@@ -238,10 +238,13 @@ struct MacRecordWidgetApp: App {
                 // This sizes the *preview* only. It has never had any bearing
                 // on the recorded video, which uses the camera's own format.
                 HStack(spacing: 2) {
-                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out")
-                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In")
+                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out", key: "-")
+                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In", key: "=")
                 }
                 .accessibilityIdentifier("panelZoom")
+                // Keyboard shortcuts with no button of their own. Mounted here
+                // because the row is always mounted; they do not belong to zoom.
+                .background { hiddenShortcuts }
 
                 Button {
                     Task {
@@ -336,9 +339,51 @@ struct MacRecordWidgetApp: App {
     /// row and the preview grow together rather than drifting apart.
     private var scale: PanelScale { PanelScale(rawValue: scaleRaw) ?? .medium }
 
+    /// Shortcuts that are not a single visible button's own.
+    ///
+    /// ⌘+ is typed as ⌘⇧= on most layouts, so it needs its own key beside the
+    /// ⌘= on the zoom-in button, as Safari accepts both. ⌘R / ⇧⌘R only *start*
+    /// and ⌘. only *stops*, either medium: a mistimed press can never start a
+    /// second recording or stop one the user meant to start. Each guard is the
+    /// matching button's own disabled rule, so a key can do nothing the button
+    /// could not. Invisible rather than `.hidden()`, which is not guaranteed to
+    /// keep a shortcut live. All of them fire only while the panel is key.
+    private var hiddenShortcuts: some View {
+        ZStack {
+            shortcut("+", .command) {
+                if let larger = scale.larger { scaleRaw = larger.rawValue }
+            }
+            shortcut("r", .command) {
+                guard recordingManager.medium == nil, !recordingManager.isInFlight else { return }
+                recordingBinding.wrappedValue = true
+            }
+            shortcut("r", [.command, .shift]) {
+                guard recordingManager.medium == nil, !isVideoButtonDisabled else { return }
+                videoRecordingBinding.wrappedValue = true
+            }
+            shortcut(".", .command) {
+                guard !recordingManager.isInFlight, !recordingManager.isArming else { return }
+                if recordingManager.isRecordingAudio {
+                    recordingBinding.wrappedValue = false
+                } else if recordingManager.isRecordingVideo {
+                    videoRecordingBinding.wrappedValue = false
+                }
+            }
+        }
+        .opacity(0)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func shortcut(_ key: KeyEquivalent, _ modifiers: EventModifiers, action: @escaping () -> Void) -> some View {
+        Button("", action: action).keyboardShortcut(key, modifiers: modifiers)
+    }
+
     /// One zoom step. `target` is nil at the end of the range, which disables
-    /// the button rather than hiding it, so the row does not shift.
-    private func zoomButton(to target: PanelScale?, symbol: String, title: String) -> some View {
+    /// the button rather than hiding it, so the row does not shift. `key` with
+    /// Command is the shortcut, the same ⌘= / ⌘− pair Safari and Preview use;
+    /// like every shortcut here it works only while the panel is key.
+    private func zoomButton(to target: PanelScale?, symbol: String, title: String, key: KeyEquivalent) -> some View {
         Button {
             if let target { scaleRaw = target.rawValue }
         } label: {
@@ -354,6 +399,7 @@ struct MacRecordWidgetApp: App {
                 isOn: false
             )
         )
+        .keyboardShortcut(key, modifiers: .command)
         .disabled(target == nil)
         .help(target.map { "\(title) (\($0.helpLabel))" } ?? title)
         .accessibilityLabel(title)

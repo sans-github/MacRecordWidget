@@ -226,6 +226,7 @@ Mocks: [playback.html](../mocks/playback.html).
 | Two-hue palette | 2026-09-28 | Camera green removed; red for capture, blue for everything else; constant control width |
 | Last recording playback | 2026-10-15 | Timer box becomes the play button; audio plays in place, video over the preview surface |
 | Playback extensions | 2026-10-18 | Audio scrubber, video playback follows the mirror toggle, fallback when the last recording is deleted, Previous/Next and Move to Trash |
+| Keyboard shortcuts | 2026-10-23 | ⌘= / ⌘+ / ⌘− zoom, ⌘R audio, ⇧⌘R video, ⌘. stop; panel-only |
 | Panel zoom | 2026-10-23 | S/M/L toggles replaced by zoom out / zoom in buttons over five sizes (adds three quarters and full width, capped to the screen height); the row stops growing at large |
 
 ### Deferred
@@ -523,6 +524,14 @@ All criteria below describe shipped behaviour as of 2026-10-05. Invalidated crit
 - **AC-PB-5:** The timer box's context menu offers Play Last Recording, Previous Recording, Next Recording and Move to Trash…. All are disabled while playing; Previous and Next are disabled at the oldest and newest recording.
 - **AC-PB-6:** Previous/Next order is creation date across Photo Booth `.mov` and Voice Memos `.m4a` files.
 - **AC-PB-7:** On panel open and after a failed play, a deleted shown recording is replaced by the newest remaining one, or the box disables if none remain. An audio recording not yet matched to its file is not treated as deleted within its first minute.
+
+### Keyboard shortcuts
+
+- **AC-K-1:** ⌘= and ⌘+ zoom in; ⌘− zooms out. At either end of the range the key does nothing, like the disabled button.
+- **AC-K-2:** ⌘R starts an audio recording and ⇧⌘R starts a video recording. Neither stops a recording.
+- **AC-K-3:** ⌘. stops whichever medium is recording. It never starts one.
+- **AC-K-4:** A key acts only when the matching button would: no start while the other medium holds the clock, while a call is in flight, or (video) while the camera is not delivering frames; no stop during arming.
+- **AC-K-5:** Shortcuts fire only while the panel is the key window. There are no global hotkeys.
 
 ### Accessibility
 

@@ -1,0 +1,25 @@
+/* MacRecordWidget mock kit styles. Light appearance, matched to reference/*.png. */
+:root {
+  --mrw-glyph: #1d1d1f;          /* labelColor */
+  --mrw-glyph-dim: #9a9aa0;
+  --mrw-ctl-bg: #ffffff;         /* controlBackgroundColor */
+  --mrw-sep: rgba(0, 0, 0, .10); /* separatorColor */
+  --mrw-bar: linear-gradient(90deg, #d9dee6 0%, #b9c6d8 55%, #8fa5c2 100%); /* window material over a typical desktop */
+}
+.mrw-panel { border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 .5px rgba(0,0,0,.25), 0 10px 30px rgba(0,0,0,.25); background: var(--mrw-bar); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; }
+.mrw-row { display: flex; align-items: center; background: var(--mrw-bar); box-sizing: border-box; }
+.mrw-grp { display: inline-flex; align-items: center; }
+.mrw-spacer { flex: 1; min-width: 12px; }
+.mrw-ctl { position: relative; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: var(--mrw-ctl-bg); border: 1px solid var(--mrw-sep); color: var(--mrw-glyph); white-space: nowrap; flex: none; }
+.mrw-ctl.on { border-color: transparent; color: #fff; }
+.mrw-ctl.disabled { opacity: .35; }
+.mrw-sym { display: inline-block; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; flex: none; }
+.mrw-timer { font-variant-numeric: tabular-nums; }
+.mrw-digits { color: var(--mrw-glyph-dim); }
+.mrw-cam { flex: 0 1 auto; min-width: 0; gap: 6px; padding: 0 1px 0 8px; justify-content: space-between; }
+.mrw-cam-name { overflow: hidden; text-overflow: ellipsis; }
+.mrw-well { align-self: stretch; margin: 1px 0; background: #007AFF; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.mrw-dot { position: absolute; right: -2px; bottom: -2px; width: 6px; height: 6px; border-radius: 50%; background: #FFB340; animation: mrw-blink 1.6s steps(1) infinite; }
+@keyframes mrw-blink { 50% { opacity: 0; } }
+.mrw-preview { position: relative; overflow: hidden; }
+.mrw-scene { position: absolute; inset: 0; background: #2c2c2e; }
