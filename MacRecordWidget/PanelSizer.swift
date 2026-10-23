@@ -519,7 +519,7 @@ enum PanelLaunchOpener {
     private static func attempt(remaining: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             MainActor.assumeIsolated {
-                if let button = statusItemButton(), button.action != nil || remaining == 0 {
+                if let button = statusItemButton(), button.action != nil || remaining <= 45 {
                     log.notice("button ready after \(50 - remaining, privacy: .public) tries")
                     NSApp.activate(ignoringOtherApps: true)
                     let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
@@ -598,8 +598,8 @@ enum PanelLaunchOpener {
         }
         guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
         log.notice("synthetic click on status item")
+        NSApp.postEvent(down, atStart: false)
         NSApp.postEvent(up, atStart: false)
-        window.sendEvent(down)
     }
 
     private static func makePanelKey() {
