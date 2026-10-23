@@ -598,8 +598,8 @@ enum PanelLaunchOpener {
         }
         guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
         log.notice("synthetic click on status item")
-        NSApp.postEvent(down, atStart: false)
         NSApp.postEvent(up, atStart: false)
+        button.mouseDown(with: down)
     }
 
     private static func makePanelKey() {
