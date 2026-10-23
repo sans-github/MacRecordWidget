@@ -525,7 +525,14 @@ enum PanelLaunchOpener {
                     let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
                     let action = button.action.map { NSStringFromSelector($0) } ?? "nil"
                     log.notice("button target=\(target, privacy: .public) action=\(action, privacy: .public) tree=\(describeTree(button.window?.contentView), privacy: .public)")
-                    if let sel = button.action {
+                    // SwiftUI may wire the status item rather than its button.
+                    let item = button.window?.value(forKey: "statusItem") as? NSStatusItem
+                    let itemTarget = (item?.target).map { String(describing: type(of: $0)) } ?? "nil"
+                    let itemAction = (item?.action).map { NSStringFromSelector($0) } ?? "nil"
+                    log.notice("item=\(item != nil, privacy: .public) target=\(itemTarget, privacy: .public) action=\(itemAction, privacy: .public)")
+                    if let item, let sel = item.action {
+                        NSApp.sendAction(sel, to: item.target, from: item)
+                    } else if let sel = button.action {
                         NSApp.sendAction(sel, to: button.target, from: button)
                     } else {
                         button.performClick(nil)
