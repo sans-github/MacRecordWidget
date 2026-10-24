@@ -339,7 +339,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
     /// Only the camera menu reads this now. Every other control in the row is
     /// drawn by `CapsuleToggleStyle`, which takes its height from
     /// `controlHeight` rather than from the platform's control metrics.
-    var controlSize: ControlSize {
+    var controlSize: SwiftUI.ControlSize {
         switch self {
         case .small: .mini
         case .medium: .small
