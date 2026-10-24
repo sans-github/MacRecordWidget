@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import os
 import SwiftUI
 
@@ -658,10 +659,56 @@ enum PanelLaunchOpener {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         PanelLaunchOpener.openAfterLaunch()
+        GlobalHotKey.register()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         PanelLaunchOpener.openOnReopen()
         return false
+    }
+}
+
+/// ⌃⌥⌘R opens the panel from anywhere, so a panel closed with ⌘W can be
+/// brought back without the mouse. It is the app's one global hotkey: every
+/// other shortcut lives in the panel's local key monitor and dies with it.
+///
+/// Carbon's `RegisterEventHotKey`, not `NSEvent.addGlobalMonitorForEvents`:
+/// the monitor needs Accessibility or Input Monitoring permission, which the
+/// app has never asked for, and the hotkey needs none. It opens, never closes:
+/// it takes the reopen path, which gives an already open panel key instead of
+/// clicking it shut.
+@MainActor
+enum GlobalHotKey {
+    private static var hotKey: EventHotKeyRef?
+    private static var handler: EventHandlerRef?
+    private static let log = Logger(subsystem: "com.macrecordwidget", category: "panel")
+
+    static func register() {
+        guard hotKey == nil else { return }
+        var spec = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+        // A C callback cannot capture, and there is only one hotkey, so the
+        // event is not inspected.
+        let installed = InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { PanelLaunchOpener.openOnReopen() }
+            }
+            return noErr
+        }, 1, &spec, nil, &handler)
+        guard installed == noErr else {
+            log.error("hotkey handler not installed: \(installed, privacy: .public)")
+            return
+        }
+        let id = EventHotKeyID(signature: OSType(0x4D52_5744), id: 1) // 'MRWD'
+        let status = RegisterEventHotKey(
+            UInt32(kVK_ANSI_R), UInt32(cmdKey | optionKey | controlKey),
+            id, GetApplicationEventTarget(), 0, &hotKey
+        )
+        if status != noErr {
+            // eventHotKeyExistsErr (-9878) means something else already holds it.
+            log.error("⌃⌥⌘R not registered: \(status, privacy: .public)")
+        }
     }
 }
