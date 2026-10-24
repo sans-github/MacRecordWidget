@@ -561,12 +561,14 @@ enum PanelScale: String, CaseIterable, Identifiable {
 /// `SMAppService` login item carries `keyAELaunchedAsLogInItem` the way a
 /// classic login item does. If the panel opens at login, that is why.
 ///
-/// SwiftUI has no public API to open a `MenuBarExtra`, so this clicks the
-/// status item's own button. That is the same path a user's click takes, so
-/// `PanelSizer` pins and sizes it exactly as usual. The status item does not
-/// exist yet at launch, so the click is retried every 0.1s for up to 3s. Key
-/// is then asserted once more, because a launch from Spotlight or another app
-/// can leave that app frontmost and the panel would not take keystrokes.
+/// SwiftUI has no public API to open a `MenuBarExtra`, and clicking the
+/// status item from code does nothing on macOS 27 (its button has no target or
+/// action, measured 2026-10-23). So this orders the `MenuBarExtraWindow` in
+/// directly, the same move as the ⌃⌥⌘R hotkey (`GlobalHotKey.show`). The
+/// window may not exist the instant launching finishes, so it is looked for
+/// every 0.1s for up to 3s. Key is then asserted once more, because a launch
+/// from Spotlight or another app can leave that app frontmost and the panel
+/// would not take keystrokes.
 @MainActor
 enum PanelLaunchOpener {
     static let argument = "--open-panel"
@@ -579,17 +581,12 @@ enum PanelLaunchOpener {
             log.notice("login item launch; panel left closed")
             return
         }
-        attempt(remaining: 50)
+        attempt(remaining: 30)
     }
 
     /// Spotlight, Finder or the Dock on an app that is already running.
-    /// Clicking toggles, so an open panel is only given key.
     static func openOnReopen() {
-        if let window = PanelSizer.panelWindow, window.isVisible {
-            makePanelKey()
-        } else {
-            attempt(remaining: 50)
-        }
+        attempt(remaining: 30)
     }
 
     private static var launchedAsLoginItem: Bool {
@@ -602,119 +599,23 @@ enum PanelLaunchOpener {
     }
 
     private static func attempt(remaining: Int) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            MainActor.assumeIsolated {
-                if let button = statusItemButton(), button.action != nil || remaining <= 45 {
-                    log.notice("button ready after \(50 - remaining, privacy: .public) tries")
-                    NSApp.activate(ignoringOtherApps: true)
-                    let target = button.target.map { String(describing: type(of: $0)) } ?? "nil"
-                    let action = button.action.map { NSStringFromSelector($0) } ?? "nil"
-                    log.notice("button target=\(target, privacy: .public) action=\(action, privacy: .public) tree=\(describeTree(button.window?.contentView), privacy: .public)")
-                    // SwiftUI may wire the status item rather than its button.
-                    let item = button.window?.value(forKey: "statusItem") as? NSStatusItem
-                    let itemTarget = (item?.target).map { String(describing: type(of: $0)) } ?? "nil"
-                    let itemAction = (item?.action).map { NSStringFromSelector($0) } ?? "nil"
-                    log.notice("item=\(item != nil, privacy: .public) target=\(itemTarget, privacy: .public) action=\(itemAction, privacy: .public)")
-                    if let item, let sel = item.action {
-                        NSApp.sendAction(sel, to: item.target, from: item)
-                    } else if let sel = button.action {
-                        NSApp.sendAction(sel, to: button.target, from: button)
-                    } else {
-                        button.performClick(nil)
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        MainActor.assumeIsolated {
-                            logWindows("after performClick")
-                            if isPanelVisible {
-                                makePanelKey()
-                            } else {
-                                // performClick fires the button's action, but the
-                                // status item may open its window on mouse-down
-                                // instead. Send it a real click.
-                                syntheticClick(on: button)
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                                    MainActor.assumeIsolated {
-                                        logWindows("after synthetic click")
-                                        makePanelKey()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if remaining > 0 {
-                    attempt(remaining: remaining - 1)
-                } else {
-                    log.error("no status item button found; panel not opened")
-                }
+        if GlobalHotKey.show() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                MainActor.assumeIsolated { makePanelKey() }
             }
+        } else if remaining > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                MainActor.assumeIsolated { attempt(remaining: remaining - 1) }
+            }
+        } else {
+            log.error("no panel window after 3s; panel not opened")
         }
-    }
-
-    /// Any visible window other than the status item itself. The panel's
-    /// window is not known to `PanelSizer` until its content first appears.
-    private static var isPanelVisible: Bool {
-        if let window = PanelSizer.panelWindow { return window.isVisible }
-        return NSApp.windows.contains {
-            $0.isVisible && !String(describing: type(of: $0)).contains("StatusBar")
-        }
-    }
-
-    private static func describeTree(_ view: NSView?) -> String {
-        guard let view else { return "" }
-        let gestures = view.gestureRecognizers.map { String(describing: type(of: $0)) }
-        let me = String(describing: type(of: view)) + (gestures.isEmpty ? "" : "\(gestures)")
-        let kids = view.subviews.map(describeTree).joined(separator: ",")
-        return kids.isEmpty ? me : "\(me){\(kids)}"
-    }
-
-    private static func logWindows(_ stage: String) {
-        let list = NSApp.windows
-            .map { "\(String(describing: type(of: $0)))(visible:\($0.isVisible) key:\($0.isKeyWindow))" }
-            .joined(separator: ", ")
-        log.notice("\(stage, privacy: .public): active=\(NSApp.isActive, privacy: .public) \(list, privacy: .public)")
-    }
-
-    /// Mouse down then up at the button's centre, delivered through its window.
-    /// The up is queued first because the down starts a tracking loop that
-    /// waits for it.
-    private static func syntheticClick(on button: NSButton) {
-        guard let window = button.window else { return }
-        let point = button.convert(NSPoint(x: button.bounds.midX, y: button.bounds.midY), to: nil)
-        func event(_ type: NSEvent.EventType) -> NSEvent? {
-            NSEvent.mouseEvent(
-                with: type, location: point, modifierFlags: [],
-                timestamp: ProcessInfo.processInfo.systemUptime,
-                windowNumber: window.windowNumber, context: nil,
-                eventNumber: 0, clickCount: 1, pressure: 1
-            )
-        }
-        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
-        log.notice("synthetic click on status item")
-        NSApp.postEvent(up, atStart: false)
-        button.mouseDown(with: down)
     }
 
     private static func makePanelKey() {
         guard let window = PanelSizer.panelWindow, window.isVisible, !window.isKeyWindow else { return }
-        NSApp.activate()
+        NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
-    }
-
-    private static func statusItemButton() -> NSButton? {
-        for window in NSApp.windows
-        where String(describing: type(of: window)).contains("NSStatusBarWindow") {
-            if let button = firstButton(in: window.contentView) { return button }
-        }
-        return nil
-    }
-
-    private static func firstButton(in view: NSView?) -> NSButton? {
-        guard let view else { return nil }
-        if let button = view as? NSButton { return button }
-        for subview in view.subviews {
-            if let button = firstButton(in: subview) { return button }
-        }
-        return nil
     }
 }
 
@@ -742,7 +643,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// app has never asked for, and the hotkey needs none. It opens, never closes.
 ///
 /// It shows the panel's own window rather than clicking the status item:
-/// measured 2026-10-23, the click path (`PanelLaunchOpener`) leaves the
+/// measured 2026-10-23, clicking it from code leaves the
 /// `MenuBarExtraWindow` hidden on macOS 27, because the status item's button
 /// has no target or action to fire. The window outlives a close, so ordering
 /// it back in is the same move the pin's re-show makes.
@@ -781,17 +682,21 @@ enum GlobalHotKey {
         }
     }
 
-    private static func show() {
+    /// Orders the panel in and gives it key. False when the window does not
+    /// exist yet, which only happens in the first moments after launch.
+    @discardableResult
+    static func show() -> Bool {
         let window = PanelSizer.panelWindow ?? NSApp.windows.first {
             String(describing: type(of: $0)).contains("MenuBarExtraWindow")
         }
         guard let window else {
-            log.error("hotkey: no panel window")
-            return
+            log.debug("no panel window yet")
+            return false
         }
         NSApp.activate(ignoringOtherApps: true)
         window.orderFrontRegardless()
         window.makeKey()
-        log.notice("hotkey: visible=\(window.isVisible, privacy: .public) key=\(window.isKeyWindow, privacy: .public)")
+        log.notice("panel shown: visible=\(window.isVisible, privacy: .public) key=\(window.isKeyWindow, privacy: .public)")
+        return true
     }
 }
