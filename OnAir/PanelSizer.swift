@@ -52,8 +52,6 @@ final class PanelAnchorView: NSView {
 ///
 /// Do not animate the resize. `animator().setFrame` animates the reverted
 /// origin too, sliding the panel across the screen before the correction lands.
-private let diagLog = Logger(subsystem: "com.onair", category: "diag")
-
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
 
@@ -105,7 +103,6 @@ struct PanelSizer: NSViewRepresentable {
         /// the panel drops to `.normal` so other apps' windows (and ⌘Tab) can
         /// cover it; at its own level it floats over everything.
         private var floatingLevel: NSWindow.Level?
-        private var statusClickMonitor: Any?
         private var tokens: [NSObjectProtocol] = []
         private weak var window: NSWindow?
         private var isApplying = false
@@ -132,7 +129,10 @@ struct PanelSizer: NSViewRepresentable {
             // Re-applied on every key change in case MenuBarExtra resets the
             // level when it shows the panel (unverified whether it does).
             tokens.append(center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.applyPinnedBehaviour() }
+                MainActor.assumeIsolated {
+                    self?.applyPinnedBehaviour()
+                    self?.raiseIfPinned()
+                }
             })
             tokens.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.sendBackIfPinned() }
@@ -140,24 +140,7 @@ struct PanelSizer: NSViewRepresentable {
             tokens.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.bringForwardIfPinned() }
             })
-            // DIAGNOSTIC (temporary): which window events a menu bar icon click produces.
-            for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification,
-                         NSWindow.didChangeOcclusionStateNotification, NSWindow.didExposeNotification,
-                         NSApplication.didBecomeActiveNotification,
-                         NSApplication.didResignActiveNotification] {
-                tokens.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak window] note in
-                    MainActor.assumeIsolated {
-                        guard let window, note.object as AnyObject? === window || note.object is NSApplication else { return }
-                        diagLog.notice("diag \(note.name.rawValue, privacy: .public) active=\(NSApp.isActive) key=\(window.isKeyWindow) visible=\(window.isVisible) occl=\(window.occlusionState.contains(.visible))")
-                    }
-                })
-            }
             floatingLevel = window.level
-            if statusClickMonitor == nil {
-                statusClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-                    MainActor.assumeIsolated { self?.raiseOnStatusItemClick(event) ?? event }
-                }
-            }
             applyPinnedBehaviour()
             align()
         }
@@ -176,20 +159,17 @@ struct PanelSizer: NSViewRepresentable {
             window.orderBack(nil)
         }
 
-        /// A pinned panel sent behind another app (even a full-screen one) is
-        /// still open, so `MenuBarExtra` would treat the icon click as "close".
-        /// Raise it instead and swallow the click; once it is in front and key
-        /// the click passes through and toggles it closed as usual.
-        private func raiseOnStatusItemClick(_ event: NSEvent) -> NSEvent? {
-            guard isPinned, let window, window.isVisible,
-                  !(NSApp.isActive && window.isKeyWindow),
-                  let clicked = event.window,
-                  String(describing: type(of: clicked)).contains("NSStatusBarWindow")
-            else { return event }
-            NSApp.activate(ignoringOtherApps: true)
+        /// A menu bar icon click on macOS 27 arrives as a status-item scene
+        /// action, not a mouse event the app can see. For a panel that is
+        /// already open, `MenuBarExtra` only makes it key: the window stays
+        /// behind the app in front and that app stays frontmost (measured
+        /// 2026-10-24). So becoming key is the signal to raise and activate.
+        private func raiseIfPinned() {
+            guard isPinned, let window else { return }
             window.orderFrontRegardless()
-            window.makeKey()
-            return nil
+            if NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+                NSApp.activate(ignoringOtherApps: true)
+            }
         }
 
         /// ⌘Tab (or the Dock icon) back to the app brings the panel forward.
@@ -262,7 +242,6 @@ struct PanelSizer: NSViewRepresentable {
 
         deinit {
             tokens.forEach(NotificationCenter.default.removeObserver)
-            if let statusClickMonitor { NSEvent.removeMonitor(statusClickMonitor) }
         }
     }
 

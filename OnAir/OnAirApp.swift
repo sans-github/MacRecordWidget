@@ -938,9 +938,10 @@ private struct MenuBarIcon: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Image(systemName: "record.circle")
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(isRecording ? .green : .primary)
+            // The Dock icon's red tile at 16pt, not a template image: it keeps its
+            // colour in light and dark menu bars. Recording shows only through
+            // the amber dot, since the tile is already red.
+            Image("MenuBarIcon")
 
             if isRecording {
                 RecordingDot(diameter: 5)

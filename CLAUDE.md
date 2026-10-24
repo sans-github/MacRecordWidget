@@ -23,7 +23,7 @@ the glyph and the timer. It is a gradient drifting on a 3.4s period with a breat
 nothing to invalidate when the recording stops. 3.4s is deliberately not a
 near-match to `RecordingDot`'s 1.6s blink. It collapses to the flat fill under
 Reduce Motion (the same `accessibilityReduceMotion` the dot already reads) and,
-separately, under Increase Contrast. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is always `record.circle`; it turns green while recording and gains a small blinking amber dot (blink suppressed under Reduce Motion).
+separately, under Increase Contrast. Panel stays open after start/stop. By default it closes when the menu bar icon is clicked or when another app takes focus; the pin toggle suppresses the second of those. The menu bar icon is the Dock icon's red tile at 16pt (`MenuBarIcon` image set, rendering intent original, not a template); while recording it gains a small blinking amber dot (blink suppressed under Reduce Motion).
 - `RecordingManager.swift` - `@MainActor @Observable` class with `isRecording`, `medium` (`.audio` / `.video` / nil), and `isInFlight` state, plus the recording clock: `startedAt` and `lastElapsed`. Elapsed time is **derived from a start `Date`, never accumulated by a ticking counter**, so it stays correct while the panel is closed and cannot drift; `RecordingTimer` renders it with a `TimelineView` and there is no timer to invalidate. The clock resets when a recording *starts*, not when it stops, so the previous duration stays readable until a new one begins. `startRecording()` is `async throws`: quits Voice Memos if it is running (a fallback now, see Gotchas), fires `shortcuts://run-shortcut?name=Start&input=text&text=Recording-<timestamp>`, then holds `isArming` for `armingDelay` before flipping to `isRecording`. `stopRecording()` fires `shortcuts://run-shortcut?name=Stop`, cancels any pending arming task, and quits Voice Memos a couple of seconds later. State is updated only after the shortcut URL opens successfully, and an `isInFlight` guard prevents a second invocation while the first is still running. `startVideoRecording(camera:)` / `stopVideoRecording(camera:)` drive the in-app movie capture through the *same* arming delay and the *same* clock.
 
 **The two mediums are mutually exclusive.** `medium` is the whole of the mode state: it is claimed on button press, released on any failure path (via the `committed` flag and `defer` -- forget that and the app is stuck in a mode that never started), and each button is disabled while the other holds it. This is not a limitation to be lifted later: one shared timer cannot honestly describe two recordings that began at different moments, and that is exactly why the design is exclusive.
@@ -396,9 +396,11 @@ preview").
   reactivating the app brings it forward. Unverified on hardware: whether
   `MenuBarExtraWindow` resets the level on show (it is re-applied on every
   didBecomeKey in case it does). Clicking the menu bar icon while the pinned panel sits behind another app
-  (full-screen included) raises it rather than closing it: a local
-  `leftMouseDown` monitor on the `NSStatusBarWindow` swallows that click.
-  Once the panel is in front and key, the click passes through and closes it.
+  (full-screen included) raises it: on macOS 27 that click is a status-item
+  scene action, not a mouse event the app sees (a local event monitor never
+  fires), and for an open panel `MenuBarExtra` only makes it key without
+  ordering it front or activating the app (measured 2026-10-24). So
+  `raiseIfPinned` on didBecomeKey orders it front and activates.
 
 ### Verified on hardware (these were open questions in the design)
 
