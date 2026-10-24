@@ -386,7 +386,7 @@ struct MacRecordWidgetApp: App {
             // Leave alerts alone: ⌘. is Cancel there.
             guard NSApp.modalWindow == nil else { return event }
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-            func stopRecording() {
+            @MainActor func stopRecording() {
                 guard !manager.isInFlight, !manager.isArming else { return }
                 if manager.isRecordingAudio {
                     Task {
