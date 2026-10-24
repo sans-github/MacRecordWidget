@@ -933,7 +933,7 @@ struct MenuBarIcon: View {
 
     /// Outer size of the capsule. `PanelController` sizes the status item
     /// from it.
-    static let size = CGSize(width: 34, height: 18)
+    static let size = CGSize(width: 45, height: 24)
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -941,11 +941,11 @@ struct MenuBarIcon: View {
             // the menu bar: colour, not a template image, so it reads the same
             // in light and dark menu bars. Recording shows only through the
             // amber dot, since the capsule is already red.
-            HStack(spacing: 3) {
+            HStack(spacing: 4) {
                 Image(systemName: "mic.fill")
                 Image(systemName: "video.fill")
             }
-            .font(.system(size: 9, weight: .semibold))
+            .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(RowPalette.glyphOn)
             .frame(width: Self.size.width, height: Self.size.height)
             .background(Capsule().fill(RowPalette.capture))
