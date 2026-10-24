@@ -53,7 +53,7 @@ struct PanelSizer: NSViewRepresentable {
     static weak var panelWindow: NSWindow?
 
     /// Closes the panel as ⌘W and the close button ask, pinned or not.
-    static func closePanel() {
+    @MainActor static func closePanel() {
         PanelController.shared?.hide()
     }
 
