@@ -362,7 +362,7 @@ struct MacRecordWidgetApp: App {
     private static var keyMonitor: Any?
 
     /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘R starts audio, ⇧⌘R starts video,
-    /// ⌘. stops whichever is recording, Space plays or stops the last
+    /// ⌘. or Esc stops whichever is recording, Space plays or stops the last
     /// recording as the timer box does, ⌘Q quits as the Quit button does, ⌘W closes the panel (a recording
     /// carries on: audio lives in Voice Memos, and `pause()` refuses to stop
     /// the session mid-video).
@@ -386,6 +386,23 @@ struct MacRecordWidgetApp: App {
             // Leave alerts alone: ⌘. is Cancel there.
             guard NSApp.modalWindow == nil else { return event }
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
+            func stopRecording() {
+                guard !manager.isInFlight, !manager.isArming else { return }
+                if manager.isRecordingAudio {
+                    Task {
+                        do { try await manager.stopRecording() }
+                        catch { app.presentAlert(for: error) }
+                    }
+                } else if manager.isRecordingVideo {
+                    Task { await manager.stopVideoRecording(camera: camera) }
+                }
+            }
+            // Esc (53) stops a recording like ⌘., and passes through otherwise.
+            if flags.isEmpty, event.keyCode == 53 {
+                guard manager.isRecording else { return event }
+                stopRecording()
+                return nil
+            }
             // Space plays the last recording, then pauses and resumes it.
             // keyCode 49 is Space on every layout.
             if flags.isEmpty, event.keyCode == 49 {
@@ -435,15 +452,7 @@ struct MacRecordWidgetApp: App {
             case "w" where !shift:
                 PanelSizer.closePanel()
             case "." where !shift:
-                guard !manager.isInFlight, !manager.isArming else { return nil }
-                if manager.isRecordingAudio {
-                    Task {
-                        do { try await manager.stopRecording() }
-                        catch { app.presentAlert(for: error) }
-                    }
-                } else if manager.isRecordingVideo {
-                    Task { await manager.stopVideoRecording(camera: camera) }
-                }
+                stopRecording()
             default:
                 return event
             }
