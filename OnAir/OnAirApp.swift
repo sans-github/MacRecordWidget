@@ -6,7 +6,11 @@ import AppKit
 // on App, so the @State initializers below would be nonisolated without it.
 @main
 @MainActor
-struct MacRecordWidgetApp: App {
+struct OnAirApp: App {
+    /// Declared first: stored properties initialise in order, and the managers
+    /// below read their settings in their own initialisers.
+    private let defaultsMigrated: Void = migrateDefaultsFromMacRecordWidget()
+
     /// Opens the panel on launch and reopen. See `PanelLaunchOpener`.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
@@ -289,7 +293,7 @@ struct MacRecordWidgetApp: App {
                         )
                     )
                     .help("Quit (⌘Q)")
-                    .accessibilityLabel("Quit MacRecordWidget")
+                    .accessibilityLabel("Quit OnAir")
                     .accessibilityIdentifier("quitButton")
                 }
             }
@@ -473,7 +477,7 @@ struct MacRecordWidgetApp: App {
                     guard let window = PanelSizer.panelWindow, window.isVisible, !window.isKeyWindow else { return }
                     let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "none"
                     // Logged so a miss can be traced to the app that took key.
-                    Logger(subsystem: "com.macrecordwidget", category: "panel")
+                    Logger(subsystem: "com.onair", category: "panel")
                         .notice("panel not key after \(delay, privacy: .public)s; frontmost \(front, privacy: .public)")
                     guard ["com.apple.shortcuts", "com.apple.VoiceMemos"].contains(front) else { return }
                     NSApp.activate()
@@ -724,7 +728,7 @@ struct MacRecordWidgetApp: App {
         let alert = NSAlert()
         alert.alertStyle = .informational
         alert.messageText = "Can't Play the Last Recording"
-        alert.informativeText = "MacRecordWidget couldn't open the recording in Voice Memos. It may still be saving, it may have been deleted, or macOS may be blocking access to Voice Memos' files."
+        alert.informativeText = "OnAir couldn't open the recording in Voice Memos. It may still be saving, it may have been deleted, or macOS may be blocking access to Voice Memos' files."
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Open Voice Memos")
         guard alert.runModal() == .alertSecondButtonReturn,
@@ -744,7 +748,7 @@ struct MacRecordWidgetApp: App {
             alert.informativeText = "The recording shortcut could not be launched. Make sure a Shortcut named \"Start\" (or \"Stop\") exists in the Shortcuts app. Detail: \(reason)"
         case VideoRecordingError.microphoneDenied:
             alert.messageText = "Microphone Access Needed"
-            alert.informativeText = "Video recordings include sound, so MacRecordWidget needs microphone access. Turn it on in System Settings › Privacy & Security › Microphone."
+            alert.informativeText = "Video recordings include sound, so OnAir needs microphone access. Turn it on in System Settings › Privacy & Security › Microphone."
         case let videoError as VideoRecordingError:
             alert.messageText = "Could Not Record Video"
             alert.informativeText = videoError.localizedDescription
@@ -1206,4 +1210,19 @@ struct CapsuleToggleStyle: ToggleStyle {
             )
         )
     }
+}
+
+/// The app was called MacRecordWidget until 2026-10-24, and its settings live
+/// under that bundle ID. Copied once, never overwriting a value already set,
+/// so the pin, the zoom, the camera and the queued Photo Booth index edits
+/// survive the rename.
+private func migrateDefaultsFromMacRecordWidget() {
+    let defaults = UserDefaults.standard
+    let doneKey = "migratedFromMacRecordWidget"
+    guard !defaults.bool(forKey: doneKey) else { return }
+    let old = defaults.persistentDomain(forName: "com.example.MacRecordWidget") ?? [:]
+    for (key, value) in old where defaults.object(forKey: key) == nil {
+        defaults.set(value, forKey: key)
+    }
+    defaults.set(true, forKey: doneKey)
 }

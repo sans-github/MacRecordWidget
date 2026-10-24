@@ -9,7 +9,7 @@
 set -euo pipefail
 
 CN="MacRecordWidget Local Signing"
-APP="/Applications/MacRecordWidget.app"
+APP="/Applications/OnAir.app"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! security find-identity -v -p codesigning | grep -q "$CN"; then
@@ -58,24 +58,27 @@ fi
 
 echo "==> Downloading run $run_id"
 gh run download "$run_id" -D "$tmp"
-unzip -qo "$tmp/MacRecordWidget/MacRecordWidget.zip" -d "$tmp"
+unzip -qo "$tmp/OnAir/OnAir.zip" -d "$tmp"
 
 echo "==> Signing with \"$CN\""
 # Deliberately NOT --options runtime: the hardened runtime requires a
 # com.apple.security.device.camera entitlement to touch the camera, and without
 # it the app is killed the moment the preview opens.
-codesign --force --deep --timestamp=none --sign "$CN" "$tmp/MacRecordWidget.app"
-codesign --verify --deep --strict "$tmp/MacRecordWidget.app"
+codesign --force --deep --timestamp=none --sign "$CN" "$tmp/OnAir.app"
+codesign --verify --deep --strict "$tmp/OnAir.app"
 
 echo "==> Installing"
+pkill -x OnAir 2>/dev/null || true
+# Renamed from MacRecordWidget on 2026-10-24: retire the old bundle.
 pkill -x MacRecordWidget 2>/dev/null || true
+rm -rf /Applications/MacRecordWidget.app
 rm -rf "$APP"
-cp -R "$tmp/MacRecordWidget.app" /Applications/
+cp -R "$tmp/OnAir.app" /Applications/
 xattr -dr com.apple.quarantine "$APP"
 
 # The copy is the last place a wrong binary can creep in, so prove the bundle
 # on disk is the one just signed rather than whatever was there before.
-signed_hash="$(codesign -dvvv "$tmp/MacRecordWidget.app" 2>&1 | awk -F= '/^CDHash/ {print $2}')"
+signed_hash="$(codesign -dvvv "$tmp/OnAir.app" 2>&1 | awk -F= '/^CDHash/ {print $2}')"
 installed_hash="$(codesign -dvvv "$APP" 2>&1 | awk -F= '/^CDHash/ {print $2}')"
 if [ "$signed_hash" != "$installed_hash" ]; then
     echo "Installed app does not match what was just signed ($installed_hash vs $signed_hash)." >&2

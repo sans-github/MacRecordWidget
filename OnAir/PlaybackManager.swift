@@ -4,7 +4,7 @@ import Foundation
 import Observation
 import os
 
-let playbackLog = Logger(subsystem: "com.macrecordwidget", category: "playback")
+let playbackLog = Logger(subsystem: "com.onair", category: "playback")
 
 /// The recording the play control replays. Persisted in `UserDefaults` so the
 /// control survives a relaunch.

@@ -1,4 +1,4 @@
-# Installing MacRecordWidget
+# Installing OnAir
 
 Run once, to create a local signing certificate:
 
@@ -29,8 +29,8 @@ identity, so one grant covers later builds.
 
 ### Manual install
 
-If you would rather not use the scripts: download `MacRecordWidget.zip` from the
-[Actions tab](../../actions), unzip it, move `MacRecordWidget.app` to
+If you would rather not use the scripts: download `OnAir.zip` from the
+[Actions tab](../../actions), unzip it, move `OnAir.app` to
 `/Applications`, and right-click > **Open** on first launch. You will be
 re-asked for camera access after every build.
 

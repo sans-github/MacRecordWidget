@@ -1,4 +1,4 @@
-# Using MacRecordWidget
+# Using OnAir
 
 Click the menu bar icon to open the panel. The controls run left to right:
 

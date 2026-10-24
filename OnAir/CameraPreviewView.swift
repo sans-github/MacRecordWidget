@@ -144,7 +144,7 @@ struct CameraPreviewPanel: View {
         // silent black rectangle for that long reads as broken.
         case .starting: "Starting camera…"
         case .notDetermined: "Waiting for camera access…"
-        case .denied: "Camera access is turned off for MacRecordWidget."
+        case .denied: "Camera access is turned off for OnAir."
         case .restricted: "Camera access is restricted on this Mac and cannot be changed here."
         case .noCamera: "No camera connected."
         case .failed(let reason): reason

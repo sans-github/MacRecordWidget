@@ -554,7 +554,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
 @MainActor
 enum PanelLaunchOpener {
     static let argument = "--open-panel"
-    private static let log = Logger(subsystem: "com.macrecordwidget", category: "panel")
+    private static let log = Logger(subsystem: "com.onair", category: "panel")
 
     /// Call from `applicationDidFinishLaunching`, while the launch Apple event
     /// is still current.
@@ -734,7 +734,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 enum GlobalHotKey {
     private static var hotKey: EventHotKeyRef?
     private static var handler: EventHandlerRef?
-    private static let log = Logger(subsystem: "com.macrecordwidget", category: "panel")
+    private static let log = Logger(subsystem: "com.onair", category: "panel")
 
     static func register() {
         guard hotKey == nil else { return }

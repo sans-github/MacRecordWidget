@@ -1,4 +1,4 @@
-# MacRecordWidget
+# OnAir
 
 A macOS menu bar app for starting and stopping recordings without leaving
 whatever you are working on.

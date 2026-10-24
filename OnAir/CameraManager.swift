@@ -8,8 +8,8 @@ import os
 /// main-actor isolated under Swift 5.9.
 ///
 /// Watch it live with:
-///   log stream --predicate 'subsystem == "com.macrecordwidget"' --info --debug
-let cameraLog = Logger(subsystem: "com.macrecordwidget", category: "camera")
+///   log stream --predicate 'subsystem == "com.onair"' --info --debug
+let cameraLog = Logger(subsystem: "com.onair", category: "camera")
 
 enum VideoRecordingError: Error, LocalizedError {
     case cameraNotReady
@@ -21,7 +21,7 @@ enum VideoRecordingError: Error, LocalizedError {
         case .cameraNotReady:
             return "The camera is not running yet."
         case .microphoneDenied:
-            return "Microphone access is turned off for MacRecordWidget, so the video would have no sound."
+            return "Microphone access is turned off for OnAir, so the video would have no sound."
         case .writeFailed(let reason):
             return reason
         }
@@ -106,7 +106,7 @@ final class CameraManager {
     let previewLayer = AVCaptureVideoPreviewLayer()
 
     private let defaults: UserDefaults
-    private let sessionQueue = DispatchQueue(label: "com.macrecordwidget.camera-session")
+    private let sessionQueue = DispatchQueue(label: "com.onair.camera-session")
     private let movieOutput = AVCaptureMovieFileOutput()
     private let frameOutput = AVCaptureVideoDataOutput()
     private let frameWatcher = FirstFrameWatcher()
@@ -184,7 +184,7 @@ final class CameraManager {
         switch state {
         case .running: return nil
         case .idle, .starting, .notDetermined: return "Waiting for the camera…"
-        case .denied: return "Camera access is turned off for MacRecordWidget"
+        case .denied: return "Camera access is turned off for OnAir"
         case .restricted: return "Camera access is restricted on this Mac"
         case .noCamera: return "No camera connected"
         case .failed(let reason): return reason
@@ -642,7 +642,7 @@ final class CameraManager {
 /// `startRunning()` returning is not the same thing, so the only honest signal
 /// is a sample buffer. After the first one this does nothing but check a flag.
 private final class FirstFrameWatcher: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
-    let queue = DispatchQueue(label: "com.macrecordwidget.first-frame")
+    let queue = DispatchQueue(label: "com.onair.first-frame")
 
     var onFirstFrame: (() -> Void)?
     private var hasSeenFrame = false

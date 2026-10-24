@@ -19,8 +19,8 @@ jobs:
 
       - name: Build
         run: |
-          xcodebuild -project MacRecordWidget.xcodeproj \
-            -scheme MacRecordWidget \
+          xcodebuild -project OnAir.xcodeproj \
+            -scheme OnAir \
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
@@ -30,10 +30,10 @@ jobs:
       - name: Create artifact
         run: |
           cd build/Build/Products/Release
-          zip -r MacRecordWidget.zip MacRecordWidget.app
+          zip -r OnAir.zip OnAir.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacRecordWidget
-          path: build/Build/Products/Release/MacRecordWidget.zip
+          name: OnAir
+          path: build/Build/Products/Release/OnAir.zip

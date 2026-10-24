@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import os
 
-let libraryLog = Logger(subsystem: "com.macrecordwidget", category: "photobooth")
+let libraryLog = Logger(subsystem: "com.onair", category: "photobooth")
 
 /// Writes movies into Photo Booth's library so they appear in its filmstrip.
 ///
