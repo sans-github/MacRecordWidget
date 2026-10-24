@@ -931,18 +931,31 @@ struct RecordingDot: View {
 struct MenuBarIcon: View {
     let isRecording: Bool
 
+    /// Outer size of the capsule. `PanelController` sizes the status item
+    /// from it.
+    static let size = CGSize(width: 34, height: 18)
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            // The Dock icon's red tile at 16pt, not a template image: it keeps its
-            // colour in light and dark menu bars. Recording shows only through
-            // the amber dot, since the tile is already red.
-            Image("MenuBarIcon")
+            // A red capsule with white glyphs, after FaceTime's green one in
+            // the menu bar: colour, not a template image, so it reads the same
+            // in light and dark menu bars. Recording shows only through the
+            // amber dot, since the capsule is already red.
+            HStack(spacing: 3) {
+                Image(systemName: "mic.fill")
+                Image(systemName: "video.fill")
+            }
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundStyle(RowPalette.glyphOn)
+            .frame(width: Self.size.width, height: Self.size.height)
+            .background(Capsule().fill(RowPalette.capture))
 
             if isRecording {
                 RecordingDot(diameter: 5)
-                    .offset(x: 2, y: 2)
+                    .offset(x: 1, y: 1)
             }
         }
+        .accessibilityHidden(true)
     }
 }
 

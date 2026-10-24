@@ -614,7 +614,7 @@ final class PanelController: NSObject {
         recordingManager = RecordingManager()
         camera = CameraManager()
         playback = PlaybackManager()
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: MenuBarIcon.size.width + 6)
         panel = PanelWindow(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
             styleMask: [.borderless],
