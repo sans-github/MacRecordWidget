@@ -103,6 +103,7 @@ struct PanelSizer: NSViewRepresentable {
         /// the panel drops to `.normal` so other apps' windows (and ⌘Tab) can
         /// cover it; at its own level it floats over everything.
         private var floatingLevel: NSWindow.Level?
+        private var statusClickMonitor: Any?
         private var tokens: [NSObjectProtocol] = []
         private weak var window: NSWindow?
         private var isApplying = false
@@ -138,6 +139,11 @@ struct PanelSizer: NSViewRepresentable {
                 MainActor.assumeIsolated { self?.bringForwardIfPinned() }
             })
             floatingLevel = window.level
+            if statusClickMonitor == nil {
+                statusClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+                    MainActor.assumeIsolated { self?.raiseOnStatusItemClick(event) ?? event }
+                }
+            }
             applyPinnedBehaviour()
             align()
         }
@@ -154,6 +160,22 @@ struct PanelSizer: NSViewRepresentable {
         private func sendBackIfPinned() {
             guard isPinned, let window, window.isVisible else { return }
             window.orderBack(nil)
+        }
+
+        /// A pinned panel sent behind another app (even a full-screen one) is
+        /// still open, so `MenuBarExtra` would treat the icon click as "close".
+        /// Raise it instead and swallow the click; once it is in front and key
+        /// the click passes through and toggles it closed as usual.
+        private func raiseOnStatusItemClick(_ event: NSEvent) -> NSEvent? {
+            guard isPinned, let window, window.isVisible,
+                  !(NSApp.isActive && window.isKeyWindow),
+                  let clicked = event.window,
+                  String(describing: type(of: clicked)).contains("NSStatusBarWindow")
+            else { return event }
+            NSApp.activate(ignoringOtherApps: true)
+            window.orderFrontRegardless()
+            window.makeKey()
+            return nil
         }
 
         /// ⌘Tab (or the Dock icon) back to the app brings the panel forward.
@@ -226,6 +248,7 @@ struct PanelSizer: NSViewRepresentable {
 
         deinit {
             tokens.forEach(NotificationCenter.default.removeObserver)
+            if let statusClickMonitor { NSEvent.removeMonitor(statusClickMonitor) }
         }
     }
 

@@ -395,7 +395,10 @@ preview").
   ordered *back*, not front, so ⌘Tab and Spotlight land on top of it, and
   reactivating the app brings it forward. Unverified on hardware: whether
   `MenuBarExtraWindow` resets the level on show (it is re-applied on every
-  didBecomeKey in case it does).
+  didBecomeKey in case it does). Clicking the menu bar icon while the pinned panel sits behind another app
+  (full-screen included) raises it rather than closing it: a local
+  `leftMouseDown` monitor on the `NSStatusBarWindow` swallows that click.
+  Once the panel is in front and key, the click passes through and closes it.
 
 ### Verified on hardware (these were open questions in the design)
 
