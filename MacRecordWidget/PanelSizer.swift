@@ -674,9 +674,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 ///
 /// Carbon's `RegisterEventHotKey`, not `NSEvent.addGlobalMonitorForEvents`:
 /// the monitor needs Accessibility or Input Monitoring permission, which the
-/// app has never asked for, and the hotkey needs none. It opens, never closes:
-/// it takes the reopen path, which gives an already open panel key instead of
-/// clicking it shut.
+/// app has never asked for, and the hotkey needs none. It opens, never closes.
+///
+/// It shows the panel's own window rather than clicking the status item:
+/// measured 2026-10-23, the click path (`PanelLaunchOpener`) leaves the
+/// `MenuBarExtraWindow` hidden on macOS 27, because the status item's button
+/// has no target or action to fire. The window outlives a close, so ordering
+/// it back in is the same move the pin's re-show makes.
 @MainActor
 enum GlobalHotKey {
     private static var hotKey: EventHotKeyRef?
@@ -693,7 +697,7 @@ enum GlobalHotKey {
         // event is not inspected.
         let installed = InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { PanelLaunchOpener.openOnReopen() }
+                MainActor.assumeIsolated { show() }
             }
             return noErr
         }, 1, &spec, nil, &handler)
@@ -710,5 +714,19 @@ enum GlobalHotKey {
             // eventHotKeyExistsErr (-9878) means something else already holds it.
             log.error("⌃⌥⌘R not registered: \(status, privacy: .public)")
         }
+    }
+
+    private static func show() {
+        let window = PanelSizer.panelWindow ?? NSApp.windows.first {
+            String(describing: type(of: $0)).contains("MenuBarExtraWindow")
+        }
+        guard let window else {
+            log.error("hotkey: no panel window")
+            return
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.orderFrontRegardless()
+        window.makeKey()
+        log.notice("hotkey: visible=\(window.isVisible, privacy: .public) key=\(window.isKeyWindow, privacy: .public)")
     }
 }
