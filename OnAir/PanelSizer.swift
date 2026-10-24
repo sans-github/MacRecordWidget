@@ -52,6 +52,8 @@ final class PanelAnchorView: NSView {
 ///
 /// Do not animate the resize. `animator().setFrame` animates the reverted
 /// origin too, sliding the panel across the screen before the correction lands.
+private let diagLog = Logger(subsystem: "com.onair", category: "diag")
+
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
 
@@ -138,6 +140,18 @@ struct PanelSizer: NSViewRepresentable {
             tokens.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.bringForwardIfPinned() }
             })
+            // DIAGNOSTIC (temporary): which window events a menu bar icon click produces.
+            for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification,
+                         NSWindow.didChangeOcclusionStateNotification, NSWindow.didExposeNotification,
+                         NSApplication.didBecomeActiveNotification,
+                         NSApplication.didResignActiveNotification] {
+                tokens.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak window] note in
+                    MainActor.assumeIsolated {
+                        guard let window, note.object as AnyObject? === window || note.object is NSApplication else { return }
+                        diagLog.notice("diag \(note.name.rawValue, privacy: .public) active=\(NSApp.isActive) key=\(window.isKeyWindow) visible=\(window.isVisible) occl=\(window.occlusionState.contains(.visible))")
+                    }
+                })
+            }
             floatingLevel = window.level
             if statusClickMonitor == nil {
                 statusClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
