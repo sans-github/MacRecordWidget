@@ -15,11 +15,11 @@ struct OnAirApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     /// The panel is not a SwiftUI scene (see `PanelController`), but an `App`
-    /// needs one. An empty Settings scene, with its menu item removed so the
-    /// pinned app's menu does not offer an empty window.
+    /// needs one. A never-inserted `MenuBarExtra`: no icon, no window. Not a
+    /// `Settings` scene, which macOS 27 opened as an empty window at every
+    /// launch (observed 2026-10-24).
     var body: some Scene {
-        Settings { EmptyView() }
-            .commands { CommandGroup(replacing: .appSettings) {} }
+        MenuBarExtra("OnAir", isInserted: .constant(false)) { EmptyView() }
     }
 }
 
