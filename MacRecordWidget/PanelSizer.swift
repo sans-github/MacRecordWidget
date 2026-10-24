@@ -697,7 +697,7 @@ enum GlobalHotKey {
         // event is not inspected.
         let installed = InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { show() }
+                MainActor.assumeIsolated { GlobalHotKey.show() }
             }
             return noErr
         }, 1, &spec, nil, &handler)
