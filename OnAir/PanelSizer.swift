@@ -30,28 +30,13 @@ final class PanelAnchorView: NSView {
     }
 }
 
-/// Pins the `MenuBarExtra(.window)` panel to the right of the screen and keeps
-/// it sized to its content.
+/// Pins the panel to the right of the screen and keeps it sized to its content.
 ///
-/// Two AppKit behaviours have to be worked around.
-///
-/// First, the panel grows to fit its content but never shrinks back, which
-/// strands a full-size empty window when the preview closes.
-///
-/// Second, and less obvious: `MenuBarExtraWindow` keeps itself anchored to the
-/// status item by reverting the origin *inside* `setFrame`. The size is
-/// honoured and the move is silently discarded, so reading the frame back
-/// immediately shows the old x. Measured on a real panel: asking for x=1072
-/// landed at x=848, and asking for x=768 landed at x=376.
-///
-/// The revert is scoped to that call, so `setFrameOrigin` immediately after it
-/// sticks. Both are applied with screen updates suppressed and flushed once, so
-/// the anchored intermediate position is never painted; correcting it on a
-/// later runloop pass instead makes the panel visibly flick from centre to
-/// right.
-///
-/// Do not animate the resize. `animator().setFrame` animates the reverted
-/// origin too, sliding the panel across the screen before the correction lands.
+/// The panel's window does not size itself (`PanelController` turns the
+/// hosting view's sizing off), so this applies the measured content size,
+/// right-anchored and keeping the top edge. Size and origin are applied with
+/// screen updates suppressed and flushed once, so no intermediate frame is
+/// painted. Do not animate the resize.
 struct PanelSizer: NSViewRepresentable {
     let size: CGSize
 
@@ -67,24 +52,9 @@ struct PanelSizer: NSViewRepresentable {
     /// that needs to hand key status back to it. Weak: AppKit owns it.
     static weak var panelWindow: NSWindow?
 
-    /// True for the moment ⌘W is closing the panel, so the pin's resign-key
-    /// handler does not put it straight back.
-    fileprivate static var isClosingOnRequest = false
-
-    /// Closes the panel as ⌘W asks, pinned or not. The camera pauses through
-    /// the content's `onDisappear`, as on any other close. Unverified on
-    /// hardware: whether `MenuBarExtra` notices a `close()` it did not start,
-    /// so that the next icon click opens rather than needing two clicks.
+    /// Closes the panel as ⌘W and the close button ask, pinned or not.
     static func closePanel() {
-        guard let window = panelWindow, window.isVisible else { return }
-        isClosingOnRequest = true
-        window.close()
-        // Two passes, matching keepVisibleIfPinned's own deferred re-show.
-        DispatchQueue.main.async {
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated { isClosingOnRequest = false }
-            }
-        }
+        PanelController.shared?.hide()
     }
 
     /// Pinned, the app behaves like a regular app: it gets a Dock icon and a
@@ -99,7 +69,7 @@ struct PanelSizer: NSViewRepresentable {
         var isPinned = false {
             didSet { if isPinned != oldValue { applyPinnedBehaviour() } }
         }
-        /// The level `MenuBarExtra` gave the panel, restored on unpin. Pinned,
+        /// The panel's unpinned level, restored on unpin. Pinned,
         /// the panel drops to `.normal` so other apps' windows (and ⌘Tab) can
         /// cover it; at its own level it floats over everything.
         private var floatingLevel: NSWindow.Level?
@@ -123,17 +93,6 @@ struct PanelSizer: NSViewRepresentable {
                     MainActor.assumeIsolated { self?.align() }
                 })
             }
-            tokens.append(center.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.keepVisibleIfPinned() }
-            })
-            // Re-applied on every key change in case MenuBarExtra resets the
-            // level when it shows the panel (unverified whether it does).
-            tokens.append(center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    self?.applyPinnedBehaviour()
-                    self?.raiseIfPinned()
-                }
-            })
             tokens.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.sendBackIfPinned() }
             })
@@ -159,23 +118,10 @@ struct PanelSizer: NSViewRepresentable {
             window.orderBack(nil)
         }
 
-        /// A menu bar icon click on macOS 27 arrives as a status-item scene
-        /// action, not a mouse event the app can see. For a panel that is
-        /// already open, `MenuBarExtra` only makes it key: the window stays
-        /// behind the app in front and that app stays frontmost (measured
-        /// 2026-10-24). So becoming key is the signal to raise and activate.
-        private func raiseIfPinned() {
-            guard isPinned, let window else { return }
-            window.orderFrontRegardless()
-            if NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
-                NSApp.activate(ignoringOtherApps: true)
-            }
-        }
-
         /// ⌘Tab (or the Dock icon) back to the app brings the panel forward.
         /// Only a panel still on screen: one closed with ⌘W stays closed.
         private func bringForwardIfPinned() {
-            guard isPinned, !PanelSizer.isClosingOnRequest, let window, window.isVisible else { return }
+            guard isPinned, let window, window.isVisible else { return }
             window.makeKeyAndOrderFront(nil)
         }
 
@@ -202,42 +148,11 @@ struct PanelSizer: NSViewRepresentable {
                 isApplying = false
             }
 
-            // Any frame change makes AppKit re-anchor the panel to the status
-            // item, reverting the origin inside setFrame. Correcting it on a
-            // later runloop pass means the anchored position gets painted
-            // first, which is the flicker from centre to right. So suppress
-            // drawing, apply size and corrected origin together, then flush.
-            //
-            // The resize is deliberately not animated: animating setFrame
-            // animates the reverted origin too, sliding the panel across the
-            // screen before the correction lands.
             window.disableScreenUpdatesUntilFlush()
             window.setFrame(target, display: false)
-            window.setFrameOrigin(target.origin)
             window.displayIfNeeded()
-        }
-
-        /// Re-shows the panel after it resigns key.
-        ///
-        /// `MenuBarExtra(.window)` closes its panel by ordering it out when the
-        /// window stops being key; there is no public switch for that. The
-        /// order of our observer against AppKit's own handler is not
-        /// guaranteed, so the re-show runs twice: once synchronously (in case
-        /// the order-out already happened) and once on the next runloop pass
-        /// (in case it has not).
-        func keepVisibleIfPinned() {
-            guard isPinned, !PanelSizer.isClosingOnRequest else { return }
-            orderFront()
-            DispatchQueue.main.async { [weak self] in
-                MainActor.assumeIsolated { self?.orderFront() }
-            }
-        }
-
-        private func orderFront() {
-            guard isPinned, !PanelSizer.isClosingOnRequest, let window, !window.isVisible else { return }
-            // Re-shown behind the app that took focus, not over it.
-            if NSApp.isActive { window.orderFrontRegardless() } else { window.orderBack(nil) }
-            align()
+            // The shadow follows the window's alpha, which the size changes.
+            window.invalidateShadow()
         }
 
         deinit {
@@ -252,10 +167,6 @@ struct PanelSizer: NSViewRepresentable {
         view.onAttach = { window in
             window.isMovable = false
             window.isMovableByWindowBackground = false
-            // The app is an accessory (LSUIElement), so it deactivates as soon
-            // as another app is clicked. Left at the default this would hide
-            // the panel before the pin observer ever runs.
-            window.hidesOnDeactivate = false
             context.coordinator.attach(to: window)
         }
         return view
@@ -553,7 +464,7 @@ enum PanelScale: String, CaseIterable, Identifiable {
 
 // MARK: - Open on launch
 
-/// Opens the panel at launch and on reopen, as if the menu bar icon were clicked.
+/// Opens the panel at launch and on reopen.
 ///
 /// Every launch opens it (Spotlight, Finder, Dock, MacAppLauncher's
 /// `--open-panel`) except a login-item launch: popping the panel, and with it
@@ -561,14 +472,9 @@ enum PanelScale: String, CaseIterable, Identifiable {
 /// `SMAppService` login item carries `keyAELaunchedAsLogInItem` the way a
 /// classic login item does. If the panel opens at login, that is why.
 ///
-/// SwiftUI has no public API to open a `MenuBarExtra`, and clicking the
-/// status item from code does nothing on macOS 27 (its button has no target or
-/// action, measured 2026-10-23). So this orders the `MenuBarExtraWindow` in
-/// directly, the same move as the ⌃⌥⌘R hotkey (`GlobalHotKey.show`). The
-/// window may not exist the instant launching finishes, so it is looked for
-/// every 0.1s for up to 3s. Key is then asserted once more, because a launch
-/// from Spotlight or another app can leave that app frontmost and the panel
-/// would not take keystrokes.
+/// Key is asserted once more after 0.3s, because a launch from Spotlight or
+/// another app can leave that app frontmost and the panel would not take
+/// keystrokes.
 @MainActor
 enum PanelLaunchOpener {
     static let argument = "--open-panel"
@@ -581,12 +487,19 @@ enum PanelLaunchOpener {
             log.notice("login item launch; panel left closed")
             return
         }
-        attempt(remaining: 30)
+        open()
     }
 
     /// Spotlight, Finder or the Dock on an app that is already running.
     static func openOnReopen() {
-        attempt(remaining: 30)
+        open()
+    }
+
+    private static func open() {
+        PanelController.shared?.show()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            MainActor.assumeIsolated { PanelController.shared?.show() }
+        }
     }
 
     private static var launchedAsLoginItem: Bool {
@@ -597,26 +510,6 @@ enum PanelLaunchOpener {
         return event.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue
             == OSType(keyAELaunchedAsLogInItem)
     }
-
-    private static func attempt(remaining: Int) {
-        if GlobalHotKey.show() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                MainActor.assumeIsolated { makePanelKey() }
-            }
-        } else if remaining > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                MainActor.assumeIsolated { attempt(remaining: remaining - 1) }
-            }
-        } else {
-            log.error("no panel window after 3s; panel not opened")
-        }
-    }
-
-    private static func makePanelKey() {
-        guard let window = PanelSizer.panelWindow, window.isVisible, !window.isKeyWindow else { return }
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-    }
 }
 
 /// Launch and reopen hooks, which SwiftUI's `App` does not expose.
@@ -624,6 +517,7 @@ enum PanelLaunchOpener {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         PanelSizer.applyActivationPolicy(pinned: UserDefaults.standard.bool(forKey: "panelPinned"))
+        PanelController.install()
         PanelLaunchOpener.openAfterLaunch()
         GlobalHotKey.register()
     }
@@ -642,11 +536,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 /// the monitor needs Accessibility or Input Monitoring permission, which the
 /// app has never asked for, and the hotkey needs none. It opens, never closes.
 ///
-/// It shows the panel's own window rather than clicking the status item:
-/// measured 2026-10-23, clicking it from code leaves the
-/// `MenuBarExtraWindow` hidden on macOS 27, because the status item's button
-/// has no target or action to fire. The window outlives a close, so ordering
-/// it back in is the same move the pin's re-show makes.
 @MainActor
 enum GlobalHotKey {
     private static var hotKey: EventHotKeyRef?
@@ -663,7 +552,7 @@ enum GlobalHotKey {
         // event is not inspected.
         let installed = InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { _ = GlobalHotKey.show() }
+                MainActor.assumeIsolated { PanelController.shared?.show() }
             }
             return noErr
         }, 1, &spec, nil, &handler)
@@ -681,22 +570,212 @@ enum GlobalHotKey {
             log.error("⌃⌥⌘R not registered: \(status, privacy: .public)")
         }
     }
+}
 
-    /// Orders the panel in and gives it key. False when the window does not
-    /// exist yet, which only happens in the first moments after launch.
-    @discardableResult
-    static func show() -> Bool {
-        let window = PanelSizer.panelWindow ?? NSApp.windows.first {
-            String(describing: type(of: $0)).contains("MenuBarExtraWindow")
+// MARK: - Panel controller
+
+/// The menu bar item and the panel, both created at launch and kept for the
+/// app's lifetime.
+///
+/// This replaced `MenuBarExtra(.window)` on 2026-10-24. That scene creates its
+/// window only on the first click of the menu bar icon, and on macOS 27
+/// nothing in the app can produce that click (the scene's status item has no
+/// target or action; the click arrives system-side). So the panel could not
+/// open at launch, and ⌃⌥⌘R did nothing until the icon had been clicked once.
+/// Owning the window removes both problems and every workaround that scene
+/// needed (the reverted origin, re-showing after resign key).
+///
+/// Unpinned, the panel closes when another app becomes active, except
+/// Shortcuts and Voice Memos, which a starting or stopping audio recording
+/// brings forward (`reclaimFocusFromRecorder` hands key back). Pinned it stays,
+/// as `PanelSizer` describes.
+@MainActor
+final class PanelController: NSObject {
+    static private(set) var shared: PanelController?
+
+    static func install() {
+        guard shared == nil else { return }
+        shared = PanelController()
+    }
+
+    let recordingManager: RecordingManager
+    let camera: CameraManager
+    let playback: PlaybackManager
+
+    private let statusItem: NSStatusItem
+    private let panel: PanelWindow
+    private var shownAt = Date.distantPast
+    private var activationObserver: NSObjectProtocol?
+
+    /// Matches the preview's bottom corners (`CameraPreviewPanel`).
+    private static let cornerRadius: CGFloat = 10
+
+    private override init() {
+        recordingManager = RecordingManager()
+        camera = CameraManager()
+        playback = PlaybackManager()
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        panel = PanelWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        super.init()
+
+        panel.isReleasedWhenClosed = false
+        // Unpinned level. Below modal panels, so an alert is never hidden
+        // behind the panel. `PanelSizer` drops it to .normal while pinned.
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.hidesOnDeactivate = false
+        panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+
+        let background = NSVisualEffectView()
+        background.material = .popover
+        background.blendingMode = .behindWindow
+        background.state = .active
+        background.maskImage = Self.roundedMask(radius: Self.cornerRadius)
+        let host = NSHostingView(rootView: PanelView(
+            recordingManager: recordingManager,
+            camera: camera,
+            playback: playback
+        ))
+        // PanelSizer sizes the window from the measured content; the hosting
+        // view resizing it as well would fight that.
+        host.sizingOptions = []
+        host.autoresizingMask = [.width, .height]
+        panel.contentView = background
+        host.frame = background.bounds
+        background.addSubview(host)
+
+        statusItem.autosaveName = "OnAir"
+        if let button = statusItem.button {
+            button.target = self
+            button.action = #selector(statusItemClicked)
+            button.setAccessibilityLabel("OnAir")
+            let icon = PassthroughHostingView(rootView: StatusIcon(manager: recordingManager))
+            icon.frame = button.bounds
+            icon.autoresizingMask = [.width, .height]
+            button.addSubview(icon)
         }
-        guard let window else {
-            log.debug("no panel window yet")
-            return false
+
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            let pid = app?.processIdentifier
+            let bundleID = app?.bundleIdentifier
+            MainActor.assumeIsolated { self?.otherAppActivated(pid: pid, bundleID: bundleID) }
+        }
+    }
+
+    private var isPinned: Bool { UserDefaults.standard.bool(forKey: "panelPinned") }
+
+    /// Opens the panel, or raises and gives key to one already open. Never
+    /// closes it.
+    func show() {
+        if !panel.isVisible {
+            place()
+            shownAt = Date()
+            playback.refreshIfMissing()
+            playback.reloadLibrary()
+            Task { await camera.start() }
         }
         NSApp.activate(ignoringOtherApps: true)
-        window.orderFrontRegardless()
-        window.makeKey()
-        log.notice("panel shown: visible=\(window.isVisible, privacy: .public) key=\(window.isKeyWindow, privacy: .public)")
-        return true
+        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
     }
+
+    /// Closes the panel, pinned or not. The camera pauses rather than tearing
+    /// down: the session stays configured so the next open skips device
+    /// discovery and format negotiation, and `pause()` refuses to stop while a
+    /// movie is being written, which is what lets a video recording survive
+    /// the panel closing. Playback stops: nothing is lost, and the next open
+    /// should show the live camera.
+    func hide() {
+        guard panel.isVisible else { return }
+        panel.orderOut(nil)
+        playback.stop()
+        camera.pause()
+        // Hand focus back to the app the panel was opened over.
+        if !isPinned, NSApp.isActive { NSApp.deactivate() }
+    }
+
+    @objc private func statusItemClicked() {
+        if panel.isVisible, panel.isKeyWindow, NSApp.isActive {
+            hide()
+        } else {
+            show()
+        }
+    }
+
+    private func otherAppActivated(pid: pid_t?, bundleID: String?) {
+        guard let pid, pid != ProcessInfo.processInfo.processIdentifier,
+              !isPinned, panel.isVisible,
+              // The app that launched or summoned us can take its activation
+              // back a moment later; that is not the user leaving.
+              Date().timeIntervalSince(shownAt) > 0.5,
+              !["com.apple.shortcuts", "com.apple.VoiceMemos"].contains(bundleID ?? "")
+        else { return }
+        hide()
+    }
+
+    /// Top right of the screen holding the menu bar item, at the content's
+    /// size, so the first frame painted is already in place. `PanelSizer`
+    /// keeps it there as the content changes.
+    private func place() {
+        let size = panel.contentView?.subviews.first?.fittingSize ?? .zero
+        let current = panel.frame.size
+        let width = size.width > 0 ? size.width : current.width
+        let height = size.height > 0 ? size.height : current.height
+        guard let screen = statusItem.button?.window?.screen ?? NSScreen.main else { return }
+        let visible = screen.visibleFrame
+        panel.setFrame(
+            NSRect(x: visible.maxX - width, y: visible.maxY - height, width: width, height: height),
+            display: false
+        )
+    }
+
+    private static func roundedMask(radius: CGFloat) -> NSImage {
+        let edge = radius * 2 + 1
+        let image = NSImage(size: NSSize(width: edge, height: edge), flipped: false) { rect in
+            NSColor.black.setFill()
+            NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+            return true
+        }
+        image.capInsets = NSEdgeInsets(top: radius, left: radius, bottom: radius, right: radius)
+        image.resizingMode = .stretch
+        return image
+    }
+}
+
+/// Borderless, so it has to opt in to key status, or no keystroke reaches the
+/// panel's key monitor.
+final class PanelWindow: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+
+    /// Esc that the key monitor passed through (nothing recording). NSPanel
+    /// would close itself here, skipping the camera pause; close properly.
+    override func cancelOperation(_ sender: Any?) {
+        PanelController.shared?.hide()
+    }
+}
+
+/// The menu bar icon, drawn by SwiftUI inside the status item's button.
+private struct StatusIcon: View {
+    let manager: RecordingManager
+
+    var body: some View {
+        MenuBarIcon(isRecording: manager.isRecording)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Lets clicks through to the status item's button underneath.
+private final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

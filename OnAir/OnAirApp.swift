@@ -3,20 +3,34 @@ import SwiftUI
 import AppKit
 
 // Explicit @MainActor: Swift 5.9 (Xcode 15.2, which CI uses) does not infer it
-// on App, so the @State initializers below would be nonisolated without it.
+// on App.
 @main
 @MainActor
 struct OnAirApp: App {
-    /// Declared first: stored properties initialise in order, and the managers
-    /// below read their settings in their own initialisers.
+    /// Declared first: the managers read their settings in their own
+    /// initialisers, which run later in `applicationDidFinishLaunching`.
     private let defaultsMigrated: Void = migrateDefaultsFromMacRecordWidget()
 
-    /// Opens the panel on launch and reopen. See `PanelLaunchOpener`.
+    /// Owns the menu bar item and the panel. See `PanelController`.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    @State private var recordingManager = RecordingManager()
-    @State private var camera = CameraManager()
-    @State private var playback = PlaybackManager()
+    /// The panel is not a SwiftUI scene (see `PanelController`), but an `App`
+    /// needs one. An empty Settings scene, with its menu item removed so the
+    /// pinned app's menu does not offer an empty window.
+    var body: some Scene {
+        Settings { EmptyView() }
+            .commands { CommandGroup(replacing: .appSettings) {} }
+    }
+}
+
+/// Everything inside the panel: the button row and the camera preview. Hosted
+/// by `PanelController` for the app's lifetime, so opening and closing the
+/// panel are the controller's calls, not this view's appear and disappear.
+@MainActor
+struct PanelView: View {
+    let recordingManager: RecordingManager
+    let camera: CameraManager
+    let playback: PlaybackManager
     @State private var measuredSize: CGSize = .zero
 
     /// Whether the panel stays on screen when another app is clicked.
@@ -28,332 +42,313 @@ struct OnAirApp: App {
     /// cannot hold an enum directly.
     @AppStorage("panelScale") private var scaleRaw = PanelScale.medium.rawValue
 
-    var body: some Scene {
-        MenuBarExtra {
-            // spacing: 0 and no padding on this stack. The row carries its own
-            // padding; the preview is meant to touch the panel's edges.
-            VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: scale.rowSpacing) {
-                Toggle(isOn: $isPinned) {
-                    Image(systemName: isPinned ? "pin.fill" : "pin.slash")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                }
-                // Blue: the pin acts on the window, not on a recording or on
-                // the camera.
-                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
-                .help(isPinned ? "Let panel close on its own" : "Keep panel open")
-                .accessibilityLabel("Keep panel open")
-                .accessibilityIdentifier("pinToggle")
-
-                // The mic and its readout are one unit, so they sit closer to
-                // each other than to the rest of the row. Half the row spacing,
-                // which still clears the recording dot on the button's corner.
-                HStack(spacing: scale.rowSpacing / 2) {
-                // One control, not two: record and stop were always mutually
-                // exclusive with one of them disabled, so a single toggle
-                // carries the same state with half the controls.
-                Toggle(isOn: recordingBinding) {
-                    // A microphone, not a record dot: a red disc is the generic
-                    // record mark and reads as video as readily as audio. The
-                    // mic names the medium, and pairs with `video.fill` on the
-                    // video record toggle beside it. It also survives the 11pt small
-                    // scale, which the thinner audio symbols do not.
-                    //
-                    // One glyph in both states, like the camera toggle: only
-                    // the fill flips. Swapping the glyph to `stop.fill` made
-                    // this control behave unlike every other toggle in the row.
-                    Image(systemName: "mic.fill")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                        // Dimmed while Voice Memos is still coming up. The red
-                        // fill, the blinking dot and the timer all arrive
-                        // together a moment later, which is the "speak now"
-                        // signal.
-                        .opacity(isArmingAudio ? 0.35 : 1)
-                }
-                // Red capsule, and while it is genuinely capturing it wears
-                // the red Live Ember instead of the flat fill. `isRecordingAudio`,
-                // not "recording or arming": the ember means "you are being
-                // captured", which during arming is not yet true.
-                .toggleStyle(
-                    CapsuleToggleStyle(
-                        scale: scale,
-                        tint: RowPalette.capture,
-                        ember: recordingManager.isRecordingAudio ? .capture : nil
-                    )
-                )
-                // Sits on the button's bottom-right corner, offset outward so
-                // most of it falls on the panel background rather than on the
-                // red fill underneath, where amber on red would barely read.
-                .overlay(alignment: .bottomTrailing) {
-                    if recordingManager.isRecordingAudio {
-                        RecordingDot(diameter: scale.recordingDotSize)
-                            .offset(
-                                x: scale.recordingDotSize * 0.45,
-                                y: scale.recordingDotSize * 0.45
-                            )
-                    }
-                }
-                // Also disabled while video holds the medium: the two are
-                // mutually exclusive, so one clock always has one meaning.
-                .disabled(
-                    recordingManager.isInFlight
-                    || recordingManager.isArming
-                    || recordingManager.medium == .video
-                )
-                .help(armingAwareHelp)
-                .accessibilityLabel(armingAwareHelp)
-                .accessibilityIdentifier("recordToggle")
-
-                // Play last, merged into the timer box: the box already shows
-                // the last recording's length, so pressing it plays that
-                // recording. The glyph names the medium it will play. Like the
-                // record toggles it keeps its glyph and flips its fill (blue,
-                // nothing is being captured); it never swaps to a stop glyph.
-                Button {
-                    if playback.isActive { playback.stop() } else { playback.play() }
-                } label: {
-                    PlayLastLabel(
-                        manager: recordingManager,
-                        playback: playback,
-                        scale: scale,
-                        glyph: playGlyph
-                    )
-                }
-                .buttonStyle(PlayLastButtonStyle(scale: scale, isOn: playback.isPlaying))
-                .overlay {
-                    if playback.isPlaying {
-                        PlaybackProgressLine(playback: playback)
-                            .clipShape(Capsule())
-                            .allowsHitTesting(false)
-                    }
-                }
-                // Browsing and deleting live in a context menu so the row
-                // keeps its width. Previous/Next walk every Photo Booth movie
-                // and Voice Memos memo by creation date.
-                .contextMenu {
-                    Button("Play Last Recording") { playback.play() }
-                        .disabled(playback.isActive)
-                    Divider()
-                    Button("Previous Recording") { playback.step(-1) }
-                        .disabled(playback.isActive || !playback.canStepBack)
-                    Button("Next Recording") { playback.step(1) }
-                        .disabled(playback.isActive || !playback.canStepForward)
-                    Divider()
-                    Button("Move to Trash…") { confirmTrash(playback) }
-                        .disabled(playback.lastRecording?.url == nil)
-                }
-                // Disabled while either medium arms or records: recording and
-                // playback never run together. Record during playback is the
-                // other direction, handled in the record bindings.
-                .disabled(
-                    playback.lastRecording == nil
-                    || recordingManager.isBusy
-                    || recordingManager.isInFlight
-                )
-                .help(playHelp)
-                .accessibilityLabel(playAccessibilityLabel)
-                .accessibilityAddTraits(
-                    recordingManager.isRecording || playback.isPlaying ? .updatesFrequently : []
-                )
-                .accessibilityIdentifier("playLastButton")
-
-                // Video sits inside the mic+timer group, not out with the
-                // camera settings: it is a record button sharing that timer,
-                // and grouping it with the picker would file it as a preview
-                // control, which is what it used to be and no longer is.
-                //
-                // Same glyph in both states and the same corner dot as the
-                // mic. The hue is the same red: it says "you are being recorded",
-                // and the glyph already names the medium.
-                Toggle(isOn: videoRecordingBinding) {
-                    Image(systemName: "video.fill")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                        .opacity(isArmingVideo ? 0.35 : 1)
-                }
-                // Red, the same as the mic: the hue reports a live recording
-                // rather than which subsystem the button belongs to, so both
-                // record controls light and ember identically.
-                .toggleStyle(
-                    CapsuleToggleStyle(
-                        scale: scale,
-                        tint: RowPalette.capture,
-                        ember: recordingManager.isRecordingVideo ? .capture : nil
-                    )
-                )
-                .overlay(alignment: .bottomTrailing) {
-                    if recordingManager.isRecordingVideo {
-                        RecordingDot(diameter: scale.recordingDotSize)
-                            .offset(
-                                x: scale.recordingDotSize * 0.45,
-                                y: scale.recordingDotSize * 0.45
-                            )
-                    }
-                }
-                .disabled(isVideoButtonDisabled)
-                .help(videoHelp)
-                .accessibilityLabel(videoHelp)
-                .accessibilityIdentifier("videoRecordToggle")
-                }
-
-                // Sits immediately right of the video button, but outside the
-                // record group, at full row spacing rather than the group's
-                // half spacing. It acts on the preview, not on a recording, so
-                // filing it inside the mic+timer+video unit would say it shares
-                // that timer, which it does not.
-                //
-                // Preview only: `CameraManager` pins the movie output
-                // unmirrored, so this can never change what lands on disk. That
-                // is why it has no disabled state -- it is free to flip as often
-                // as the user likes, mid-recording included.
-                Toggle(isOn: mirrorBinding) {
-                    // Apple's own Flip Horizontal glyph, the one Preview and
-                    // Photos use for this exact operation. Checked at 11pt: the
-                    // two triangles and the arrow above them stay distinct at
-                    // the small scale.
-                    Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
-                        .font(scale.glyphFont)
-                        .frame(width: scale.glyphSize, height: scale.glyphSize)
-                }
-                // Blue, like every lit control that is not a recording. It
-                // acts on the preview, nothing is being captured because of
-                // it, and red here would claim otherwise.
-                .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
-                // Stays live during video playback: playback is drawn the
-                // same way round as the preview. The file itself is pinned
-                // unmirrored, so this never touches what was recorded.
-                .help(mirrorHelp)
-                .accessibilityLabel(mirrorHelp)
-                .accessibilityIdentifier("mirrorToggle")
-
-                Spacer(minLength: 12)
-
-                // The preview is permanent now, so these are permanent too.
-                // They used to be mounted only with the preview, which stranded
-                // an oversized row whenever the camera was turned off at the
-                // large scale, with no visible control to shrink it.
-                CameraControls(camera: camera, scale: scale)
-                    // Switching camera reconfigures the session, which would
-                    // truncate a movie mid-write.
-                    .disabled(recordingManager.isRecordingVideo)
-
-                // Zoom out / zoom in step through the five sizes in order and
-                // disable at either end. Plain buttons, not toggles: neither
-                // has an on state, so both are drawn as off capsules.
-                //
-                // This sizes the *preview* only. It has never had any bearing
-                // on the recorded video, which uses the camera's own format.
-                HStack(spacing: 2) {
-                    zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out", shortcut: "⌘−")
-                    zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In", shortcut: "⌘+")
-                }
-                .accessibilityIdentifier("panelZoom")
-
-                // Close and Quit as one pair, 2pt apart like the zoom pair:
-                // the two ways of leaving. Close is a plain off capsule, since
-                // it has no on state; Quit stays the permanent blue capsule.
-                HStack(spacing: 2) {
-                    Button {
-                        PanelSizer.closePanel()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(scale.glyphFont)
-                            .frame(width: scale.glyphSize, height: scale.glyphSize)
-                    }
-                    .buttonStyle(
-                        CapsuleControlButtonStyle(
-                            scale: scale,
-                            tint: RowPalette.control,
-                            ember: nil,
-                            isOn: false
-                        )
-                    )
-                    .help("Close panel (⌘W)")
-                    .accessibilityLabel("Close panel")
-                    .accessibilityIdentifier("closePanelButton")
-
-                    Button {
-                        quit()
-                    } label: {
-                        Image(systemName: "power")
-                            .font(scale.glyphFont)
-                            .frame(width: scale.glyphSize, height: scale.glyphSize)
-                    }
-                    // A permanent blue capsule: quit acts on the window, and
-                    // unlike every other control here it has no off state, so it is
-                    // always drawn lit.
-                    .buttonStyle(
-                        CapsuleControlButtonStyle(
-                            scale: scale,
-                            tint: RowPalette.control,
-                            ember: nil,
-                            isOn: true
-                        )
-                    )
-                    .help("Quit (⌘Q)")
-                    .accessibilityLabel("Quit OnAir")
-                    .accessibilityIdentifier("quitButton")
-                }
+    var body: some View {
+        // spacing: 0 and no padding on this stack. The row carries its own
+        // padding; the preview is meant to touch the panel's edges.
+        VStack(alignment: .leading, spacing: 0) {
+        HStack(spacing: scale.rowSpacing) {
+            Toggle(isOn: $isPinned) {
+                Image(systemName: isPinned ? "pin.fill" : "pin.slash")
+                    .font(scale.glyphFont)
+                    .frame(width: scale.glyphSize, height: scale.glyphSize)
             }
-            .focusEffectDisabled()
-            // Leading-aligned: the panel is a fixed width, so the row fills it
-            // and each group sits at its own end. Without an explicit alignment
-            // an HStack centers inside its frame.
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Padding is on the row, not on the panel, so the preview below can
-            // run flush to the left, right and bottom edges.
-            .padding(.horizontal, scale.horizontalPadding)
-            // Top and bottom separately: the bottom gap meets the hard top
-            // edge of the preview image and the top gap meets empty window
-            // chrome, so equal numbers read bottom-heavy.
-            .padding(.top, scale.verticalPaddingTop)
-            .padding(.bottom, scale.verticalPaddingBottom)
+            // Blue: the pin acts on the window, not on a recording or on
+            // the camera.
+            .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
+            .help(isPinned ? "Let panel close on its own" : "Keep panel open")
+            .accessibilityLabel("Keep panel open")
+            .accessibilityIdentifier("pinToggle")
 
-            // Always mounted. The preview is the app's resting state now:
-            // there is no toggle, and nothing to collapse.
-            CameraPreviewPanel(camera: camera, playback: playback, scale: scale)
+            // The mic and its readout are one unit, so they sit closer to
+            // each other than to the rest of the row. Half the row spacing,
+            // which still clears the recording dot on the button's corner.
+            HStack(spacing: scale.rowSpacing / 2) {
+            // One control, not two: record and stop were always mutually
+            // exclusive with one of them disabled, so a single toggle
+            // carries the same state with half the controls.
+            Toggle(isOn: recordingBinding) {
+                // A microphone, not a record dot: a red disc is the generic
+                // record mark and reads as video as readily as audio. The
+                // mic names the medium, and pairs with `video.fill` on the
+                // video record toggle beside it. It also survives the 11pt small
+                // scale, which the thinner audio symbols do not.
+                //
+                // One glyph in both states, like the camera toggle: only
+                // the fill flips. Swapping the glyph to `stop.fill` made
+                // this control behave unlike every other toggle in the row.
+                Image(systemName: "mic.fill")
+                    .font(scale.glyphFont)
+                    .frame(width: scale.glyphSize, height: scale.glyphSize)
+                    // Dimmed while Voice Memos is still coming up. The red
+                    // fill, the blinking dot and the timer all arrive
+                    // together a moment later, which is the "speak now"
+                    // signal.
+                    .opacity(isArmingAudio ? 0.35 : 1)
             }
-            .frame(width: contentWidth)
-            .fixedSize()
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.preference(key: PanelSizeKey.self, value: proxy.size)
-                }
+            // Red capsule, and while it is genuinely capturing it wears
+            // the red Live Ember instead of the flat fill. `isRecordingAudio`,
+            // not "recording or arming": the ember means "you are being
+            // captured", which during arming is not yet true.
+            .toggleStyle(
+                CapsuleToggleStyle(
+                    scale: scale,
+                    tint: RowPalette.capture,
+                    ember: recordingManager.isRecordingAudio ? .capture : nil
+                )
             )
-            .background(PanelSizer(size: measuredSize, isPinned: isPinned))
-            .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
-            // Starting or stopping audio runs a Shortcut, which brings
-            // Shortcuts or Voice Memos forward and takes key from the panel,
-            // so ⌘. would go nowhere. Take it back, but only from them.
-            .onChange(of: recordingManager.isArming) { Self.reclaimFocusFromRecorder() }
-            .onChange(of: recordingManager.isRecording) { Self.reclaimFocusFromRecorder() }
-            .task {
-                recordingManager.onError = { error in presentAlert(for: error) }
-                let playback = self.playback
-                recordingManager.onFinished = { finished in playback.recordingFinished(finished) }
-                playback.onAudioUnavailable = { presentPlaybackAlert() }
-                playback.refreshIfMissing()
-                playback.reloadLibrary()
-                installKeyMonitor()
-                await camera.start()
+            // Sits on the button's bottom-right corner, offset outward so
+            // most of it falls on the panel background rather than on the
+            // red fill underneath, where amber on red would barely read.
+            .overlay(alignment: .bottomTrailing) {
+                if recordingManager.isRecordingAudio {
+                    RecordingDot(diameter: scale.recordingDotSize)
+                        .offset(
+                            x: scale.recordingDotSize * 0.45,
+                            y: scale.recordingDotSize * 0.45
+                        )
+                }
             }
-            // `pause()`, not a teardown: the session stays configured so the
-            // next open skips device discovery and format negotiation. It also
-            // refuses to stop while a movie is being written, which is what
-            // lets a video recording survive the panel closing.
+            // Also disabled while video holds the medium: the two are
+            // mutually exclusive, so one clock always has one meaning.
+            .disabled(
+                recordingManager.isInFlight
+                || recordingManager.isArming
+                || recordingManager.medium == .video
+            )
+            .help(armingAwareHelp)
+            .accessibilityLabel(armingAwareHelp)
+            .accessibilityIdentifier("recordToggle")
+
+            // Play last, merged into the timer box: the box already shows
+            // the last recording's length, so pressing it plays that
+            // recording. The glyph names the medium it will play. Like the
+            // record toggles it keeps its glyph and flips its fill (blue,
+            // nothing is being captured); it never swaps to a stop glyph.
+            Button {
+                if playback.isActive { playback.stop() } else { playback.play() }
+            } label: {
+                PlayLastLabel(
+                    manager: recordingManager,
+                    playback: playback,
+                    scale: scale,
+                    glyph: playGlyph
+                )
+            }
+            .buttonStyle(PlayLastButtonStyle(scale: scale, isOn: playback.isPlaying))
+            .overlay {
+                if playback.isPlaying {
+                    PlaybackProgressLine(playback: playback)
+                        .clipShape(Capsule())
+                        .allowsHitTesting(false)
+                }
+            }
+            // Browsing and deleting live in a context menu so the row
+            // keeps its width. Previous/Next walk every Photo Booth movie
+            // and Voice Memos memo by creation date.
+            .contextMenu {
+                Button("Play Last Recording") { playback.play() }
+                    .disabled(playback.isActive)
+                Divider()
+                Button("Previous Recording") { playback.step(-1) }
+                    .disabled(playback.isActive || !playback.canStepBack)
+                Button("Next Recording") { playback.step(1) }
+                    .disabled(playback.isActive || !playback.canStepForward)
+                Divider()
+                Button("Move to Trash…") { confirmTrash(playback) }
+                    .disabled(playback.lastRecording?.url == nil)
+            }
+            // Disabled while either medium arms or records: recording and
+            // playback never run together. Record during playback is the
+            // other direction, handled in the record bindings.
+            .disabled(
+                playback.lastRecording == nil
+                || recordingManager.isBusy
+                || recordingManager.isInFlight
+            )
+            .help(playHelp)
+            .accessibilityLabel(playAccessibilityLabel)
+            .accessibilityAddTraits(
+                recordingManager.isRecording || playback.isPlaying ? .updatesFrequently : []
+            )
+            .accessibilityIdentifier("playLastButton")
+
+            // Video sits inside the mic+timer group, not out with the
+            // camera settings: it is a record button sharing that timer,
+            // and grouping it with the picker would file it as a preview
+            // control, which is what it used to be and no longer is.
             //
-            // Playback stops with the panel: unlike a video recording, nothing
-            // is lost, and the next open should show the live camera.
-            .onDisappear {
-                playback.stop()
-                camera.pause()
+            // Same glyph in both states and the same corner dot as the
+            // mic. The hue is the same red: it says "you are being recorded",
+            // and the glyph already names the medium.
+            Toggle(isOn: videoRecordingBinding) {
+                Image(systemName: "video.fill")
+                    .font(scale.glyphFont)
+                    .frame(width: scale.glyphSize, height: scale.glyphSize)
+                    .opacity(isArmingVideo ? 0.35 : 1)
             }
-        } label: {
-            MenuBarIcon(isRecording: recordingManager.isRecording)
+            // Red, the same as the mic: the hue reports a live recording
+            // rather than which subsystem the button belongs to, so both
+            // record controls light and ember identically.
+            .toggleStyle(
+                CapsuleToggleStyle(
+                    scale: scale,
+                    tint: RowPalette.capture,
+                    ember: recordingManager.isRecordingVideo ? .capture : nil
+                )
+            )
+            .overlay(alignment: .bottomTrailing) {
+                if recordingManager.isRecordingVideo {
+                    RecordingDot(diameter: scale.recordingDotSize)
+                        .offset(
+                            x: scale.recordingDotSize * 0.45,
+                            y: scale.recordingDotSize * 0.45
+                        )
+                }
+            }
+            .disabled(isVideoButtonDisabled)
+            .help(videoHelp)
+            .accessibilityLabel(videoHelp)
+            .accessibilityIdentifier("videoRecordToggle")
+            }
+
+            // Sits immediately right of the video button, but outside the
+            // record group, at full row spacing rather than the group's
+            // half spacing. It acts on the preview, not on a recording, so
+            // filing it inside the mic+timer+video unit would say it shares
+            // that timer, which it does not.
+            //
+            // Preview only: `CameraManager` pins the movie output
+            // unmirrored, so this can never change what lands on disk. That
+            // is why it has no disabled state -- it is free to flip as often
+            // as the user likes, mid-recording included.
+            Toggle(isOn: mirrorBinding) {
+                // Apple's own Flip Horizontal glyph, the one Preview and
+                // Photos use for this exact operation. Checked at 11pt: the
+                // two triangles and the arrow above them stay distinct at
+                // the small scale.
+                Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right")
+                    .font(scale.glyphFont)
+                    .frame(width: scale.glyphSize, height: scale.glyphSize)
+            }
+            // Blue, like every lit control that is not a recording. It
+            // acts on the preview, nothing is being captured because of
+            // it, and red here would claim otherwise.
+            .toggleStyle(CapsuleToggleStyle(scale: scale, tint: RowPalette.control))
+            // Stays live during video playback: playback is drawn the
+            // same way round as the preview. The file itself is pinned
+            // unmirrored, so this never touches what was recorded.
+            .help(mirrorHelp)
+            .accessibilityLabel(mirrorHelp)
+            .accessibilityIdentifier("mirrorToggle")
+
+            Spacer(minLength: 12)
+
+            // The preview is permanent now, so these are permanent too.
+            // They used to be mounted only with the preview, which stranded
+            // an oversized row whenever the camera was turned off at the
+            // large scale, with no visible control to shrink it.
+            CameraControls(camera: camera, scale: scale)
+                // Switching camera reconfigures the session, which would
+                // truncate a movie mid-write.
+                .disabled(recordingManager.isRecordingVideo)
+
+            // Zoom out / zoom in step through the five sizes in order and
+            // disable at either end. Plain buttons, not toggles: neither
+            // has an on state, so both are drawn as off capsules.
+            //
+            // This sizes the *preview* only. It has never had any bearing
+            // on the recorded video, which uses the camera's own format.
+            HStack(spacing: 2) {
+                zoomButton(to: scale.smaller, symbol: "minus.magnifyingglass", title: "Zoom Out", shortcut: "⌘−")
+                zoomButton(to: scale.larger, symbol: "plus.magnifyingglass", title: "Zoom In", shortcut: "⌘+")
+            }
+            .accessibilityIdentifier("panelZoom")
+
+            // Close and Quit as one pair, 2pt apart like the zoom pair:
+            // the two ways of leaving. Close is a plain off capsule, since
+            // it has no on state; Quit stays the permanent blue capsule.
+            HStack(spacing: 2) {
+                Button {
+                    PanelSizer.closePanel()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
+                }
+                .buttonStyle(
+                    CapsuleControlButtonStyle(
+                        scale: scale,
+                        tint: RowPalette.control,
+                        ember: nil,
+                        isOn: false
+                    )
+                )
+                .help("Close panel (⌘W)")
+                .accessibilityLabel("Close panel")
+                .accessibilityIdentifier("closePanelButton")
+
+                Button {
+                    quit()
+                } label: {
+                    Image(systemName: "power")
+                        .font(scale.glyphFont)
+                        .frame(width: scale.glyphSize, height: scale.glyphSize)
+                }
+                // A permanent blue capsule: quit acts on the window, and
+                // unlike every other control here it has no off state, so it is
+                // always drawn lit.
+                .buttonStyle(
+                    CapsuleControlButtonStyle(
+                        scale: scale,
+                        tint: RowPalette.control,
+                        ember: nil,
+                        isOn: true
+                    )
+                )
+                .help("Quit (⌘Q)")
+                .accessibilityLabel("Quit OnAir")
+                .accessibilityIdentifier("quitButton")
+            }
         }
-        .menuBarExtraStyle(.window)
+        .focusEffectDisabled()
+        // Leading-aligned: the panel is a fixed width, so the row fills it
+        // and each group sits at its own end. Without an explicit alignment
+        // an HStack centers inside its frame.
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Padding is on the row, not on the panel, so the preview below can
+        // run flush to the left, right and bottom edges.
+        .padding(.horizontal, scale.horizontalPadding)
+        // Top and bottom separately: the bottom gap meets the hard top
+        // edge of the preview image and the top gap meets empty window
+        // chrome, so equal numbers read bottom-heavy.
+        .padding(.top, scale.verticalPaddingTop)
+        .padding(.bottom, scale.verticalPaddingBottom)
+
+        // Always mounted. The preview is the app's resting state now:
+        // there is no toggle, and nothing to collapse.
+        CameraPreviewPanel(camera: camera, playback: playback, scale: scale)
+        }
+        .frame(width: contentWidth)
+        .fixedSize()
+        .background(
+            GeometryReader { proxy in
+                Color.clear.preference(key: PanelSizeKey.self, value: proxy.size)
+            }
+        )
+        .background(PanelSizer(size: measuredSize, isPinned: isPinned))
+        .onPreferenceChange(PanelSizeKey.self) { measuredSize = $0 }
+        // Starting or stopping audio runs a Shortcut, which brings
+        // Shortcuts or Voice Memos forward and takes key from the panel,
+        // so ⌘. would go nowhere. Take it back, but only from them.
+        .onChange(of: recordingManager.isArming) { Self.reclaimFocusFromRecorder() }
+        .onChange(of: recordingManager.isRecording) { Self.reclaimFocusFromRecorder() }
+        .task {
+            recordingManager.onError = { error in presentAlert(for: error) }
+            let playback = self.playback
+            recordingManager.onFinished = { finished in playback.recordingFinished(finished) }
+            playback.onAudioUnavailable = { presentPlaybackAlert() }
+            installKeyMonitor()
+        }
     }
 
     /// The chosen size. Every dimension in the panel derives from it, so the
@@ -933,7 +928,7 @@ struct RecordingDot: View {
 // MARK: - MenuBarIcon
 
 @MainActor
-private struct MenuBarIcon: View {
+struct MenuBarIcon: View {
     let isRecording: Bool
 
     var body: some View {

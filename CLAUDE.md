@@ -14,7 +14,7 @@ Built via GitHub Actions on push to main. Download the artifact from the Actions
 
 Seven Swift files, no tests:
 
-- `OnAirApp.swift` - SwiftUI `@main` entry point, `.window`-style `MenuBarExtra` (popover panel). Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` video record toggle. The glyph does **not** swap to `stop.fill`: the record toggles keep their glyph and flip their fill, and this one used to be the exception. The pin is the one toggle that still swaps glyphs (`pin.fill` on, `pin.slash` off). While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), the **play-last control**: a medium glyph plus `RecordingTimer` showing MM:SS in one bordered box that is also the play button (see "Play last recording"), grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, zoom out / zoom in buttons (`minus.magnifyingglass` / `plus.magnifyingglass`, off-state capsules that step through the five panel sizes and disable at either end), then a **close / quit pair** 2pt apart: a close button (`xmark`, off-state capsule, `PanelSizer.closePanel`, same as ⌘W) and a quit button (`power`) that is always drawn as a lit blue capsule (`isOn: true`), never as a bordered off-state control. The row sets `.focusEffectDisabled()`, so keyboard focus shows no ring. Keyboard shortcuts, all firing only while the panel is key, with one exception: ⌃⌥⌘R is a global hotkey that opens the panel from anywhere (or gives an open one key; it never closes it), registered with Carbon's `RegisterEventHotKey` in `GlobalHotKey` (end of `PanelSizer.swift`); it orders the `MenuBarExtraWindow` back in directly, because clicking the status item from code does not open the panel on macOS 27 (the button has no target/action, measured 2026-10-23) (the launch/reopen auto-open uses the same path); the hotkey needs no Accessibility or Input Monitoring permission, unlike `NSEvent.addGlobalMonitorForEvents`. The rest: ⌘= and ⌘+ zoom in, ⌘− zooms out (Safari and Preview's pair); ⌘R starts audio, ⇧⌘R starts video, ⌘. stops whichever is recording, and so does Esc (no modifiers, keyCode 53), which passes through when nothing is recording; Tooltips name the shortcut for the action the button would take now (record ⌘R / ⇧⌘R, stop ⌘., zoom ⌘+ / ⌘−), and not while it shows an arming or unavailable reason. Space (no modifiers, keyCode 49) plays the last recording with the timer box's own disabled rule, and while it plays pauses and resumes in place (`togglePause`, the transport's pause) rather than stopping; the timer box click still stops; it overrides Full Keyboard Access's Space-presses-focused-button inside the panel. Left and right arrow (no modifiers) jump back or forward 10s while a recording is playing, and pass through otherwise. ⌘Q quits through the same `quit()` as the Quit button (so a video is finalised first); ⌘W, and the close button beside Quit, close the panel even when pinned (`PanelSizer.closePanel`, which suspends the pin's re-show for that close). Start keys never stop and the stop key never starts. All of them live in one `NSEvent` local key monitor (`installKeyMonitor`), whose guards repeat the matching button's disabled rule. **Do not move them back to `.keyboardShortcut`:** on the zoom buttons that stuck between two sizes on hardware (2026-10-23), apparently because the registered action kept a target computed at an older render. The monitor reads the scale from `UserDefaults` and the state from the managers at key-press time. Starting or stopping audio brings Shortcuts or Voice Memos forward and takes key from the panel, which would leave ⌘. dead, so `reclaimFocusFromRecorder` hands key back (at 0.3s and 1.5s after `isArming` / `isRecording` change) but only when one of those two is frontmost and the panel is visible. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, height, spacing and corner radius from `PanelScale`, and the whole row scales as a unit. Since 2026-09-24 the controls are **semantic capsules**: off is the scale's corner radius plus a 1pt `separatorColor` outline on `controlBackgroundColor`; on is a *fully round* capsule filled with a semantic hue and a white glyph, with no outline (the fill is the edge). Hue says whether the app is capturing, not which subsystem a control belongs to (narrowed from three hues to two on 2026-09-28): red `#FF383C` for a live recording, audio and video alike, and blue `#007AFF` for every other lit control (pin, mirror, the camera menu's chevron well, quit). The camera green `#3AD862` that mirror, S/M/L and the chevron used to wear is gone: it read as a third, unexplained state beside the blue controls, and it carried the row's one accepted contrast failure. The user's accent colour is still not honoured in the row. Contrast now clears WCAG 1.4.11's 3:1 for a control icon in both hues (white on red 3.57:1, white on blue 4.02:1, computed); the only value still under it is the ember gradient's bright point (`#FF7A3D`, 2.59:1), which was already true of the audio ember. The silhouette therefore changes between off and on, and the one thing holding the row together across that is `PanelScale.controlHeight`, which every control including the timer is pinned to. While a medium is
+- `OnAirApp.swift` - SwiftUI `@main` entry point (an empty `Settings` scene) and `PanelView`, the panel's content. The menu bar item and the panel window are AppKit, owned by `PanelController` (end of `PanelSizer.swift`), not a `MenuBarExtra`; see "Panel sizing gotchas". Single row, left to right: a pin toggle, ONE audio toggle button (`mic.fill` in both states, plain while idle and on a red fill while recording; a mic rather than a record dot, because a red disc reads as video as readily as audio, and it pairs with the `video.fill` video record toggle. The glyph does **not** swap to `stop.fill`: the record toggles keep their glyph and flip their fill, and this one used to be the exception. The pin is the one toggle that still swaps glyphs (`pin.fill` on, `pin.slash` off). While recording it also carries a blinking amber `RecordingDot` on its bottom-right corner, giving the state a second, non-hue channel), the **play-last control**: a medium glyph plus `RecordingTimer` showing MM:SS in one bordered box that is also the play button (see "Play last recording"), grouped tight against the mic and faded while idle (`lineLimit(1)` + `fixedSize()` are load-bearing: at the small scale the row is tight enough that the value otherwise wraps mid-digit), then a **video record toggle** (`video.fill`) inside that same tight group, a **mirror toggle** (`arrow.left.and.right.righttriangle.left.righttriangle.right`, Apple's Flip Horizontal glyph) sitting immediately right of the video button but *outside* that tight group, at full row spacing: it acts on the preview, not on a recording, so grouping it with the record controls would imply it shares their timer, a spacer, the camera picker, zoom out / zoom in buttons (`minus.magnifyingglass` / `plus.magnifyingglass`, off-state capsules that step through the five panel sizes and disable at either end), then a **close / quit pair** 2pt apart: a close button (`xmark`, off-state capsule, `PanelSizer.closePanel`, same as ⌘W) and a quit button (`power`) that is always drawn as a lit blue capsule (`isOn: true`), never as a bordered off-state control. The row sets `.focusEffectDisabled()`, so keyboard focus shows no ring. Keyboard shortcuts, all firing only while the panel is key, with one exception: ⌃⌥⌘R is a global hotkey that opens the panel from anywhere (or gives an open one key; it never closes it), registered with Carbon's `RegisterEventHotKey` in `GlobalHotKey` (end of `PanelSizer.swift`); it calls `PanelController.show`, as the launch/reopen auto-open does; the hotkey needs no Accessibility or Input Monitoring permission, unlike `NSEvent.addGlobalMonitorForEvents`. The rest: ⌘= and ⌘+ zoom in, ⌘− zooms out (Safari and Preview's pair); ⌘R starts audio, ⇧⌘R starts video, ⌘. stops whichever is recording, and so does Esc (no modifiers, keyCode 53), which passes through when nothing is recording; Tooltips name the shortcut for the action the button would take now (record ⌘R / ⇧⌘R, stop ⌘., zoom ⌘+ / ⌘−), and not while it shows an arming or unavailable reason. Space (no modifiers, keyCode 49) plays the last recording with the timer box's own disabled rule, and while it plays pauses and resumes in place (`togglePause`, the transport's pause) rather than stopping; the timer box click still stops; it overrides Full Keyboard Access's Space-presses-focused-button inside the panel. Left and right arrow (no modifiers) jump back or forward 10s while a recording is playing, and pass through otherwise. ⌘Q quits through the same `quit()` as the Quit button (so a video is finalised first); ⌘W, and the close button beside Quit, close the panel even when pinned (`PanelSizer.closePanel`, which suspends the pin's re-show for that close). Start keys never stop and the stop key never starts. All of them live in one `NSEvent` local key monitor (`installKeyMonitor`), whose guards repeat the matching button's disabled rule. **Do not move them back to `.keyboardShortcut`:** on the zoom buttons that stuck between two sizes on hardware (2026-10-23), apparently because the registered action kept a target computed at an older render. The monitor reads the scale from `UserDefaults` and the state from the managers at key-press time. Starting or stopping audio brings Shortcuts or Voice Memos forward and takes key from the panel, which would leave ⌘. dead, so `reclaimFocusFromRecorder` hands key back (at 0.3s and 1.5s after `isArming` / `isRecording` change) but only when one of those two is frontmost and the panel is visible. The video button is grouped with the mic and timer, not with the camera picker, because it is a record control sharing that timer; filing it beside the picker would read as a preview setting, which is what it used to be and is no longer. Every control derives its glyph size, font, height, spacing and corner radius from `PanelScale`, and the whole row scales as a unit. Since 2026-09-24 the controls are **semantic capsules**: off is the scale's corner radius plus a 1pt `separatorColor` outline on `controlBackgroundColor`; on is a *fully round* capsule filled with a semantic hue and a white glyph, with no outline (the fill is the edge). Hue says whether the app is capturing, not which subsystem a control belongs to (narrowed from three hues to two on 2026-09-28): red `#FF383C` for a live recording, audio and video alike, and blue `#007AFF` for every other lit control (pin, mirror, the camera menu's chevron well, quit). The camera green `#3AD862` that mirror, S/M/L and the chevron used to wear is gone: it read as a third, unexplained state beside the blue controls, and it carried the row's one accepted contrast failure. The user's accent colour is still not honoured in the row. Contrast now clears WCAG 1.4.11's 3:1 for a control icon in both hues (white on red 3.57:1, white on blue 4.02:1, computed); the only value still under it is the ember gradient's bright point (`#FF7A3D`, 2.59:1), which was already true of the audio ember. The silhouette therefore changes between off and on, and the one thing holding the row together across that is `PanelScale.controlHeight`, which every control including the timer is pinned to. While a medium is
 genuinely capturing, that control's capsule wears a **Live Ember** in the
 capture red: one `EmberHue`, shared by both record buttons, because what the
 animation reports is "you are being recorded" and the medium is already said by
@@ -55,7 +55,7 @@ Added 2026-10-15. Design: `projects/20261015-last-recording-playback/generated-d
 - **There is no signal for "Voice Memos is now capturing."** Measured 2026-09-06: the `.m4a` does not appear in `~/Library/Group Containers/group.com.apple.VoiceMemos.shared/Recordings/` until *after* Stop; the process is up 1.3s before audio flows; and the filename timestamp records when the shortcut fired, not when recording began. So none of those can drive a "recording is live" indicator, and `RecordingManager.armingDelay` is a measured constant instead.
 - **Audio is lost between firing Start and actual capture.** Measured by firing Start, waiting a known interval, firing Stop, and comparing against the audio duration of the resulting file: 1.54s with Voice Memos quit first, 0.88-0.93s with it left running (n=3, spread 0.05s). This is why the first words of a recording used to be cut off. `isArming` holds the UI in a "starting" state so the user is not invited to speak into a mic that is not listening yet.
 - **The "must quit or error 5" rule did not reproduce.** Four warm starts with Voice Memos running all recorded fine. The quit is kept anyway: four successes are not enough to delete a documented failure mode whose trigger conditions are unknown, and it is now free on the hot path.
-- Do not call `popover.close()` or `panel?.orderOut(nil)` after Start/Stop. The panel intentionally stays open during recording so the user can press Stop without re-opening the popover. Closing is left to the native MenuBarExtra behavior: the menu bar icon click, plus focus loss unless the panel is pinned.
+- Do not call `popover.close()` or `panel?.orderOut(nil)` after Start/Stop. The panel intentionally stays open during recording so the user can press Stop without re-opening the popover. Closing is left to `PanelController`: the menu bar icon click, ⌘W / close, Esc while nothing records, and another app becoming active unless the panel is pinned.
 - `NSWorkspace.open` returns `true` whenever something claims the `shortcuts://` scheme, which the Shortcuts app always does. It says nothing about whether the "Start" Shortcut exists or ran, so the app cannot detect a missing or broken Shortcut. Do not read that return value as proof a recording started.
 
 ## Live camera preview
@@ -335,40 +335,39 @@ preview").
 
 ### Panel sizing gotchas
 
-- **The panel opens itself on launch and on reopen** (changed 2026-10-23;
-  it used to need `--open-panel`). `AppDelegate` (via
+- **The panel is our own window, not a `MenuBarExtra`** (changed
+  2026-10-24). `MenuBarExtra(.window)` creates its window only on the first
+  click of the menu bar icon, and on macOS 27 nothing in the app can produce
+  that click: the scene's status item has no target or action, the click
+  arrives system-side, and `performClick`, synthetic mouse events and private
+  status item methods were all tried (2026-10-23). So the panel could not open
+  at launch and ⌃⌥⌘R did nothing until the icon had been clicked once.
+  `PanelController` now creates an `NSStatusItem` (icon drawn by SwiftUI in a
+  click-through hosting view) and a borderless `PanelWindow` (`NSPanel`,
+  popover material, 10pt corners masked to match the preview) at launch, and
+  `show()` / `hide()` are the only ways in and out. Because the hosting view
+  lives for the app's lifetime, `PanelView` gets no appear/disappear per open:
+  `show()` starts the camera and refreshes the last recording, `hide()` stops
+  playback and pauses the camera. Do not move that back into `.task` /
+  `.onDisappear`. Unverified on hardware: whether the material and corners
+  match the old panel exactly.
+- **The panel opens itself on launch and on reopen.** `AppDelegate` (via
   `@NSApplicationDelegateAdaptor`, end of `PanelSizer.swift`) calls
-  `PanelLaunchOpener`, which orders the `MenuBarExtraWindow` in through
-  `GlobalHotKey.show` (clicking the status item from code does nothing on
-  macOS 27), retrying every 0.1s for up to 3s in case the window does not
-  exist yet, then makes the panel key once more 0.3s later so a Spotlight
-  launch does not leave Spotlight's caller frontmost. Changed 2026-10-24. **A login-item launch is
-  the exception** (detected by `keyAELaunchedAsLogInItem` on the open Apple
-  event; unverified for `SMAppService` login items) and stays closed unless
-  `--open-panel` is passed. Reopen (Spotlight/Finder/Dock on a running app)
-  opens a closed panel or gives an open one key.
-
-- **`MenuBarExtraWindow` reverts origin changes made inside `setFrame`.** The size
-  is honoured and the move is silently discarded, so reading the frame back
-  immediately shows the old x. Measured: asking for x=1072 landed at x=848,
-  asking for x=768 landed at x=376. The revert is scoped to that call, so
-  `setFrameOrigin` immediately afterwards sticks.
-- **Never animate the panel resize.** `animator().setFrame` animates the reverted
-  origin as well, sliding the panel across the screen before the correction
-  lands. `PanelSizer` applies size and corrected origin with
-  `disableScreenUpdatesUntilFlush()` and flushes once, so the anchored
-  intermediate position is never painted.
+  `PanelLaunchOpener`, which calls `PanelController.show`, and again 0.3s
+  later so a Spotlight launch does not leave Spotlight's caller frontmost.
+  **A login-item launch is the exception** (detected by
+  `keyAELaunchedAsLogInItem` on the open Apple event; unverified for
+  `SMAppService` login items) and stays closed unless `--open-panel` is
+  passed.
+- **Never animate the panel resize.** `PanelSizer` applies size and
+  right-anchored origin with `disableScreenUpdatesUntilFlush()` and flushes
+  once. The hosting view's `sizingOptions` are empty, so nothing else resizes
+  the window.
 - **The panel width is constant across camera on/off, but not across scales.**
   Toggling the camera only ever changes the height. Zooming does change
   the width, and that is fine: the panel is right-anchored, so only the left
   edge moves, and the screen-update suppression above covers a width change the
-  same way it covers a height change. An earlier version of this file claimed
-  the width could never change; that rule predated the suppression fix
-  (`c718a9d` froze the width, `13ac77e` fixed the flicker afterwards) and was
-  never revisited.
-- **AppKit grows the panel to fit content but never shrinks it back.** Without an
-  explicit frame the panel strands at full size with the collapsed row floating
-  in the middle of it.
+  same way it covers a height change.
 - **Padding order matters.** `.frame(width:)` must size the content *before*
   `.padding` is added outside it, or the row is squeezed by the padding.
 - **Padding belongs to the button row, not to the panel.** The outer `VStack`
@@ -378,27 +377,21 @@ preview").
 - The button row is leading-aligned (`.frame(maxWidth: .infinity, alignment: .leading)`).
   An `HStack` in a fixed-width frame with no alignment argument centers, so the
   row slides instead of filling the panel.
-- **The pin toggle fights an undocumented behaviour too.** `MenuBarExtra(.window)`
-  closes its panel by ordering it out when the window resigns key, and there is
-  no public switch for that. `PanelSizer.keepVisibleIfPinned` re-shows the
-  window on `didResignKeyNotification`, twice: once synchronously (in case the
-  order-out already ran) and once on the next runloop pass (in case it has not).
-  `hidesOnDeactivate` is also forced off, because the app is `LSUIElement` and
-  deactivates the moment another app is clicked. The pinned state persists in
-  `UserDefaults` under `panelPinned`.
+- **Unpinned, the panel closes when another app becomes active**
+  (`NSWorkspace.didActivateApplicationNotification`), except Shortcuts and
+  Voice Memos, which starting or stopping audio brings forward, and except in
+  the first 0.5s after opening. Closing deactivates the app so focus returns
+  to where it was. The pinned state persists in `UserDefaults` under
+  `panelPinned`.
 - **Pinned, the app acts like a regular app** (added 2026-10-24). The pin
   switches the activation policy to `.regular` (Dock icon, a place in ⌘Tab) and
-  drops the panel to window level `.normal`; unpinning restores `.accessory` and
-  the level `MenuBarExtra` gave it. When the app deactivates the panel is
-  ordered *back*, not front, so ⌘Tab and Spotlight land on top of it, and
-  reactivating the app brings it forward. Unverified on hardware: whether
-  `MenuBarExtraWindow` resets the level on show (it is re-applied on every
-  didBecomeKey in case it does). Clicking the menu bar icon while the pinned panel sits behind another app
-  (full-screen included) raises it: on macOS 27 that click is a status-item
-  scene action, not a mouse event the app sees (a local event monitor never
-  fires), and for an open panel `MenuBarExtra` only makes it key without
-  ordering it front or activating the app (measured 2026-10-24). So
-  `raiseIfPinned` on didBecomeKey orders it front and activates.
+  drops the panel from `.floating` to window level `.normal`; unpinning
+  restores both. `.floating` is below modal panels, so an alert is never
+  hidden behind the panel. When the app deactivates the panel is ordered
+  *back*, not front, so ⌘Tab and Spotlight land on top of it, and
+  reactivating the app brings it forward. Clicking the menu bar icon raises a
+  pinned panel sitting behind another app, and closes a panel that is open
+  and key.
 
 ### Verified on hardware (these were open questions in the design)
 

@@ -32,7 +32,7 @@ struct CameraPreviewPanel: View {
     let playback: PlaybackManager
     let scale: PanelScale
 
-    /// Matches the rounding of the `MenuBarExtra` panel itself. The preview runs
+    /// Matches the rounding of the panel itself (`PanelController.cornerRadius`). The preview runs
     /// flush to the panel's left, right and bottom edges, so only its bottom
     /// corners are rounded; square ones would poke out past the window.
     private static let panelCornerRadius: CGFloat = 10
