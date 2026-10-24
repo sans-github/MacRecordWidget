@@ -384,6 +384,14 @@ preview").
   `hidesOnDeactivate` is also forced off, because the app is `LSUIElement` and
   deactivates the moment another app is clicked. The pinned state persists in
   `UserDefaults` under `panelPinned`.
+- **Pinned, the app acts like a regular app** (added 2026-10-24). The pin
+  switches the activation policy to `.regular` (Dock icon, a place in ⌘Tab) and
+  drops the panel to window level `.normal`; unpinning restores `.accessory` and
+  the level `MenuBarExtra` gave it. When the app deactivates the panel is
+  ordered *back*, not front, so ⌘Tab and Spotlight land on top of it, and
+  reactivating the app brings it forward. Unverified on hardware: whether
+  `MenuBarExtraWindow` resets the level on show (it is re-applied on every
+  didBecomeKey in case it does).
 
 ### Verified on hardware (these were open questions in the design)
 

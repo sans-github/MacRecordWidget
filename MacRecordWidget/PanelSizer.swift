@@ -87,9 +87,22 @@ struct PanelSizer: NSViewRepresentable {
         }
     }
 
+    /// Pinned, the app behaves like a regular app: it gets a Dock icon and a
+    /// place in ⌘Tab. Unpinned it is back to an accessory (`LSUIElement`).
+    static func applyActivationPolicy(pinned: Bool) {
+        let policy: NSApplication.ActivationPolicy = pinned ? .regular : .accessory
+        if NSApp.activationPolicy() != policy { NSApp.setActivationPolicy(policy) }
+    }
+
     final class Coordinator {
         var size: CGSize = .zero
-        var isPinned = false
+        var isPinned = false {
+            didSet { if isPinned != oldValue { applyPinnedBehaviour() } }
+        }
+        /// The level `MenuBarExtra` gave the panel, restored on unpin. Pinned,
+        /// the panel drops to `.normal` so other apps' windows (and ⌘Tab) can
+        /// cover it; at its own level it floats over everything.
+        private var floatingLevel: NSWindow.Level?
         private var tokens: [NSObjectProtocol] = []
         private weak var window: NSWindow?
         private var isApplying = false
@@ -113,7 +126,41 @@ struct PanelSizer: NSViewRepresentable {
             tokens.append(center.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.keepVisibleIfPinned() }
             })
+            // Re-applied on every key change in case MenuBarExtra resets the
+            // level when it shows the panel (unverified whether it does).
+            tokens.append(center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.applyPinnedBehaviour() }
+            })
+            tokens.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.sendBackIfPinned() }
+            })
+            tokens.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.bringForwardIfPinned() }
+            })
+            floatingLevel = window.level
+            applyPinnedBehaviour()
             align()
+        }
+
+        func applyPinnedBehaviour() {
+            PanelSizer.applyActivationPolicy(pinned: isPinned)
+            guard let window, let floatingLevel else { return }
+            let level = isPinned ? .normal : floatingLevel
+            if window.level != level { window.level = level }
+        }
+
+        /// Another app took over (⌘Tab, a click, Spotlight): stay on screen
+        /// but behind it, like any app window.
+        private func sendBackIfPinned() {
+            guard isPinned, let window, window.isVisible else { return }
+            window.orderBack(nil)
+        }
+
+        /// ⌘Tab (or the Dock icon) back to the app brings the panel forward.
+        /// Only a panel still on screen: one closed with ⌘W stays closed.
+        private func bringForwardIfPinned() {
+            guard isPinned, !PanelSizer.isClosingOnRequest, let window, window.isVisible else { return }
+            window.makeKeyAndOrderFront(nil)
         }
 
         func align() {
@@ -172,7 +219,8 @@ struct PanelSizer: NSViewRepresentable {
 
         private func orderFront() {
             guard isPinned, !PanelSizer.isClosingOnRequest, let window, !window.isVisible else { return }
-            window.orderFrontRegardless()
+            // Re-shown behind the app that took focus, not over it.
+            if NSApp.isActive { window.orderFrontRegardless() } else { window.orderBack(nil) }
             align()
         }
 
@@ -658,6 +706,7 @@ enum PanelLaunchOpener {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        PanelSizer.applyActivationPolicy(pinned: UserDefaults.standard.bool(forKey: "panelPinned"))
         PanelLaunchOpener.openAfterLaunch()
         GlobalHotKey.register()
     }
