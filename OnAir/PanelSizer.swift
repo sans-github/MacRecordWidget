@@ -113,9 +113,19 @@ struct PanelSizer: NSViewRepresentable {
 
         /// Another app took over (⌘Tab, a click, Spotlight): stay on screen
         /// but behind it, like any app window.
+        /// Not when Shortcuts or Voice Memos took over: starting or stopping
+        /// audio does that, and `reclaimFocusFromRecorder` hands key straight
+        /// back, so sending the panel back would only flash whatever app sat
+        /// behind it.
         private func sendBackIfPinned() {
             guard isPinned, let window, window.isVisible else { return }
-            window.orderBack(nil)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
+                    guard !["com.apple.shortcuts", "com.apple.VoiceMemos"].contains(front) else { return }
+                    window.orderBack(nil)
+                }
+            }
         }
 
         /// ⌘Tab (or the Dock icon) back to the app brings the panel forward.

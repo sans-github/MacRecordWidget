@@ -163,10 +163,7 @@ final class RecordingManager {
             throw RecordingError.shortcutLaunchFailed(reason: "Could not construct shortcut URL")
         }
 
-        let opened = NSWorkspace.shared.open(url)
-        guard opened else {
-            throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false")
-        }
+        try await Self.openInBackground(url, failure: "Start")
 
         // State is set only after the URL opens successfully (AC-SW-7).
         //
@@ -190,6 +187,20 @@ final class RecordingManager {
         committed = true
     }
 
+    /// Fires a Shortcuts URL without bringing Shortcuts forward. A plain
+    /// `NSWorkspace.open` activates it, the panel loses key (and, pinned, is
+    /// ordered behind every other window), so the previously used app flashed
+    /// up until `reclaimFocusFromRecorder` took key back.
+    private static func openInBackground(_ url: URL, failure: String) async throws {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        do {
+            _ = try await NSWorkspace.shared.open(url, configuration: configuration)
+        } catch {
+            throw RecordingError.shortcutLaunchFailed(reason: "Could not open the \(failure) shortcut URL: \(error.localizedDescription)")
+        }
+    }
+
     func stopRecording() async throws {
         guard !isInFlight else { return }
         isInFlight = true
@@ -205,10 +216,7 @@ final class RecordingManager {
             throw RecordingError.shortcutLaunchFailed(reason: "Could not construct Stop shortcut URL")
         }
 
-        let opened = NSWorkspace.shared.open(url)
-        guard opened else {
-            throw RecordingError.shortcutLaunchFailed(reason: "NSWorkspace.open returned false for Stop")
-        }
+        try await Self.openInBackground(url, failure: "Stop")
 
         if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
