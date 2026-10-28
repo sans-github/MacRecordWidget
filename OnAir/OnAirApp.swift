@@ -360,8 +360,8 @@ struct PanelView: View {
     /// Installed once for the app's lifetime.
     private static var keyMonitor: Any?
 
-    /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘N starts audio, ⇧⌘N starts video,
-    /// ⌘S stops and saves whichever is recording, Esc stops and discards it, Space plays or stops the last
+    /// ⌘= / ⌘+ zoom in, ⌘− zooms out, ⌘↩ starts audio, ⇧⌘↩ starts video,
+    /// Esc stops and saves whichever is recording, Space plays or stops the last
     /// recording as the timer box does, ⌘Q quits as the Quit button does, ⌘W closes the panel (a recording
     /// carries on: audio lives in Voice Memos, and `pause()` refuses to stop
     /// the session mid-video).
@@ -385,21 +385,21 @@ struct PanelView: View {
             // Leave alerts alone: ⌘. is Cancel there.
             guard NSApp.modalWindow == nil else { return event }
             let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-            @MainActor func stopRecording(discard: Bool) {
+            @MainActor func stopRecording() {
                 guard !manager.isInFlight, !manager.isArming else { return }
                 if manager.isRecordingAudio {
                     Task {
-                        do { try await manager.stopRecording(discard: discard) }
+                        do { try await manager.stopRecording() }
                         catch { app.presentAlert(for: error) }
                     }
                 } else if manager.isRecordingVideo {
-                    Task { await manager.stopVideoRecording(camera: camera, discard: discard) }
+                    Task { await manager.stopVideoRecording(camera: camera) }
                 }
             }
-            // Esc (53) stops and discards a recording, and passes through otherwise.
+            // Esc (53) stops and saves a recording, and passes through otherwise.
             if flags.isEmpty, event.keyCode == 53 {
                 guard manager.isRecording else { return event }
-                stopRecording(discard: true)
+                stopRecording()
                 return nil
             }
             // Space plays the last recording, then pauses and resumes it.
@@ -425,12 +425,8 @@ struct PanelView: View {
             guard flags.contains(.command), !flags.contains(.option), !flags.contains(.control),
                   let key = event.charactersIgnoringModifiers?.lowercased() else { return event }
             let shift = flags.contains(.shift)
-            switch key {
-            case "=", "+":
-                Self.zoom(larger: true)
-            case "-" where !shift:
-                Self.zoom(larger: false)
-            case "n":
+            // Return (36) or keypad Enter (76): ⌘ starts audio, ⇧⌘ starts video.
+            if event.keyCode == 36 || event.keyCode == 76 {
                 guard manager.medium == nil, !manager.isInFlight else { return nil }
                 if shift {
                     guard camera.canRecordVideo else { return nil }
@@ -446,12 +442,17 @@ struct PanelView: View {
                         catch { app.presentAlert(for: error) }
                     }
                 }
+                return nil
+            }
+            switch key {
+            case "=", "+":
+                Self.zoom(larger: true)
+            case "-" where !shift:
+                Self.zoom(larger: false)
             case "q" where !shift:
                 app.quit()
             case "w" where !shift:
                 PanelSizer.closePanel()
-            case "s" where !shift:
-                stopRecording(discard: false)
             default:
                 return event
             }
@@ -546,8 +547,8 @@ struct PanelView: View {
     private var armingAwareHelp: String {
         if isArmingAudio { return "Starting… wait to speak" }
         return recordingManager.isRecordingAudio
-            ? "Stop and save (⌘S) or discard (Esc)"
-            : "Record audio to Voice Memos (⌘N)"
+            ? "Stop and save (Esc)"
+            : "Record audio to Voice Memos (⌘↩)"
     }
 
     /// Drives the single audio control: on starts, off stops.
@@ -606,10 +607,10 @@ struct PanelView: View {
     /// area cannot disagree about what is wrong.
     private var videoHelp: String {
         if isArmingVideo { return "Starting… wait to perform" }
-        if recordingManager.isRecordingVideo { return "Stop and save (⌘S) or discard (Esc)" }
+        if recordingManager.isRecordingVideo { return "Stop and save (Esc)" }
         if recordingManager.medium == .audio { return "Stop the audio recording first" }
         if let reason = camera.videoUnavailableReason { return reason }
-        return "Record video to Photo Booth (⇧⌘N)"
+        return "Record video to Photo Booth (⇧⌘↩)"
     }
 
     /// Names the result rather than the state: the button's fill already says

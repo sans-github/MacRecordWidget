@@ -201,9 +201,8 @@ final class RecordingManager {
         }
     }
 
-    /// Stops audio. With `discard`, the take is not offered for playback and
-    /// its `.m4a` goes to the Trash.
-    func stopRecording(discard: Bool = false) async throws {
+    /// Stops audio and saves it.
+    func stopRecording() async throws {
         guard !isInFlight else { return }
         isInFlight = true
         defer { isInFlight = false }
@@ -220,9 +219,7 @@ final class RecordingManager {
 
         try await Self.openInBackground(url, failure: "Stop")
 
-        if discard, let firedAt = audioFiredAt {
-            Self.discardMemo(firedAt: firedAt)
-        } else if let startedAt {
+        if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
             onFinished?(FinishedRecording(
                 medium: .audio,
@@ -243,31 +240,6 @@ final class RecordingManager {
         Task {
             try? await Task.sleep(for: .seconds(2))
             Self.runningVoiceMemos()?.terminate()
-        }
-    }
-
-    /// Moves the memo's `.m4a` to the Trash once Voice Memos has written it.
-    /// Voice Memos' own library is not touched, so the memo stays there as an
-    /// unplayable entry (the same as the trash button). Deleting it properly
-    /// needs a Shortcut, and Shortcuts asks before every delete unless the
-    /// user turns off that confirmation for all Shortcuts; rejected 2026-10-27.
-    private static func discardMemo(firedAt: Date) {
-        Task {
-            var file: URL?
-            for _ in 0..<30 where file == nil {
-                try? await Task.sleep(for: .milliseconds(500))
-                file = try? await PlaybackManager.newestVoiceMemo(createdAfter: firedAt)
-            }
-            guard let file else {
-                playbackLog.error("discard: no Voice Memos file appeared, nothing trashed")
-                return
-            }
-            do {
-                try FileManager.default.trashItem(at: file, resultingItemURL: nil)
-                playbackLog.notice("discard: moved \(file.lastPathComponent, privacy: .public) to the Trash")
-            } catch {
-                playbackLog.error("discard: cannot trash \(file.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            }
         }
     }
 
@@ -331,10 +303,8 @@ final class RecordingManager {
     }
 
     /// Stops the video recording and waits for the file to be closed and
-    /// indexed. Safe to call during the arming window. With `discard`, the
-    /// movie goes to the Trash and leaves the filmstrip, and the previous last
-    /// recording stays.
-    func stopVideoRecording(camera: CameraManager, discard: Bool = false) async {
+    /// indexed. Safe to call during the arming window.
+    func stopVideoRecording(camera: CameraManager) async {
         guard !isInFlight else { return }
         isInFlight = true
         defer { isInFlight = false }
@@ -347,15 +317,7 @@ final class RecordingManager {
 
         let movieURL = await camera.stopRecording()
 
-        if discard, let movieURL {
-            do {
-                try FileManager.default.trashItem(at: movieURL, resultingItemURL: nil)
-                PhotoBoothLibrary.removeFromFilmstrip(movieURL)
-                playbackLog.notice("discard: moved \(movieURL.lastPathComponent, privacy: .public) to the Trash")
-            } catch {
-                playbackLog.error("discard: cannot trash \(movieURL.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            }
-        } else if let startedAt {
+        if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
             // A nil URL means the file was not written; offering it for
             // playback would only produce the "missing" state.
