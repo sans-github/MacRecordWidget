@@ -75,6 +75,8 @@ final class RecordingManager {
     /// Memos writes its file only after Stop, so the playback lookup accepts
     /// only files created after this moment.
     private var audioFiredAt: Date?
+    /// The text handed to the Start shortcut, so a discard can name the memo.
+    private var audioName: String?
 
     /// True between firing the Start shortcut and the point where Voice Memos
     /// is actually capturing. The UI shows a distinct "starting" state so the
@@ -172,6 +174,7 @@ final class RecordingManager {
         // window so the timer does not over-report and the user is not invited
         // to start talking into a mic that is not listening.
         audioFiredAt = Date()
+        audioName = name
         isArming = true
         armingTask?.cancel()
         armingTask = Task { [weak self] in
@@ -201,7 +204,10 @@ final class RecordingManager {
         }
     }
 
-    func stopRecording() async throws {
+    /// Stops audio. With `discard`, the take is not offered for playback and
+    /// the "Discard" shortcut is fired to delete the memo in Voice Memos
+    /// itself; trashing the `.m4a` would leave a broken entry in its library.
+    func stopRecording(discard: Bool = false) async throws {
         guard !isInFlight else { return }
         isInFlight = true
         defer { isInFlight = false }
@@ -218,7 +224,9 @@ final class RecordingManager {
 
         try await Self.openInBackground(url, failure: "Stop")
 
-        if let startedAt {
+        if discard, let firedAt = audioFiredAt {
+            Self.discardMemo(named: audioName ?? "", firedAt: firedAt)
+        } else if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
             onFinished?(FinishedRecording(
                 medium: .audio,
@@ -229,6 +237,7 @@ final class RecordingManager {
         }
         startedAt = nil
         audioFiredAt = nil
+        audioName = nil
         isRecording = false
         medium = nil
 
@@ -239,6 +248,28 @@ final class RecordingManager {
         Task {
             try? await Task.sleep(for: .seconds(2))
             Self.runningVoiceMemos()?.terminate()
+        }
+    }
+
+    /// Fires `shortcuts://run-shortcut?name=Discard` with the memo's name once
+    /// Voice Memos has written the file: before that there is no memo for the
+    /// shortcut to find. Nothing confirms the shortcut exists or ran (see `NSWorkspace.open` in CLAUDE.md).
+    private static func discardMemo(named name: String, firedAt: Date) {
+        Task {
+            var found = false
+            for _ in 0..<30 where !found {
+                try? await Task.sleep(for: .milliseconds(500))
+                found = (try? await PlaybackManager.newestVoiceMemo(createdAfter: firedAt)) != nil
+            }
+            guard found,
+                  let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                  let url = URL(string: "shortcuts://run-shortcut?name=Discard&input=text&text=\(encoded)")
+            else {
+                playbackLog.error("discard: no Voice Memos file appeared, Discard shortcut not fired")
+                return
+            }
+            try? await openInBackground(url, failure: "Discard")
+            playbackLog.notice("discard: fired Discard shortcut")
         }
     }
 
@@ -302,8 +333,10 @@ final class RecordingManager {
     }
 
     /// Stops the video recording and waits for the file to be closed and
-    /// indexed. Safe to call during the arming window.
-    func stopVideoRecording(camera: CameraManager) async {
+    /// indexed. Safe to call during the arming window. With `discard`, the
+    /// movie goes to the Trash and leaves the filmstrip, and the previous last
+    /// recording stays.
+    func stopVideoRecording(camera: CameraManager, discard: Bool = false) async {
         guard !isInFlight else { return }
         isInFlight = true
         defer { isInFlight = false }
@@ -316,7 +349,15 @@ final class RecordingManager {
 
         let movieURL = await camera.stopRecording()
 
-        if let startedAt {
+        if discard, let movieURL {
+            do {
+                try FileManager.default.trashItem(at: movieURL, resultingItemURL: nil)
+                PhotoBoothLibrary.removeFromFilmstrip(movieURL)
+                playbackLog.notice("discard: moved \(movieURL.lastPathComponent, privacy: .public) to the Trash")
+            } catch {
+                playbackLog.error("discard: cannot trash \(movieURL.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
+        } else if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
             // A nil URL means the file was not written; offering it for
             // playback would only produce the "missing" state.
