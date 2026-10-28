@@ -202,8 +202,7 @@ final class RecordingManager {
     }
 
     /// Stops audio. With `discard`, the take is not offered for playback and
-    /// the "Discard" shortcut is fired to delete the memo in Voice Memos
-    /// itself; trashing the `.m4a` would leave a broken entry in its library.
+    /// its `.m4a` goes to the Trash.
     func stopRecording(discard: Bool = false) async throws {
         guard !isInFlight else { return }
         isInFlight = true
@@ -247,16 +246,11 @@ final class RecordingManager {
         }
     }
 
-    /// Fires `shortcuts://run-shortcut?name=Discard` with the memo's title
-    /// once Voice Memos has written the file: before that there is no memo
-    /// for the shortcut to find. Nothing confirms the shortcut exists or ran
-    /// (see `NSWorkspace.open` in CLAUDE.md).
-    ///
-    /// Voice Memos' only lookup for Shortcuts is a text search on the memo's
-    /// name, and the Start shortcut ignores its input, so the memo keeps its
-    /// default title: the UTC start time, `2026-10-28T01:09:35Z`, which is
-    /// the file's local `20261027 180935.m4a` (read from CloudRecordings.db
-    /// 2026-10-27). That is unique to the second, so the search finds one memo.
+    /// Moves the memo's `.m4a` to the Trash once Voice Memos has written it.
+    /// Voice Memos' own library is not touched, so the memo stays there as an
+    /// unplayable entry (the same as the trash button). Deleting it properly
+    /// needs a Shortcut, and Shortcuts asks before every delete unless the
+    /// user turns off that confirmation for all Shortcuts; rejected 2026-10-27.
     private static func discardMemo(firedAt: Date) {
         Task {
             var file: URL?
@@ -264,26 +258,17 @@ final class RecordingManager {
                 try? await Task.sleep(for: .milliseconds(500))
                 file = try? await PlaybackManager.newestVoiceMemo(createdAfter: firedAt)
             }
-            guard let file, let title = memoTitle(for: file),
-                  let encoded = title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-                  let url = URL(string: "shortcuts://run-shortcut?name=Discard&input=text&text=\(encoded)")
-            else {
-                playbackLog.error("discard: no Voice Memos file to name, Discard shortcut not fired")
+            guard let file else {
+                playbackLog.error("discard: no Voice Memos file appeared, nothing trashed")
                 return
             }
-            try? await openInBackground(url, failure: "Discard")
-            playbackLog.notice("discard: fired Discard shortcut for \(title, privacy: .public)")
+            do {
+                try FileManager.default.trashItem(at: file, resultingItemURL: nil)
+                playbackLog.notice("discard: moved \(file.lastPathComponent, privacy: .public) to the Trash")
+            } catch {
+                playbackLog.error("discard: cannot trash \(file.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
         }
-    }
-
-    /// `20261027 180935.m4a` (local time) to `2026-10-28T01:09:35Z`.
-    private static func memoTitle(for file: URL) -> String? {
-        let local = DateFormatter()
-        local.locale = Locale(identifier: "en_US_POSIX")
-        local.dateFormat = "yyyyMMdd HHmmss"
-        guard let date = local.date(from: String(file.deletingPathExtension().lastPathComponent.prefix(15))) else { return nil }
-        let utc = ISO8601DateFormatter()
-        return utc.string(from: date)
     }
 
     // MARK: - Video
