@@ -75,8 +75,6 @@ final class RecordingManager {
     /// Memos writes its file only after Stop, so the playback lookup accepts
     /// only files created after this moment.
     private var audioFiredAt: Date?
-    /// The text handed to the Start shortcut, so a discard can name the memo.
-    private var audioName: String?
 
     /// True between firing the Start shortcut and the point where Voice Memos
     /// is actually capturing. The UI shows a distinct "starting" state so the
@@ -174,7 +172,6 @@ final class RecordingManager {
         // window so the timer does not over-report and the user is not invited
         // to start talking into a mic that is not listening.
         audioFiredAt = Date()
-        audioName = name
         isArming = true
         armingTask?.cancel()
         armingTask = Task { [weak self] in
@@ -225,7 +222,7 @@ final class RecordingManager {
         try await Self.openInBackground(url, failure: "Stop")
 
         if discard, let firedAt = audioFiredAt {
-            Self.discardMemo(named: audioName ?? "", firedAt: firedAt)
+            Self.discardMemo(firedAt: firedAt)
         } else if let startedAt {
             lastElapsed = max(0, Date().timeIntervalSince(startedAt))
             onFinished?(FinishedRecording(
@@ -237,7 +234,6 @@ final class RecordingManager {
         }
         startedAt = nil
         audioFiredAt = nil
-        audioName = nil
         isRecording = false
         medium = nil
 
@@ -251,26 +247,43 @@ final class RecordingManager {
         }
     }
 
-    /// Fires `shortcuts://run-shortcut?name=Discard` with the memo's name once
-    /// Voice Memos has written the file: before that there is no memo for the
-    /// shortcut to find. Nothing confirms the shortcut exists or ran (see `NSWorkspace.open` in CLAUDE.md).
-    private static func discardMemo(named name: String, firedAt: Date) {
+    /// Fires `shortcuts://run-shortcut?name=Discard` with the memo's title
+    /// once Voice Memos has written the file: before that there is no memo
+    /// for the shortcut to find. Nothing confirms the shortcut exists or ran
+    /// (see `NSWorkspace.open` in CLAUDE.md).
+    ///
+    /// Voice Memos' only lookup for Shortcuts is a text search on the memo's
+    /// name, and the Start shortcut ignores its input, so the memo keeps its
+    /// default title: the UTC start time, `2026-10-28T01:09:35Z`, which is
+    /// the file's local `20261027 180935.m4a` (read from CloudRecordings.db
+    /// 2026-10-27). That is unique to the second, so the search finds one memo.
+    private static func discardMemo(firedAt: Date) {
         Task {
-            var found = false
-            for _ in 0..<30 where !found {
+            var file: URL?
+            for _ in 0..<30 where file == nil {
                 try? await Task.sleep(for: .milliseconds(500))
-                found = (try? await PlaybackManager.newestVoiceMemo(createdAfter: firedAt)) != nil
+                file = try? await PlaybackManager.newestVoiceMemo(createdAfter: firedAt)
             }
-            guard found,
-                  let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+            guard let file, let title = memoTitle(for: file),
+                  let encoded = title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                   let url = URL(string: "shortcuts://run-shortcut?name=Discard&input=text&text=\(encoded)")
             else {
-                playbackLog.error("discard: no Voice Memos file appeared, Discard shortcut not fired")
+                playbackLog.error("discard: no Voice Memos file to name, Discard shortcut not fired")
                 return
             }
             try? await openInBackground(url, failure: "Discard")
-            playbackLog.notice("discard: fired Discard shortcut")
+            playbackLog.notice("discard: fired Discard shortcut for \(title, privacy: .public)")
         }
+    }
+
+    /// `20261027 180935.m4a` (local time) to `2026-10-28T01:09:35Z`.
+    private static func memoTitle(for file: URL) -> String? {
+        let local = DateFormatter()
+        local.locale = Locale(identifier: "en_US_POSIX")
+        local.dateFormat = "yyyyMMdd HHmmss"
+        guard let date = local.date(from: String(file.deletingPathExtension().lastPathComponent.prefix(15))) else { return nil }
+        let utc = ISO8601DateFormatter()
+        return utc.string(from: date)
     }
 
     // MARK: - Video
