@@ -396,11 +396,19 @@ struct PanelView: View {
                     Task { await manager.stopVideoRecording(camera: camera) }
                 }
             }
-            // Esc (53) stops and saves a recording, and passes through otherwise.
+            // Esc (53) stops and saves a recording, leaves playback (playing
+            // or paused) for the live preview, and passes through otherwise,
+            // which closes the panel.
             if flags.isEmpty, event.keyCode == 53 {
-                guard manager.isRecording else { return event }
-                stopRecording()
-                return nil
+                if manager.isRecording {
+                    stopRecording()
+                    return nil
+                }
+                if playback.isActive {
+                    playback.stop()
+                    return nil
+                }
+                return event
             }
             // Space plays the last recording, then pauses and resumes it.
             // keyCode 49 is Space on every layout.
